@@ -66,7 +66,11 @@ class SM_Admin {
         );
     }
 
-    public function enqueue_styles() {
+    public function enqueue_styles($hook = '') {
+        if (!empty($hook) && strpos($hook, 'sm-') === false && (!isset($_GET['page']) || strpos($_GET['page'], 'sm-') === false)) {
+            return;
+        }
+
         wp_enqueue_style('google-font-cairo', 'https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Noto+Kufi+Arabic:wght@300;400;600;700;800&display=swap', array(), null);
         wp_enqueue_style($this->plugin_name, SM_PLUGIN_URL . 'assets/css/sm-admin.css', array(), $this->version, 'all');
 
