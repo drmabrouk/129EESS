@@ -809,7 +809,10 @@ class SM_Settings {
             'eess_register_submit',
             'sm_verify_employee_id',
             'sm_submit_mobile_lesson',
-            'sm_get_pending_announcements'
+            'sm_get_pending_announcements',
+            'sm_public_search_student',
+            'sm_public_verify_student',
+            'sm_public_submit_exit_card'
         );
 
         if (!$user_id) {
@@ -857,6 +860,9 @@ class SM_Settings {
             'sm_download_student_import_template' => 'students',
             'sm_print_student_full_report' => 'students',
             'sm_update_student_photo' => 'students',
+            'sm_update_exit_card_request_status' => 'students',
+            'sm_get_exit_card_request_details' => 'students',
+            'sm_save_exit_card_settings' => 'students',
 
             // Behavior / Stats
             'sm_filter_violations' => 'stats',

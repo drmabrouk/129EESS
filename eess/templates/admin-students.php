@@ -521,43 +521,98 @@ $to_num = min($offset + $limit, $total_students_count);
 
     <!-- EXIT CARD REQUESTS REVIEW MODAL -->
     <div id="eess-exit-card-requests-modal" class="sm-modal-overlay" style="display: none;">
-        <div class="sm-modal-content" style="max-width: 900px; background: white;">
-            <div class="sm-modal-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding: 14px 18px; background: #ffffff; border-radius: 12px 12px 0 0; margin-bottom: 12px;">
-                <h3 style="margin:0; font-weight:800; font-size: 15px; color: #0f172a; display: flex; align-items: center; gap: 8px;">
-                    <span class="dashicons dashicons-id" style="font-size: 18px; width: 18px; height: 18px; color: #0f172a; margin: 0;"></span>
-                    <span>إدارة ومراجعة طلبات بطاقات تصريح الخروج (Student Exit Cards)</span>
+        <div class="sm-modal-content" style="max-width: 1050px; background: white; border-radius: 16px; overflow: hidden;">
+            <div class="sm-modal-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding: 16px 20px; background: #0f172a; color: white;">
+                <h3 style="margin:0; font-weight:800; font-size: 16px; color: #ffffff; display: flex; align-items: center; gap: 8px;">
+                    <span class="dashicons dashicons-id-alt" style="font-size: 20px; width: 20px; height: 20px;"></span>
+                    <span>نظام إدارة ومراجعة طلبات تصاريح الخروج المدرسية (Exit Cards)</span>
                 </h3>
-                <button class="sm-modal-close" onclick="document.getElementById('eess-exit-card-requests-modal').style.display='none'" style="width:28px; height:28px; display:flex; align-items:center; justify-content:center; color: #0f172a; font-weight: bold; font-size: 18px; border: none; background: transparent; cursor: pointer;">&times;</button>
+                <button class="sm-modal-close" onclick="document.getElementById('eess-exit-card-requests-modal').style.display='none'" style="width:28px; height:28px; display:flex; align-items:center; justify-content:center; color: #ffffff; font-weight: bold; font-size: 20px; border: none; background: transparent; cursor: pointer;">&times;</button>
             </div>
-            <div class="sm-modal-body" style="max-height: 70vh; overflow-y: auto;">
+            <div class="sm-modal-body" style="max-height: 80vh; overflow-y: auto; padding: 20px;">
+
+                <?php
+                $settings = get_option('sm_exit_card_settings', array('max_requests' => 3, 'redirect_discipline' => 'yes'));
+                $max_reqs_val = intval($settings['max_requests'] ?? 3);
+                $redirect_val = $settings['redirect_discipline'] ?? 'yes';
+                ?>
+                <!-- Filter & Settings Controls -->
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; margin-bottom: 16px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between;">
+                    <div style="display: flex; gap: 8px; flex: 1; min-width: 280px;">
+                        <input type="text" id="er_search_q" onkeyup="eessFilterExitCardTable()" placeholder="ابحث باسم الطالب، الكود، الرقم المرجعي، أو ولي الأمر..." style="flex: 1; height: 38px; border-radius: 8px; border: 1px solid #cbd5e1; padding: 0 10px; font-size: 12px;">
+                        <select id="er_filter_status" onchange="eessFilterExitCardTable()" style="height: 38px; border-radius: 8px; border: 1px solid #cbd5e1; padding: 0 10px; font-size: 12px; font-weight: 700;">
+                            <option value="">جميع الحالات</option>
+                            <option value="submitted">تم تقديم الطلب</option>
+                            <option value="under_review">قيد المراجعة والتدقيق</option>
+                            <option value="parent_confirmation">بانتظار تأكيد ولي الأمر</option>
+                            <option value="approved">تمت الموافقة الرسمية</option>
+                            <option value="preparing">جاري تجهيز/طباعة البطاقة</option>
+                            <option value="issued">تم الإصدار والتسليم</option>
+                            <option value="rejected">مرفوض</option>
+                        </select>
+                    </div>
+                    <?php if ($is_admin): ?>
+                    <button type="button" onclick="document.getElementById('eess-exit-settings-box').style.display = document.getElementById('eess-exit-settings-box').style.display === 'none' ? 'block' : 'none';" class="sm-btn" style="background: #0f172a; color: white !important; font-size: 11px; padding: 0 14px; height: 38px; font-weight: 800; border-radius: 8px;">⚙️ إعدادات الضوابط والحد الأقصى</button>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Admin Settings Panel -->
+                <div id="eess-exit-settings-box" style="display: none; background: #fffbe3; border: 1px solid #fde047; border-radius: 12px; padding: 14px; margin-bottom: 16px;">
+                    <h4 style="margin: 0 0 10px 0; font-size: 13.5px; font-weight: 800; color: #854d0e;">⚙️ إعدادات وضوابط تصاريح الخروج المدرسية</h4>
+                    <form onsubmit="eessSaveExitSettings(event)" style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap;">
+                        <div>
+                            <label style="font-size: 11.5px; font-weight: 700; color: #713f12; display: block; margin-bottom: 2px;">الحد الأقصى للطلبات المسموحة للسنوية:</label>
+                            <input type="number" id="cfg_max_requests" value="<?php echo $max_reqs_val; ?>" min="1" max="20" style="width: 80px; height: 34px; border-radius: 6px; border: 1px solid #cbd5e1; padding: 0 8px; font-weight: 800;">
+                        </div>
+                        <div>
+                            <label style="font-size: 11.5px; font-weight: 700; color: #713f12; display: block; margin-bottom: 2px;">توجيه تجاوز الحد لمكتب السلوك:</label>
+                            <select id="cfg_redirect_discipline" style="height: 34px; border-radius: 6px; border: 1px solid #cbd5e1; padding: 0 8px; font-weight: 800;">
+                                <option value="yes" <?php selected($redirect_val, 'yes'); ?>>نعم - توجيه لمكتب الانضباط وسلوك الطلاب</option>
+                                <option value="no" <?php selected($redirect_val, 'no'); ?>>لا - رفض الطلب تلقائياً</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="sm-btn" style="height: 34px; padding: 0 18px; background: #854d0e; color: white !important; font-size: 11.5px; font-weight: 800; border-radius: 6px; margin-top: 14px;">حفظ الضوابط</button>
+                    </form>
+                </div>
+
                 <?php
                 $all_exit_reqs = $wpdb->get_results("SELECT r.*, s.name as student_name, s.student_code, s.class_name, s.section FROM {$wpdb->prefix}sm_exit_card_requests r JOIN {$wpdb->prefix}sm_students s ON r.student_id = s.id ORDER BY r.created_at DESC LIMIT 100");
                 if (empty($all_exit_reqs)): ?>
                     <p style="text-align: center; color: #94a3b8; padding: 40px; font-weight: 700;">لا توجد طلبات بطاقات خروج مسجلة حالياً.</p>
                 <?php else: ?>
-                    <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: right;">
+                    <table id="eess_exit_req_table" style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: right;">
                         <thead>
-                            <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0; color: #475569;">
-                                <th style="padding: 10px;">الطالب الكود/الصف</th>
-                                <th style="padding: 10px;">سبب الطلب</th>
+                            <tr style="background: #0f172a; color: #ffffff;">
+                                <th style="padding: 10px;">الرقم المرجعي / الطالب</th>
+                                <th style="padding: 10px;">ولي الأمر والتواصل</th>
                                 <th style="padding: 10px;">تاريخ الطلب</th>
                                 <th style="padding: 10px; text-align: center;">حالة الطلب</th>
                                 <th style="padding: 10px; text-align: center;">الطباعة</th>
-                                <th style="padding: 10px; text-align: center;">الإجراء</th>
+                                <th style="padding: 10px; text-align: center;">إدارة الحالة والمعاينة</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach ($all_exit_reqs as $er): ?>
-                                <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <?php foreach ($all_exit_reqs as $er):
+                                $ref_disp = $er->reference_no ?: ('EXT-' . date('Y') . '-' . $er->id);
+                                $status_lbl = SM_Public::eess_get_exit_card_status_label($er->status);
+                                $status_bg = $er->status === 'approved' || $er->status === 'issued' ? '#dcfce7' : ($er->status === 'rejected' ? '#fee2e2' : '#fef3c7');
+                                $status_fg = $er->status === 'approved' || $er->status === 'issued' ? '#15803d' : ($er->status === 'rejected' ? '#dc2626' : '#d97706');
+                                $search_haystack = strtolower(($er->student_name ?? '') . ' ' . $er->student_code . ' ' . $ref_disp . ' ' . ($er->parent_name ?? ''));
+                            ?>
+                                <tr class="er-row-item" data-search="<?php echo esc_attr($search_haystack); ?>" data-status="<?php echo esc_attr($er->status); ?>" style="border-bottom: 1px solid #f1f5f9;">
                                     <td style="padding: 10px;">
-                                        <strong><?php echo esc_html($er->student_name); ?></strong>
+                                        <div style="font-family: monospace; font-weight: 900; color: #881337; font-size: 11px;"><?php echo esc_html($ref_disp); ?></div>
+                                        <strong style="font-size: 13px; color: #0f172a;"><?php echo esc_html($er->student_name); ?></strong>
                                         <div style="font-size: 11px; color: #64748b;"><?php echo esc_html($er->student_code); ?> | <?php echo esc_html($er->class_name); ?> (<?php echo esc_html($er->section); ?>)</div>
                                     </td>
-                                    <td style="padding: 10px;"><?php echo esc_html($er->reason); ?></td>
-                                    <td style="padding: 10px; font-family: monospace;"><?php echo esc_html($er->requested_date); ?></td>
+                                    <td style="padding: 10px;">
+                                        <div style="font-weight: 800; color: #0f172a;"><?php echo esc_html($er->parent_name ?: 'غير مدخل'); ?></div>
+                                        <div style="font-size: 11px; color: #64748b; font-family: monospace;"><?php echo esc_html($er->parent_phone ?: '---'); ?></div>
+                                    </td>
+                                    <td style="padding: 10px; font-family: monospace;"><?php echo esc_html(date_i18n('Y-m-d H:i', strtotime($er->created_at))); ?></td>
                                     <td style="padding: 10px; text-align: center;">
-                                        <span style="display:inline-block; padding:2px 8px; border-radius:12px; font-size:10.5px; font-weight:800; background:<?php echo $er->status === 'approved' ? '#dcfce7' : ($er->status === 'rejected' ? '#fee2e2' : '#fef3c7'); ?>; color:<?php echo $er->status === 'approved' ? '#15803d' : ($er->status === 'rejected' ? '#dc2626' : '#d97706'); ?>;">
-                                            <?php echo esc_html($er->status); ?>
+                                        <span style="display:inline-block; padding:3px 10px; border-radius:9999px; font-size:10.5px; font-weight:800; background:<?php echo $status_bg; ?>; color:<?php echo $status_fg; ?>;">
+                                            <?php echo esc_html($status_lbl); ?>
                                         </span>
                                     </td>
                                     <td style="padding: 10px; text-align: center;">
@@ -566,10 +621,18 @@ $to_num = min($offset + $limit, $total_students_count);
                                         </span>
                                     </td>
                                     <td style="padding: 10px; text-align: center;">
-                                        <div style="display: flex; gap: 4px; justify-content: center;">
-                                            <a href="<?php echo admin_url('admin-ajax.php?action=sm_print&print_type=student_card&student_id=' . $er->student_id); ?>" target="_blank" onclick="eessMarkRequestPrinted(<?php echo $er->id; ?>)" class="sm-btn" style="background: #1d4ed8; color: white !important; font-size: 11px; padding: 4px 10px; height: 28px; width: auto; font-weight: 700; text-decoration: none;">🖨️ طباعة</a>
-                                            <button onclick="eessUpdateExitReqStatus(<?php echo $er->id; ?>, 'approved')" class="sm-btn" style="background: #16a34a; color: white; font-size: 11px; padding: 4px 8px; height: 28px; width: auto; font-weight: 700;">اعتماد</button>
-                                            <button onclick="eessUpdateExitReqStatus(<?php echo $er->id; ?>, 'rejected')" class="sm-btn" style="background: #dc2626; color: white; font-size: 11px; padding: 4px 8px; height: 28px; width: auto; font-weight: 700;">رفض</button>
+                                        <div style="display: flex; gap: 4px; justify-content: center; flex-wrap: wrap;">
+                                            <button type="button" onclick="eessInspectExitCardDetails(<?php echo $er->id; ?>)" class="sm-btn" style="background: #0f172a; color: white !important; font-size: 10.5px; padding: 3px 8px; height: 26px; width: auto; font-weight: 800;">👁️ معاينة وتدقيق</button>
+                                            <a href="<?php echo admin_url('admin-ajax.php?action=sm_print&print_type=student_card&student_id=' . $er->student_id); ?>" target="_blank" onclick="eessMarkRequestPrinted(<?php echo $er->id; ?>)" class="sm-btn" style="background: #1d4ed8; color: white !important; font-size: 10.5px; padding: 3px 8px; height: 26px; width: auto; font-weight: 800; text-decoration: none;">🖨️ طباعة</a>
+                                            <select onchange="eessUpdateExitReqStatus(<?php echo $er->id; ?>, this.value)" style="height: 26px; font-size: 10.5px; font-weight: 800; border-radius: 6px; border: 1px solid #cbd5e1; padding: 0 4px;">
+                                                <option value="" disabled selected>تغيير الحالة...</option>
+                                                <option value="under_review">قيد المراجعة والتدقيق</option>
+                                                <option value="parent_confirmation">تأكيد ولي الأمر</option>
+                                                <option value="approved">اعتماد وموافقة</option>
+                                                <option value="preparing">جاري التجهيز والطباعة</option>
+                                                <option value="issued">إصدار وتسليم نهائي</option>
+                                                <option value="rejected">رفض الطلب</option>
+                                            </select>
                                         </div>
                                     </td>
                                 </tr>
@@ -581,7 +644,118 @@ $to_num = min($offset + $limit, $total_students_count);
         </div>
     </div>
 
+    <!-- EXIT CARD DETAILS INSPECTION DRAWER MODAL -->
+    <div id="eess-exit-card-inspect-modal" class="sm-modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.7); z-index: 100000; backdrop-filter: blur(4px);">
+        <div style="max-width: 650px; width: 92%; margin: 40px auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);">
+            <div style="padding: 16px 20px; background: #0f172a; color: white; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0; font-size: 15px; font-weight: 900; color: white;" id="insp_title">تفاصيل وسجل طلب تصريح الخروج</h3>
+                <button onclick="document.getElementById('eess-exit-card-inspect-modal').style.display='none'" style="background: none; border: none; color: white; font-size: 20px; cursor: pointer;">&times;</button>
+            </div>
+            <div style="padding: 20px; max-height: 75vh; overflow-y: auto;" id="insp_body">
+                <div style="text-align: center; padding: 30px; font-weight: 700; color: #64748b;">جاري جلب تفاصيل الطلب... ⏳</div>
+            </div>
+        </div>
+    </div>
+
     <script>
+    function eessFilterExitCardTable() {
+        const q = (document.getElementById('er_search_q').value || '').toLowerCase().trim();
+        const stat = (document.getElementById('er_filter_status').value || '').trim();
+
+        document.querySelectorAll('.er-row-item').forEach(row => {
+            const haystack = row.getAttribute('data-search') || '';
+            const rowStat  = row.getAttribute('data-status') || '';
+
+            const matchQ    = !q || haystack.includes(q);
+            const matchStat = !stat || rowStat === stat;
+
+            if (matchQ && matchStat) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    function eessInspectExitCardDetails(reqId) {
+        const modal = document.getElementById('eess-exit-card-inspect-modal');
+        const body  = document.getElementById('insp_body');
+        modal.style.display = 'block';
+        body.innerHTML = '<div style="text-align: center; padding: 30px; font-weight: 700; color: #64748b;">جاري جلب تفاصيل الطلب والتوقيع... ⏳</div>';
+
+        const formData = new FormData();
+        formData.append('action', 'sm_get_exit_card_request_details');
+        formData.append('request_id', reqId);
+        formData.append('nonce', '<?php echo wp_create_nonce("sm_admin_action"); ?>');
+
+        fetch('<?php echo admin_url('admin-ajax.php'); ?>', { method: 'POST', body: formData })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success && res.data) {
+                const d = res.data;
+                let html = '<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:12px; color:#334155; line-height:1.6; margin-bottom:14px; background:#f8fafc; padding:14px; border-radius:12px; border:1px solid #e2e8f0;">';
+                html += '<div><strong>الرقم المرجعي:</strong> <span style="font-family:monospace; font-weight:900; color:#881337;">' + d.reference_no + '</span></div>';
+                html += '<div><strong>الحالة الحالية:</strong> <span style="font-weight:900; color:#15803d;">' + d.status_label + '</span></div>';
+                html += '<div><strong>اسم الطالب:</strong> <strong style="color:#0f172a;">' + d.student_name + '</strong></div>';
+                html += '<div><strong>الكود والصف:</strong> ' + d.student_code + ' | ' + d.class_name + ' (' + d.section + ')</div>';
+                html += '<div><strong>اسم ولي الأمر:</strong> ' + d.parent_name + '</div>';
+                html += '<div><strong>هاتف ولي الأمر:</strong> <span style="font-family:monospace;">' + d.parent_phone + '</span></div>';
+                html += '<div><strong>سبب الاستئذان:</strong> ' + d.reason + '</div>';
+                html += '<div><strong>تاريخ التقديم:</strong> <span style="font-family:monospace;">' + d.created_at + '</span></div>';
+                html += '</div>';
+
+                if (d.declaration_accepted) {
+                    html += '<div style="background:#f0fdf4; border:1px solid #86efac; border-radius:10px; padding:10px; font-size:11.5px; color:#166534; font-weight:700; margin-bottom:14px;">✓ تمت الموافقة الإلكترونية على الإقرار والتعهد الرسمي لولي الأمر.</div>';
+                }
+
+                if (d.signature_data) {
+                    html += '<div style="margin-bottom:14px;">';
+                    html += '<div style="font-size:12px; font-weight:800; color:#0f172a; margin-bottom:4px;">معاينة التوقيع الإلكتروني المعتمد لولي الأمر:</div>';
+                    html += '<div style="background:white; border:1px solid #cbd5e1; border-radius:10px; padding:10px; text-align:center;">';
+                    html += '<img src="' + d.signature_data + '" style="max-height:80px; object-fit:contain;" alt="Signature">';
+                    html += '</div>';
+                    html += '</div>';
+                }
+
+                if (d.history && d.history.length > 0) {
+                    html += '<div>';
+                    html += '<div style="font-size:12px; font-weight:800; color:#0f172a; margin-bottom:6px;">سجل الطلبات السابقة لنفس العام الدراسي (' + d.history.length + ' طلبات):</div>';
+                    html += '<div style="display:flex; flex-direction:column; gap:6px;">';
+                    d.history.forEach(h => {
+                        html += '<div style="background:#f1f5f9; padding:6px 10px; border-radius:6px; font-size:11px; display:flex; justify-content:space-between;">';
+                        html += '<span><strong>' + h.reference_no + '</strong> (' + h.status + ')</span>';
+                        html += '<span style="font-family:monospace; color:#64748b;">' + h.created_at + '</span>';
+                        html += '</div>';
+                    });
+                    html += '</div>';
+                    html += '</div>';
+                }
+
+                body.innerHTML = html;
+            } else {
+                body.innerHTML = '<div style="color:#dc2626; font-weight:800; text-align:center;">تعذر جلب تفاصيل الطلب.</div>';
+            }
+        });
+    }
+
+    function eessSaveExitSettings(e) {
+        e.preventDefault();
+        const formData = new FormData();
+        formData.append('action', 'sm_save_exit_card_settings');
+        formData.append('max_requests', document.getElementById('cfg_max_requests').value);
+        formData.append('redirect_discipline', document.getElementById('cfg_redirect_discipline').value);
+        formData.append('nonce', '<?php echo wp_create_nonce("sm_admin_action"); ?>');
+
+        fetch('<?php echo admin_url('admin-ajax.php'); ?>', { method: 'POST', body: formData })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                if (typeof smShowNotification === 'function') smShowNotification(res.data.message);
+                document.getElementById('eess-exit-settings-box').style.display = 'none';
+            }
+        });
+    }
+
     function eessUpdateExitReqStatus(reqId, status) {
         const formData = new FormData();
         formData.append('action', 'sm_update_exit_card_request_status');
@@ -604,7 +778,7 @@ $to_num = min($offset + $limit, $total_students_count);
         formData.append('action', 'sm_update_exit_card_request_status');
         formData.append('request_id', reqId);
         formData.append('printing_status', 'printed');
-        formData.append('status', 'ready_for_collection');
+        formData.append('status', 'preparing');
         formData.append('nonce', '<?php echo wp_create_nonce("sm_admin_action"); ?>');
 
         fetch('<?php echo admin_url('admin-ajax.php'); ?>', { method: 'POST', body: formData });

@@ -528,20 +528,29 @@ class SM_Activator {
 
         CREATE TABLE {$wpdb->prefix}sm_exit_card_requests (
             id bigint(20) NOT NULL AUTO_INCREMENT,
+            reference_no varchar(50) DEFAULT NULL,
             student_id bigint(20) NOT NULL,
             parent_user_id bigint(20) DEFAULT NULL,
-            reason varchar(255) NOT NULL,
-            requested_date date NOT NULL,
+            parent_name varchar(255) DEFAULT NULL,
+            parent_phone varchar(50) DEFAULT NULL,
+            academic_year varchar(50) DEFAULT '2025/2026' NOT NULL,
+            reason varchar(255) DEFAULT 'طلب تصريح خروج طالب' NOT NULL,
+            requested_date date DEFAULT NULL,
             notes text DEFAULT NULL,
+            declaration_accepted tinyint(1) DEFAULT 0 NOT NULL,
+            signature_data longtext DEFAULT NULL,
             status varchar(50) DEFAULT 'submitted' NOT NULL,
             printing_status varchar(50) DEFAULT 'pending' NOT NULL,
             reviewed_by bigint(20) DEFAULT NULL,
             reviewed_at datetime DEFAULT NULL,
             review_notes text DEFAULT NULL,
+            admin_notes text DEFAULT NULL,
             created_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
             updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
             PRIMARY KEY (id),
+            KEY reference_no (reference_no),
             KEY student_id (student_id),
+            KEY academic_year (academic_year),
             KEY status (status)
         ) $charset_collate;";
 
