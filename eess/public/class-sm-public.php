@@ -9563,11 +9563,12 @@ class SM_Public {
                     .card-field-label { color: #64748b; font-weight: 700; width: 42px; min-width: 42px; flex-shrink: 0; }
                     .card-field-val { color: #0f172a; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-right: 2px; padding-left: 6px; }
 
-                    /* Barcode / Serial Stack Vertically Centered */
-                    .card-qr-stack { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 21mm; flex-shrink: 0; text-align: center; }
-                    .card-qr-box { width: 18.5mm; height: 18.5mm; border: 1px solid #cbd5e1; border-radius: 4px; padding: 1px; background: #ffffff; }
+                    /* Barcode / Serial Stack Aligned Left Above Bottom Strip */
+                    .card-qr-stack { display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end; width: 26mm; flex-shrink: 0; text-align: left; margin-top: auto; }
+                    .card-qr-box { width: 26mm; height: 11mm; border: none; border-radius: 0; padding: 0; background: transparent; box-shadow: none; }
                     .card-qr-box svg { width: 100%; height: 100%; display: block; }
-                    .card-serial-text { font-size: 8px; font-weight: 900; color: #881337; margin-top: 2px; letter-spacing: 0.3px; line-height: 1; }
+                    .card-qr-box svg rect:first-child { fill: transparent !important; }
+                    .card-serial-text { font-size: 8.5px; font-weight: 900; color: #000000 !important; margin-top: 3px; letter-spacing: 2px; line-height: 1.1; text-align: left; width: 100%; }
 
                     /* Footer Area */
                     .card-footer {
