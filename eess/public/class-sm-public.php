@@ -409,7 +409,7 @@ class SM_Public {
             </div>
 
             <script>
-            function eessShowMobileToast(message) {
+            function eessShowMobileToast(message, duration) {
                 const toast = document.getElementById('m-floating-toast');
                 const msgBox = document.getElementById('m-floating-toast-msg');
                 if (toast && msgBox) {
@@ -417,7 +417,7 @@ class SM_Public {
                     toast.style.display = 'block';
                     setTimeout(() => {
                         toast.style.display = 'none';
-                    }, 3000);
+                    }, duration || 3000);
                 }
             }
             </script>
@@ -444,7 +444,7 @@ class SM_Public {
                 $m_dept_display = get_user_meta($user->ID, 'eess_department', true) ?: (get_user_meta($user->ID, 'department', true) ?: 'قسم التربية البدنية والصحية');
             ?>
             <!-- Solid Black Mobile Header Banner (Rendered ONLY after login) -->
-            <div style="position: sticky; top: 0; z-index: 9999; background: #000000; color: #ffffff; padding: 12px 16px; border-radius: 14px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 14px rgba(0,0,0,0.25);">
+            <div style="position: sticky; top: 0; z-index: 99999; background: #000000; color: #ffffff; padding: 12px 16px; border-radius: 14px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 14px rgba(0,0,0,0.25);">
                 <div style="display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1;">
                     <div style="width: 32px; height: 32px; border-radius: 6px; background: #ffffff; padding: 2px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.2);">
                         <img src="<?php echo esc_url($m_sys_logo); ?>" style="width: 100%; height: 100%; object-fit: contain; border-radius: 4px;" alt="Logo">
@@ -454,13 +454,21 @@ class SM_Public {
                         <div style="font-size: 10.5px; color: #cbd5e1; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px;"><?php echo esc_html($m_role_display . ' · ' . $m_dept_display); ?></div>
                     </div>
                 </div>
-                <a href="<?php echo wp_logout_url(home_url('/sm-login')); ?>" title="تسجيل الخروج" style="width: 34px; height: 34px; background: rgba(255, 255, 255, 0.15); color: #ffffff !important; border-radius: 50%; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; margin-right: 10px; border: 1px solid rgba(255,255,255,0.25); transition: background 0.2s;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display: block;">
-                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                        <polyline points="16 17 21 12 16 7"></polyline>
-                        <line x1="21" y1="12" x2="9" y2="12"></line>
-                    </svg>
-                </a>
+                <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+                    <button type="button" onclick="window.location.reload();" title="تحديث الصفحة" style="width: 34px; height: 34px; background: rgba(255, 255, 255, 0.15); color: #ffffff !important; border-radius: 50%; border: 1px solid rgba(255,255,255,0.25); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display: block;">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                        </svg>
+                    </button>
+                    <a href="<?php echo wp_logout_url(home_url('/sm-login')); ?>" title="تسجيل الخروج" style="width: 34px; height: 34px; background: rgba(255, 255, 255, 0.15); color: #ffffff !important; border-radius: 50%; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.25); transition: background 0.2s;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display: block;">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                    </a>
+                </div>
             </div>
             <?php endif; ?>
             <!-- DEDICATED 4-BUTTON MOBILE MAIN DASHBOARD -->
@@ -518,7 +526,7 @@ class SM_Public {
                         cap.style.opacity = '0';
                         setTimeout(function() { cap.style.display = 'none'; }, 500);
                     }
-                }, 10000);
+                }, 15000);
                 </script>
                 <?php endif; ?>
 
@@ -602,11 +610,10 @@ class SM_Public {
                         <button type="button" onclick="eessCloseAdminMobileBox()" style="background: #f1f5f9; border: 1px solid #cbd5e1; color: #475569; padding: 4px 12px; border-radius: 9999px; font-size: 11.5px; font-weight: 800; cursor: pointer;">➔ إغلاق</button>
                     </div>
 
-                    <!-- Identification Method Sub-Tabs -->
-                    <div style="display: flex; gap: 6px; margin-bottom: 14px;">
-                        <button type="button" onclick="eessSwitchMobileIdentMethod('camera', this)" class="m-ident-tab active" style="flex: 1; height: 34px; border-radius: 8px; border: none; background: #dc2626; color: white; font-weight: 800; font-size: 11px; cursor: pointer;">📷 مسح الباركود</button>
-                        <button type="button" onclick="eessSwitchMobileIdentMethod('name', this)" class="m-ident-tab" style="flex: 1; height: 34px; border-radius: 8px; border: 1px solid #cbd5e1; background: white; color: #475569; font-weight: 800; font-size: 11px; cursor: pointer;">🔍 باسم الطالب</button>
-                        <button type="button" onclick="eessSwitchMobileIdentMethod('code', this)" class="m-ident-tab" style="flex: 1; height: 34px; border-radius: 8px; border: 1px solid #cbd5e1; background: white; color: #475569; font-weight: 800; font-size: 11px; cursor: pointer;">🔢 بكود الطالب</button>
+                    <!-- Identification Method Sub-Tabs (Formal text buttons, no icons) -->
+                    <div style="display: flex; gap: 8px; margin-bottom: 14px;">
+                        <button type="button" onclick="eessSwitchMobileIdentMethod('camera', this)" class="m-ident-tab active" style="flex: 1; height: 36px; border-radius: 8px; border: none; background: #dc2626; color: white; font-weight: 800; font-size: 12px; cursor: pointer;">مسح الباركود</button>
+                        <button type="button" onclick="eessSwitchMobileIdentMethod('search', this)" class="m-ident-tab" style="flex: 1; height: 36px; border-radius: 8px; border: 1px solid #cbd5e1; background: white; color: #475569; font-weight: 800; font-size: 12px; cursor: pointer;">البحث عن طالب</button>
                     </div>
 
                     <!-- Method 1: Camera Scanner & Image Upload -->
@@ -621,20 +628,14 @@ class SM_Public {
                         <div id="m-viol-camera-reader" style="display: none; margin-top: 10px; border-radius: 12px; overflow: hidden; border: 2px solid #dc2626;"></div>
                     </div>
 
-                    <!-- Method 2: Name Search -->
-                    <div id="m-ident-panel-name" style="display: none; margin-bottom: 14px; position: relative;">
-                        <label style="font-size: 11.5px; font-weight: 700; color: #334155; display: block; margin-bottom: 4px;">ابحث باسم الطالب:</label>
-                        <input type="text" id="m_viol_name_input" onkeyup="eessMobileSearchStudentByName()" placeholder="أدخل اسم الطالب..." style="width: 100%; height: 40px; border-radius: 8px; border: 1px solid #cbd5e1; padding: 0 10px; font-size: 12.5px; box-sizing: border-box;">
-                        <div id="m_viol_name_results" style="display: none; position: absolute; top: 100%; right: 0; left: 0; z-index: 9999; background: white; border: 1px solid #cbd5e1; border-radius: 8px; max-height: 160px; overflow-y: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1);"></div>
-                    </div>
-
-                    <!-- Method 3: Code Search -->
-                    <div id="m-ident-panel-code" style="display: none; margin-bottom: 14px;">
-                        <label style="font-size: 11.5px; font-weight: 700; color: #334155; display: block; margin-bottom: 4px;">ادخل الهوية الوطنية / كود الطالب:</label>
+                    <!-- Method 2: Unified Search Engine (Name or Code) -->
+                    <div id="m-ident-panel-search" style="display: none; margin-bottom: 14px; position: relative;">
+                        <label style="font-size: 11.5px; font-weight: 700; color: #334155; display: block; margin-bottom: 4px;">ابحث باسم الطالب أو الهوية أو الكود:</label>
                         <div style="display: flex; gap: 8px;">
-                            <input type="text" id="m_viol_code_input" placeholder="أدخل الهوية أو كود الطالب..." style="flex: 1; height: 40px; border-radius: 8px; border: 1px solid #cbd5e1; padding: 0 10px; font-size: 12.5px;">
-                            <button type="button" onclick="eessMobileSearchStudentByCode()" style="height: 40px; padding: 0 16px; background: #0f172a; color: white; border: none; border-radius: 8px; font-weight: 800; font-size: 12px; cursor: pointer;">تأكيد</button>
+                            <input type="text" id="m_viol_unified_input" onkeyup="eessMobileSearchStudentUnified()" placeholder="أدخل اسم الطالب، كود الطالب، أو الهوية..." style="flex: 1; height: 40px; border-radius: 8px; border: 1px solid #cbd5e1; padding: 0 10px; font-size: 12.5px; box-sizing: border-box;">
+                            <button type="button" onclick="eessMobileConfirmSearchStudentByCode()" style="height: 40px; padding: 0 16px; background: #0f172a; color: white; border: none; border-radius: 8px; font-weight: 800; font-size: 12px; cursor: pointer;">بحث / تأكيد</button>
                         </div>
+                        <div id="m_viol_name_results" style="display: none; position: absolute; top: 100%; right: 0; left: 0; z-index: 9999; background: white; border: 1px solid #cbd5e1; border-radius: 8px; max-height: 180px; overflow-y: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1);"></div>
                     </div>
 
                     <!-- Selected Student Card Indicator -->
@@ -710,9 +711,20 @@ class SM_Public {
 
                     $teacher_count = count($all_school_teachers);
 
-                    // Submitted lesson preps
+                    // Submitted lesson preps synchronized with desktop module calculation logic
                     global $wpdb;
-                    $submitted_teacher_ids = $wpdb->get_col("SELECT DISTINCT teacher_id FROM {$wpdb->prefix}sm_lesson_preps WHERE status = 'submitted' OR status = 'approved'");
+                    $school_teacher_ids = array_map(function($t) { return $t->ID; }, $all_school_teachers);
+
+                    if (!empty($school_teacher_ids)) {
+                        $placeholders = implode(',', array_fill(0, count($school_teacher_ids), '%d'));
+                        $submitted_teacher_ids = $wpdb->get_col($wpdb->prepare("SELECT DISTINCT teacher_id FROM {$wpdb->prefix}sm_lesson_preps WHERE teacher_id IN ($placeholders) AND status IN ('submitted', 'approved', 'revision_required', 'rejected', 'late')", ...$school_teacher_ids));
+                        $m_late_count = intval($wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->prefix}sm_lesson_preps WHERE teacher_id IN ($placeholders) AND status = 'late'", ...$school_teacher_ids)));
+                        $m_approved_count = intval($wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->prefix}sm_lesson_preps WHERE teacher_id IN ($placeholders) AND status = 'approved'", ...$school_teacher_ids)));
+                    } else {
+                        $submitted_teacher_ids = array();
+                        $m_late_count = 0;
+                        $m_approved_count = 0;
+                    }
 
                     $submitted_teachers = array();
                     $pending_teachers = array();
@@ -724,18 +736,32 @@ class SM_Public {
                             $pending_teachers[] = $st->display_name;
                         }
                     }
+
+                    $m_total_submitted = count($submitted_teachers);
+                    $m_missing_count   = max(0, $teacher_count - $m_total_submitted);
+                    $m_compliance_rate = $teacher_count > 0 ? round(($m_total_submitted / $teacher_count) * 100) : 0;
                 ?>
                 <!-- Administrative Statistics Panel -->
                 <div style="background: #ffffff; border-radius: 16px; padding: 16px; border: 1px solid #cbd5e1; margin-bottom: 16px;">
                     <h4 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 800; color: #0f172a; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">📊 إحصائيات متابعة التحضير اليومية (<?php echo $is_act_supervisor ? 'التربية البدنية والصحية' : 'إحصائيات المدرسة'; ?>)</h4>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                         <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 10px; text-align: center;">
-                            <div style="font-size: 18px; font-weight: 900; color: #16a34a;"><?php echo count($submitted_teachers); ?> / <?php echo $teacher_count; ?></div>
-                            <div style="font-size: 10.5px; font-weight: 700; color: #15803d; margin-top: 2px;">قاموا بالرفع والتسليم</div>
+                            <div style="font-size: 18px; font-weight: 900; color: #16a34a;"><?php echo $m_total_submitted; ?> / <?php echo $teacher_count; ?></div>
+                            <div style="font-size: 10.5px; font-weight: 700; color: #15803d; margin-top: 2px;">تسليم وتحضير (<?php echo $m_compliance_rate; ?>%)</div>
                         </div>
                         <div style="background: #fef2f2; border: 1px solid #fecdd3; border-radius: 10px; padding: 10px; text-align: center;">
-                            <div style="font-size: 18px; font-weight: 900; color: #dc2626;"><?php echo count($pending_teachers); ?></div>
-                            <div style="font-size: 10.5px; font-weight: 700; color: #991b1b; margin-top: 2px;">لم يقوموا برفع التحضير</div>
+                            <div style="font-size: 18px; font-weight: 900; color: #dc2626;"><?php echo $m_missing_count; ?></div>
+                            <div style="font-size: 10.5px; font-weight: 700; color: #991b1b; margin-top: 2px;">متبقي دون تحضير</div>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+                        <div style="background: #fefce8; border: 1px solid #fef08a; border-radius: 10px; padding: 8px; text-align: center;">
+                            <div style="font-size: 15px; font-weight: 900; color: #ca8a04;"><?php echo $m_late_count; ?></div>
+                            <div style="font-size: 10px; font-weight: 700; color: #a16207; margin-top: 1px;">تحضير متأخر</div>
+                        </div>
+                        <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 8px; text-align: center;">
+                            <div style="font-size: 15px; font-weight: 900; color: #2563eb;"><?php echo $m_approved_count; ?></div>
+                            <div style="font-size: 10px; font-weight: 700; color: #1d4ed8; margin-top: 1px;">معتمد رسمياً</div>
                         </div>
                     </div>
                     <?php if (!empty($pending_teachers)): ?>
@@ -816,13 +842,13 @@ class SM_Public {
                 btn.style.background = '#dc2626'; btn.style.color = 'white'; btn.style.border = 'none';
 
                 document.getElementById('m-ident-panel-camera').style.display = (method === 'camera') ? 'block' : 'none';
-                document.getElementById('m-ident-panel-name').style.display = (method === 'name') ? 'block' : 'none';
-                document.getElementById('m-ident-panel-code').style.display = (method === 'code') ? 'block' : 'none';
+                document.getElementById('m-ident-panel-search').style.display = (method === 'search') ? 'block' : 'none';
             }
 
             let mViolScannerInstance = null;
             let lastViolScannedCode = '';
             let lastViolScanTime = 0;
+            let scannedMobileStudentCodes = [];
 
             function eessMobileScanBarcodeImage(input) {
                 if (!input.files || !input.files[0]) return;
@@ -837,7 +863,12 @@ class SM_Public {
                 if (typeof Html5Qrcode !== 'undefined') {
                     var html5QrCode = new Html5Qrcode("m-reader-file-temp");
                     html5QrCode.scanFile(file, true).then(function(decodedText) {
-                        eessResolveMobileViolStudent(decodedText.trim());
+                        const code = decodedText.trim();
+                        if (scannedMobileStudentCodes.includes(code)) {
+                            eessShowMobileToast('تم رصد المخالفة لهذا الطالب بالفعل', 1000);
+                            return;
+                        }
+                        eessResolveMobileViolStudent(code);
                     }).catch(function(err) {
                         eessShowMobileToast('تعذر قراءة الباركوود من الصورة', 'error');
                     }).finally(function() {
@@ -856,9 +887,16 @@ class SM_Public {
                         const code = decodedText.trim();
                         const now = Date.now();
 
-                        if (now - lastViolScanTime < 1200 && code === lastViolScannedCode) return;
+                        if (now - lastViolScanTime < 1000 && code === lastViolScannedCode) {
+                            return;
+                        }
                         lastViolScanTime = now;
                         lastViolScannedCode = code;
+
+                        if (scannedMobileStudentCodes.includes(code)) {
+                            eessShowMobileToast('تم رصد المخالفة لهذا الطالب بالفعل', 1000);
+                            return;
+                        }
 
                         eessResolveMobileViolStudent(code);
                     }).catch(function(err) {
@@ -868,8 +906,8 @@ class SM_Public {
                 }
             }
 
-            function eessMobileSearchStudentByName() {
-                var q = document.getElementById('m_viol_name_input').value.trim();
+            function eessMobileSearchStudentUnified() {
+                var q = document.getElementById('m_viol_unified_input').value.trim();
                 var resDiv = document.getElementById('m_viol_name_results');
                 if (q.length < 2) { resDiv.style.display = 'none'; return; }
 
@@ -880,7 +918,8 @@ class SM_Public {
                     if (res.success && res.data && res.data.length > 0) {
                         let html = '';
                         res.data.forEach(st => {
-                            html += '<div onclick="eessSelectMobileViolStudent(' + st.id + ', \'' + st.name.replace(/'/g, "\\'") + '\', \'' + (st.class_name || '') + '\')" style="padding: 8px 12px; border-bottom: 1px solid #f1f5f9; font-size: 12px; font-weight: 700; cursor: pointer;">' + st.name + ' (' + (st.class_name || '') + ')</div>';
+                            var codeMeta = st.student_code ? (' | كود: ' + st.student_code) : '';
+                            html += '<div onclick="eessSelectMobileViolStudent(' + st.id + ', \'' + st.name.replace(/'/g, "\\'") + '\', \'' + (st.class_name || '') + '\')" style="padding: 8px 12px; border-bottom: 1px solid #f1f5f9; font-size: 12px; font-weight: 700; cursor: pointer;">' + st.name + ' (' + (st.class_name || '') + codeMeta + ')</div>';
                         });
                         resDiv.innerHTML = html;
                         resDiv.style.display = 'block';
@@ -890,31 +929,41 @@ class SM_Public {
                 });
             }
 
-            function eessMobileSearchStudentByCode() {
-                var code = document.getElementById('m_viol_code_input').value.trim();
-                if (code) eessResolveMobileViolStudent(code);
+            function eessMobileConfirmSearchStudentByCode() {
+                var val = document.getElementById('m_viol_unified_input').value.trim();
+                if (val) eessResolveMobileViolStudent(val);
             }
 
             function eessResolveMobileViolStudent(code) {
+                if (scannedMobileStudentCodes.includes(code)) {
+                    eessShowMobileToast('تم رصد المخالفة لهذا الطالب بالفعل', 1000);
+                    return;
+                }
                 jQuery.post('<?php echo $ajax_url; ?>', {
                     action: 'sm_get_student',
                     code: code
                 }, function(res) {
                     if (res.success && res.data) {
-                        eessSelectMobileViolStudent(res.data.id, res.data.name, res.data.class_name);
+                        eessSelectMobileViolStudent(res.data.id, res.data.name, res.data.class_name, code);
                     } else {
                         alert('عذراً، لم يتم العثور على طالب مطابق للكود: ' + code);
                     }
                 });
             }
 
-            function eessSelectMobileViolStudent(id, name, className) {
+            function eessSelectMobileViolStudent(id, name, className, codeVal) {
                 document.getElementById('m_viol_student_id').value = id;
                 document.getElementById('m_sel_stu_name').innerText = '✓ تم اختيار الطالب: ' + name;
                 document.getElementById('m_sel_stu_meta').innerText = 'الصف: ' + (className || 'غير محدد');
                 document.getElementById('m-selected-student-box').style.display = 'block';
                 document.getElementById('eess_mobile_violation_form').style.display = 'block';
                 document.getElementById('m_viol_name_results').style.display = 'none';
+                if (codeVal && !scannedMobileStudentCodes.includes(codeVal)) {
+                    scannedMobileStudentCodes.push(codeVal);
+                }
+                if (id && !scannedMobileStudentCodes.includes(String(id))) {
+                    scannedMobileStudentCodes.push(String(id));
+                }
             }
 
             let mViolSubmitting = false;
