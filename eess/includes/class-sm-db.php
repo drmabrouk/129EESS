@@ -658,7 +658,7 @@ class SM_DB {
         
         $stats['total_students'] = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}sm_students s WHERE $scope_filter");
 
-        $stats['total_teachers'] = count(get_users(array('role' => 'sm_teacher')));
+        $stats['total_teachers'] = count(get_users(array('role' => 'sm_teacher', 'fields' => 'ID')));
         
         // Optimized: Combined counts in a single query with joins
         $summary_counts = $wpdb->get_row("
@@ -1453,7 +1453,7 @@ class SM_DB {
         // 2. Admin & Principal View Data
         if ($is_admin || $is_principal) {
             $data['total_students']     = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}sm_students") ?: 0;
-            $data['total_teachers']     = count(get_users(array('role' => 'sm_teacher')));
+            $data['total_teachers']     = count(get_users(array('role' => 'sm_teacher', 'fields' => 'ID')));
             $data['pending_approvals']   = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->usermeta} WHERE meta_key = 'eess_approval_status' AND meta_value = 'pending'") ?: 0;
             $data['violations_today']    = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}sm_records WHERE DATE(created_at) = CURDATE()") ?: 0;
             $data['lesson_prep_compliance'] = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}sm_lesson_preps WHERE status = 'approved'") ?: 0;
@@ -1462,7 +1462,7 @@ class SM_DB {
         // 3. Supervisor & Head of Department
         if ($is_supervisor || $is_hod) {
             $dept_subject = get_user_meta($user_id, 'sm_specialization', true) ?: '';
-            $data['dept_teachers_count'] = count(get_users(array('role' => 'sm_teacher', 'meta_key' => 'sm_specialization', 'meta_value' => $dept_subject)));
+            $data['dept_teachers_count'] = count(get_users(array('role' => 'sm_teacher', 'meta_key' => 'sm_specialization', 'meta_value' => $dept_subject, 'fields' => 'ID')));
             $data['pending_prep_reviews'] = !empty($dept_subject)
                 ? ($wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->prefix}sm_lesson_preps WHERE status = 'submitted' AND subject = %s", $dept_subject)) ?: 0)
                 : ($wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}sm_lesson_preps WHERE status = 'submitted'") ?: 0);
