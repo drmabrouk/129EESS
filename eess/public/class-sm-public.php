@@ -9563,12 +9563,12 @@ class SM_Public {
                     .card-field-label { color: #64748b; font-weight: 700; width: 42px; min-width: 42px; flex-shrink: 0; }
                     .card-field-val { color: #0f172a; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-right: 2px; padding-left: 6px; }
 
-                    /* Barcode / Serial Stack Aligned Left Above Bottom Strip */
-                    .card-qr-stack { display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end; width: 26mm; flex-shrink: 0; text-align: left; margin-top: auto; }
-                    .card-qr-box { width: 26mm; height: 11mm; border: none; border-radius: 0; padding: 0; background: transparent; box-shadow: none; }
+                    /* Barcode Stack Aligned Left Above Bottom Strip */
+                    .card-qr-stack { display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end; width: 29mm; flex-shrink: 0; text-align: left; margin-top: auto; padding-top: 4px; }
+                    .card-qr-box { width: 29mm; height: 13.5mm; border: none; border-radius: 0; padding: 0; background: transparent; box-shadow: none; margin-top: 3px; }
                     .card-qr-box svg { width: 100%; height: 100%; display: block; }
                     .card-qr-box svg rect:first-child { fill: transparent !important; }
-                    .card-serial-text { font-size: 8.5px; font-weight: 900; color: #000000 !important; margin-top: 3px; letter-spacing: 2px; line-height: 1.1; text-align: left; width: 100%; }
+                    .card-serial-text { display: none !important; }
 
                     /* Footer Area */
                     .card-footer {
@@ -9702,7 +9702,6 @@ class SM_Public {
                             </div>
                             <div class="card-qr-stack">
                                 <div class="card-qr-box" title="<?php echo esc_attr($barcode_identity); ?>"><?php echo $qr_svg; ?></div>
-                                <div class="card-serial-text"><?php echo esc_html($serial); ?></div>
                             </div>
                         </div>
 
