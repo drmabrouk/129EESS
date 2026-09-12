@@ -208,6 +208,16 @@ class School_Management {
         $this->loader->add_action('wp_ajax_sm_submit_exit_card_request', $plugin_public, 'ajax_submit_exit_card_request');
         $this->loader->add_action('wp_ajax_nopriv_sm_submit_exit_card_request', $plugin_public, 'ajax_submit_exit_card_request');
         $this->loader->add_action('wp_ajax_sm_update_exit_card_request_status', $plugin_public, 'ajax_update_exit_card_request_status');
+        $this->loader->add_action('wp_ajax_sm_get_exit_card_request_details', $plugin_public, 'ajax_get_exit_card_request_details');
+        $this->loader->add_action('wp_ajax_sm_save_exit_card_settings', $plugin_public, 'ajax_save_exit_card_settings');
+
+        // Public Exit Card Request Wizard Hooks [card]
+        $this->loader->add_action('wp_ajax_sm_public_search_student', $plugin_public, 'ajax_public_search_student');
+        $this->loader->add_action('wp_ajax_nopriv_sm_public_search_student', $plugin_public, 'ajax_public_search_student');
+        $this->loader->add_action('wp_ajax_sm_public_verify_student', $plugin_public, 'ajax_public_verify_student');
+        $this->loader->add_action('wp_ajax_nopriv_sm_public_verify_student', $plugin_public, 'ajax_public_verify_student');
+        $this->loader->add_action('wp_ajax_sm_public_submit_exit_card', $plugin_public, 'ajax_public_submit_exit_card');
+        $this->loader->add_action('wp_ajax_nopriv_sm_public_submit_exit_card', $plugin_public, 'ajax_public_submit_exit_card');
 
         // Organizational Sub-Tab AJAX Actions
         $this->loader->add_action('wp_ajax_eess_save_department', $plugin_public, 'ajax_eess_save_department');

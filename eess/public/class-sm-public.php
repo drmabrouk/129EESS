@@ -352,6 +352,7 @@ class SM_Public {
         add_shortcode('sm_login', array($this, 'shortcode_login'));
         add_shortcode('sm_admin', array($this, 'shortcode_admin_dashboard'));
         add_shortcode('sm_class_attendance', array($this, 'shortcode_class_attendance'));
+        add_shortcode('card', array($this, 'shortcode_public_card_wizard'));
     }
 
     public function eess_render_mobile_lesson_prep() {
@@ -12483,5 +12484,290 @@ class SM_Public {
         }
 
         wp_send_json_success(array('message' => 'تم حفظ الصف الدراسي بنجاح'));
+    }
+
+    /*
+     * PUBLIC STUDENT EXIT CARD WIZARD & SHORTCODE [card]
+     */
+    public function shortcode_public_card_wizard() {
+        ob_start();
+        include SM_PLUGIN_DIR . 'templates/public-card-wizard.php';
+        return ob_get_clean();
+    }
+
+    public function ajax_public_search_student() {
+        $name_query = sanitize_text_field($_POST['name_query'] ?? '');
+        $clean_query = trim($name_query);
+
+        if (mb_strlen($clean_query) < 10) {
+            wp_send_json_error('يرجى إدخال 10 حروف على الأقل من بداية اسم الطالب للبحث.');
+        }
+
+        global $wpdb;
+        $sql = "SELECT id, name, class_name, section FROM {$wpdb->prefix}sm_students WHERE name LIKE %s ORDER BY name ASC LIMIT 10";
+        $results = $wpdb->get_results($wpdb->prepare($sql, $wpdb->esc_like($clean_query) . '%'));
+
+        if (empty($results)) {
+            wp_send_json_error('لم يتم العثور على طالب يطابق بداية الاسم المدخل.');
+        }
+
+        $safe_suggestions = array();
+        foreach ($results as $s) {
+            $name_parts = explode(' ', trim($s->name));
+            $display_name = count($name_parts) >= 2 ? ($name_parts[0] . ' ' . $name_parts[count($name_parts)-1]) : $s->name;
+            $safe_suggestions[] = array(
+                'id' => $s->id,
+                'display_name' => $display_name,
+                'class_name' => $s->class_name ?: 'الصف الدراسي',
+                'section' => $s->section ?: 'أ'
+            );
+        }
+
+        wp_send_json_success($safe_suggestions);
+    }
+
+    public function ajax_public_verify_student() {
+        $student_id  = intval($_POST['student_id'] ?? 0);
+        $verify_code = sanitize_text_field($_POST['verify_code'] ?? '');
+
+        if (!$student_id || empty($verify_code)) {
+            wp_send_json_error('بيانات التحقق غير مكتملة.');
+        }
+
+        $student = SM_DB::get_student_by_id($student_id);
+        if (!$student) {
+            wp_send_json_error('بيانات الطالب غير صحيحة أو تم نقل الملف.');
+        }
+
+        $clean_input = strtolower(trim($verify_code));
+        $stu_code = strtolower(trim($student->student_code ?: ''));
+        $nat_id   = strtolower(trim($student->national_id ?: ''));
+
+        $matched = false;
+        if (!empty($stu_code) && $clean_input === $stu_code) {
+            $matched = true;
+        } elseif (!empty($nat_id) && $clean_input === $nat_id) {
+            $matched = true;
+        }
+
+        if (!$matched) {
+            wp_send_json_error('رمز التحقق غير مطابق لبيانات الطالب المسجلة.');
+        }
+
+        global $wpdb;
+        $acad_year = '2025/2026';
+        $active_req = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM {$wpdb->prefix}sm_exit_card_requests WHERE student_id = %d AND academic_year = %s AND status IN ('submitted', 'under_review', 'parent_confirmation', 'approved', 'preparing', 'issued') ORDER BY id DESC LIMIT 1",
+            $student_id, $acad_year
+        ));
+
+        $req_history = $wpdb->get_results($wpdb->prepare(
+            "SELECT id, reference_no, status, created_at FROM {$wpdb->prefix}sm_exit_card_requests WHERE student_id = %d AND academic_year = %s ORDER BY id DESC",
+            $student_id, $acad_year
+        ));
+
+        $total_prev_requests = count($req_history);
+
+        $settings = get_option('sm_exit_card_settings', array(
+            'max_requests' => 3,
+            'redirect_discipline' => 'yes'
+        ));
+        $max_reqs = intval($settings['max_requests'] ?? 3);
+        $exceeded_limit = ($total_prev_requests >= $max_reqs);
+
+        wp_send_json_success(array(
+            'student' => array(
+                'id' => $student->id,
+                'name' => $student->name,
+                'student_code' => $student->student_code ?: ('STU-' . $student->id),
+                'class_name' => $student->class_name ?: 'الصف الدراسي',
+                'section' => $student->section ?: 'أ'
+            ),
+            'active_request' => $active_req ? array(
+                'reference_no' => $active_req->reference_no ?: ('EXT-' . date('Y') . '-' . $active_req->id),
+                'status' => $active_req->status,
+                'status_label' => self::eess_get_exit_card_status_label($active_req->status),
+                'status_desc' => self::eess_get_exit_card_status_desc($active_req->status),
+                'created_at' => date_i18n('Y-m-d H:i', strtotime($active_req->created_at))
+            ) : null,
+            'total_prev_requests' => $total_prev_requests,
+            'exceeded_limit' => $exceeded_limit,
+            'max_allowed' => $max_reqs
+        ));
+    }
+
+    public function ajax_public_submit_exit_card() {
+        $student_id = intval($_POST['student_id'] ?? 0);
+        $verify_code = sanitize_text_field($_POST['verify_code'] ?? '');
+        $parent_name = sanitize_text_field($_POST['parent_name'] ?? '');
+        $parent_phone = sanitize_text_field($_POST['parent_phone'] ?? '');
+        $reason = sanitize_text_field($_POST['reason'] ?? 'استخراج بطاقة تصريح خروج طالب');
+        $declaration = intval($_POST['declaration'] ?? 0);
+        $sig_raw = $_POST['signature_data'] ?? '';
+
+        if (!$student_id || empty($verify_code) || empty($parent_name) || empty($parent_phone) || !$declaration || empty($sig_raw)) {
+            wp_send_json_error('يرجى استكمال كافة حقول الطلب، الإقرار، والتوقيع الإلكتروني.');
+        }
+
+        $student = SM_DB::get_student_by_id($student_id);
+        if (!$student) {
+            wp_send_json_error('بيانات الطالب غير صالحة.');
+        }
+
+        // Validate verification code matches student code or national ID
+        $clean_input = strtolower(trim($verify_code));
+        $stu_code = strtolower(trim($student->student_code ?: ''));
+        $nat_id   = strtolower(trim($student->national_id ?: ''));
+
+        $matched = false;
+        if (!empty($stu_code) && $clean_input === $stu_code) {
+            $matched = true;
+        } elseif (!empty($nat_id) && $clean_input === $nat_id) {
+            $matched = true;
+        }
+
+        if (!$matched) {
+            wp_send_json_error('رمز التحقق غير مطابق لبيانات الطالب المسجلة.');
+        }
+
+        // Validate signature Data URI pattern (strictly image/png, jpeg, webp base64)
+        $signature_data = '';
+        if (preg_match('/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+\/=]+$/', $sig_raw)) {
+            $signature_data = $sig_raw;
+        } else {
+            wp_send_json_error('التوقيع الإلكتروني المرفق غير صالح.');
+        }
+
+        global $wpdb;
+        $acad_year = '2025/2026';
+
+        // Check active duplicate request
+        $active_req = $wpdb->get_row($wpdb->prepare(
+            "SELECT id, reference_no, status FROM {$wpdb->prefix}sm_exit_card_requests WHERE student_id = %d AND academic_year = %s AND status IN ('submitted', 'under_review', 'parent_confirmation', 'approved', 'preparing') LIMIT 1",
+            $student_id, $acad_year
+        ));
+
+        if ($active_req) {
+            wp_send_json_error('يوجد طلب نشط سابق لهذا الطالب برقم مرجعي (' . ($active_req->reference_no ?: $active_req->id) . '). يرجى متابعة حالة الطلب القائم.');
+        }
+
+        $ref_no = 'EXT-' . date('Y') . '-' . rand(10000, 99999);
+
+        $inserted = $wpdb->insert(
+            "{$wpdb->prefix}sm_exit_card_requests",
+            array(
+                'reference_no' => $ref_no,
+                'student_id' => $student_id,
+                'parent_user_id' => get_current_user_id() ?: null,
+                'parent_name' => $parent_name,
+                'parent_phone' => $parent_phone,
+                'academic_year' => $acad_year,
+                'reason' => $reason,
+                'requested_date' => current_time('Y-m-d'),
+                'declaration_accepted' => 1,
+                'signature_data' => $signature_data,
+                'status' => 'submitted',
+                'printing_status' => 'pending',
+                'created_at' => current_time('mysql')
+            )
+        );
+
+        if ($inserted) {
+            $req_id = $wpdb->insert_id;
+            SM_Logger::log('طلب تصريح خروج عام', "تم تسجيل طلب تصريح خروج برقم مرجعي: $ref_no للطالب: {$student->name}");
+            wp_send_json_success(array(
+                'request_id' => $req_id,
+                'reference_no' => $ref_no,
+                'message' => 'تم تقديم واستلام طلب تصريح الخروج بنجاح وهو الآن قيد المراجعة الإدارية.'
+            ));
+        } else {
+            wp_send_json_error('فشل حفظ طلب تصريح الخروج في قاعدة البيانات.');
+        }
+    }
+
+    public static function eess_get_exit_card_status_label($status) {
+        $labels = array(
+            'submitted' => 'تم تقديم الطلب',
+            'under_review' => 'قيد المراجعة والتدقيق',
+            'parent_confirmation' => 'بانتظار تأكيد ولي الأمر',
+            'approved' => 'تمت الموافقة الرسمية',
+            'preparing' => 'جاري تجهيز وطباعة البطاقة',
+            'issued' => 'تم إصدار وتسليم البطاقة',
+            'rejected' => 'تم رفض الطلب'
+        );
+        return $labels[$status] ?? 'قيد المعالجة';
+    }
+
+    public static function eess_get_exit_card_status_desc($status) {
+        $descs = array(
+            'submitted' => 'تم استلام طلبكم إلكترونياً بنجاح وجاري تحويله للإدارة المختصة.',
+            'under_review' => 'يقوم قسم شؤون الطلاب بمراجعة بيانات الطالب والتأكد من استيفاء الشروط.',
+            'parent_confirmation' => 'يرجى التكرم بالرد على اتصال المدرسة لتأكيد تفاصيل الاستئذان.',
+            'approved' => 'تمت موافقة إدارة المدرسة على إصدار بطاقة تصريح الخروج.',
+            'preparing' => 'يجري حالياً طباعة وتجهيز البطاقة الرقمية وتغليفها.',
+            'issued' => 'تم إصدار وتفعيل تصريح الخروج بنجاح وهو جاهز للاستخدام.',
+            'rejected' => 'عذراً، تعذر قبول الطلب. يُرجى مراجعة قسم قسم قسم قسم السلوك أو الإدارة.'
+        );
+        return $descs[$status] ?? 'الطلب تحت الإجراء الإداري المعتمد.';
+    }
+
+    public function ajax_get_exit_card_request_details() {
+        check_ajax_referer('sm_admin_action', 'nonce');
+        if (!is_user_logged_in() || (!current_user_can('إدارة_الطلاب') && !current_user_can('manage_options') && !current_user_can('manage_students'))) {
+            wp_send_json_error('عفواً، لا تمتلك الصلاحية المطلوبة.');
+        }
+
+        $req_id = intval($_POST['request_id'] ?? 0);
+        if (!$req_id) wp_send_json_error('معرف الطلب غير صحيح.');
+
+        global $wpdb;
+        $req = $wpdb->get_row($wpdb->prepare(
+            "SELECT r.*, s.name as student_name, s.student_code, s.class_name, s.section, s.national_id FROM {$wpdb->prefix}sm_exit_card_requests r JOIN {$wpdb->prefix}sm_students s ON r.student_id = s.id WHERE r.id = %d",
+            $req_id
+        ));
+
+        if (!$req) wp_send_json_error('الطلب غير موجود.');
+
+        $history = $wpdb->get_results($wpdb->prepare(
+            "SELECT id, reference_no, status, created_at FROM {$wpdb->prefix}sm_exit_card_requests WHERE student_id = %d AND academic_year = %s ORDER BY id DESC",
+            $req->student_id, $req->academic_year
+        ));
+
+        wp_send_json_success(array(
+            'id' => $req->id,
+            'reference_no' => $req->reference_no ?: ('EXT-' . date('Y') . '-' . $req->id),
+            'student_name' => $req->student_name,
+            'student_code' => $req->student_code ?: ('STU-' . $req->student_id),
+            'class_name' => $req->class_name,
+            'section' => $req->section,
+            'national_id' => $req->national_id ?: 'غير مدخلة',
+            'parent_name' => $req->parent_name ?: 'غير مدخل',
+            'parent_phone' => $req->parent_phone ?: 'غير مدخل',
+            'reason' => $req->reason,
+            'status' => $req->status,
+            'status_label' => self::eess_get_exit_card_status_label($req->status),
+            'declaration_accepted' => intval($req->declaration_accepted),
+            'signature_data' => $req->signature_data ?: '',
+            'admin_notes' => $req->admin_notes ?: '',
+            'created_at' => date_i18n('Y-m-d H:i', strtotime($req->created_at)),
+            'history' => $history
+        ));
+    }
+
+    public function ajax_save_exit_card_settings() {
+        check_ajax_referer('sm_admin_action', 'nonce');
+        if (!is_user_logged_in() || !current_user_can('manage_options')) {
+            wp_send_json_error('عفواً، لا تمتلك الصلاحية الكافية.');
+        }
+
+        $max_reqs = max(1, intval($_POST['max_requests'] ?? 3));
+        $redirect = sanitize_text_field($_POST['redirect_discipline'] ?? 'yes');
+
+        update_option('sm_exit_card_settings', array(
+            'max_requests' => $max_reqs,
+            'redirect_discipline' => $redirect
+        ));
+
+        wp_send_json_success(array('message' => 'تم حفظ إعدادات ضوابط تصاريح الخروج بنجاح.'));
     }
 }
