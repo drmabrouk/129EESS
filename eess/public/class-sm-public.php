@@ -9557,17 +9557,15 @@ class SM_Public {
                     }
 
                     /* Student Info Layout — Tight, Balanced & Professional Typography */
-                    .card-info { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; align-self: stretch; padding-right: 2px; }
-                    .card-stu-name { font-weight: 900; color: #0f172a; margin-bottom: 3px; white-space: nowrap; line-height: 1.25; width: 100%; }
-                    .card-details-row { display: flex; justify-content: space-between; align-items: flex-end; width: 100%; }
-                    .card-fields-group { display: flex; flex-direction: column; }
-                    .card-field { font-size: 8.5px; color: #334155; font-weight: 700; margin-bottom: 1.5px; display: flex; align-items: center; gap: 2px; }
+                    .card-info { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; padding-right: 2px; }
+                    .card-stu-name { font-weight: 900; color: #0f172a; margin-bottom: 2px; white-space: nowrap; line-height: 1.25; }
+                    .card-field { font-size: 8.5px; color: #334155; font-weight: 700; margin-bottom: 1px; display: flex; align-items: center; gap: 2px; }
                     .card-field-label { color: #64748b; font-weight: 700; width: 36px; min-width: 36px; flex-shrink: 0; }
                     .card-field-val { color: #0f172a; font-weight: 900; white-space: nowrap; }
 
                     /* Barcode Stack Aligned Left Above Bottom Strip */
-                    .card-qr-stack { display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end; width: 27mm; flex-shrink: 0; text-align: left; }
-                    .card-qr-box { width: 27mm; height: 12.5mm; border: none; border-radius: 0; padding: 0; background: transparent; box-shadow: none; }
+                    .card-qr-stack { display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end; width: 31mm; flex-shrink: 0; text-align: left; margin-top: auto; }
+                    .card-qr-box { width: 31mm; height: 14.5mm; border: none; border-radius: 0; padding: 0; background: transparent; box-shadow: none; }
                     .card-qr-box svg { width: 100%; height: 100%; display: block; }
                     .card-qr-box svg rect:first-child { fill: transparent !important; }
                     .card-serial-text { display: none !important; }
@@ -9686,28 +9684,24 @@ class SM_Public {
                             </div>
                             <div class="card-info">
                                 <div class="card-stu-name" style="font-size: <?php echo $name_font_size; ?>;" title="<?php echo esc_attr($st->name); ?>"><?php echo esc_html($st->name); ?></div>
-                                <div class="card-details-row">
-                                    <div class="card-fields-group">
-                                        <div class="card-field">
-                                            <span class="card-field-label">الصف:</span>
-                                            <span class="card-field-val" style="display: inline-flex; align-items: center; gap: 4px;">
-                                                <?php echo esc_html($clean_class ?: 'الأول'); ?>
-                                                <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background-color: <?php echo $stage_color; ?>; flex-shrink: 0;" title="<?php echo esc_attr($stage_label); ?>"></span>
-                                            </span>
-                                        </div>
-                                        <div class="card-field">
-                                            <span class="card-field-label">الشعبة:</span>
-                                            <span class="card-field-val"><?php echo esc_html($clean_section ?: 'أ'); ?></span>
-                                        </div>
-                                        <div class="card-field">
-                                            <span class="card-field-label">الكود:</span>
-                                            <span class="card-field-val" style="color: #881337;"><?php echo esc_html($serial); ?></span>
-                                        </div>
-                                    </div>
-                                    <div class="card-qr-stack">
-                                        <div class="card-qr-box" title="<?php echo esc_attr($barcode_identity); ?>"><?php echo $qr_svg; ?></div>
-                                    </div>
+                                <div class="card-field">
+                                    <span class="card-field-label">الصف:</span>
+                                    <span class="card-field-val" style="display: inline-flex; align-items: center; gap: 4px;">
+                                        <?php echo esc_html($clean_class ?: 'الأول'); ?>
+                                        <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background-color: <?php echo $stage_color; ?>; flex-shrink: 0;" title="<?php echo esc_attr($stage_label); ?>"></span>
+                                    </span>
                                 </div>
+                                <div class="card-field">
+                                    <span class="card-field-label">الشعبة:</span>
+                                    <span class="card-field-val"><?php echo esc_html($clean_section ?: 'أ'); ?></span>
+                                </div>
+                                <div class="card-field">
+                                    <span class="card-field-label">الكود:</span>
+                                    <span class="card-field-val" style="color: #881337;"><?php echo esc_html($serial); ?></span>
+                                </div>
+                            </div>
+                            <div class="card-qr-stack">
+                                <div class="card-qr-box" title="<?php echo esc_attr($barcode_identity); ?>"><?php echo $qr_svg; ?></div>
                             </div>
                         </div>
 
