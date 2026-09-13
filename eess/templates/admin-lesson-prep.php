@@ -2665,10 +2665,15 @@ $prep_report_total_late = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}sm
                     </table>
                 </div>
 
-                <!-- TAB SECOND TABLE: COMPLIANT TEACHERS -->
-                <h4 style="margin: 25px 0 10px 0; color: #15803d; font-weight: 900; font-size: 15px; border-bottom: 2px solid #16a34a; padding-bottom: 6px;">
-                    ✓ الكادر الملتزم بتسليم جميع التحضيرات والتكليفات
+                <!-- TAB SECOND SECTION: COMPLIANT TEACHERS -->
+                <h4 style="margin: 30px 0 6px 0; color: #15803d; font-weight: 900; font-size: 16px; text-align: center; border-bottom: 2px solid #16a34a; padding-bottom: 6px;">
+                    الكادر الملتزم بتسليم جميع التحضيرات والتكليفات
                 </h4>
+
+                <div style="text-align: center; font-size: 12px; color: #334155; font-weight: 700; margin-bottom: 15px;">
+                    <div style="font-weight: 900; color: #0f172a; font-size: 12px;">الأسابيع الأكاديمية المستحقة المعتمدة</div>
+                    <div style="font-weight: 900; color: #15803d; font-size: 13px; margin-top: 2px;">الأسبوع الأول إلى <?php echo esc_html($tab_range_end_title); ?></div>
+                </div>
 
                 <div class="sm-table-container">
                     <table class="sm-table" style="width: 100%;">
@@ -2677,7 +2682,7 @@ $prep_report_total_late = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}sm
                                 <th style="width: 32px; text-align: center;">#</th>
                                 <th style="width: 35%;">اسم الموظف / المعلم</th>
                                 <th style="width: 30%;">المدرسة والصفوف المكلّف بها</th>
-                                <th style="width: 35%;">حالة الالتزام والتغطية</th>
+                                <th style="width: 35%; text-align: center;">حالة الالتزام والتغطية</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -2692,20 +2697,21 @@ $prep_report_total_late = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}sm
                             ?>
                                 <tr>
                                     <td style="text-align: center; font-weight: bold;"><?php echo ($idx + 1); ?></td>
-                                    <td>
+                                    <td style="text-align: right;">
                                         <div style="font-size: 12.5px; font-weight: 800; color: #0f172a; margin-bottom: 4px;"><?php echo esc_html($cs['user']->display_name); ?></div>
                                         <div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
                                             <span style="background: #881337; color: #ffffff; padding: 2px 8px; border-radius: 9999px; font-size: 10px; font-weight: 800; font-family: monospace;"><?php echo esc_html($cs['emp_number']); ?></span>
                                             <span style="background: #dc2626; color: #ffffff; padding: 2px 8px; border-radius: 9999px; font-size: 10px; font-weight: 800;"><?php echo esc_html($cs['subject']); ?></span>
                                         </div>
                                     </td>
-                                    <td>
+                                    <td style="text-align: right;">
                                         <div style="font-weight: 800; color: #0f172a; font-size: 11.5px;"><?php echo esc_html($cs['school_name']); ?></div>
                                         <div style="color: #475569; font-size: 10.5px; font-weight: 700; margin-top: 2px;">الصفوف: <?php echo esc_html($cs['grades_taught']); ?></div>
                                     </td>
-                                    <td>
-                                        <span style="display: inline-block; padding: 4px 12px; border-radius: 9999px; background: #dcfce7; color: #15803d; border: 1px solid #86efac; font-weight: 900; font-size: 11px;">
-                                            ✓ مستوفي لكافة الأسابيع (الأسابيع 1 إلى <?php echo $tab_curr_week; ?>)
+                                    <td style="text-align: center; vertical-align: middle;">
+                                        <span style="display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 4px 14px; border-radius: 9999px; background: #dcfce7; color: #15803d; border: 1px solid #86efac; font-weight: 900; font-size: 11px;">
+                                            <span style="display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; background: #16a34a; color: #ffffff; font-size: 10px; font-weight: 900; line-height: 1;">✓</span>
+                                            <span>مستوفي كافة الأسابيع</span>
                                         </span>
                                     </td>
                                 </tr>
