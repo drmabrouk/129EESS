@@ -217,7 +217,7 @@ function eessToggleAttendanceCamera() {
     }
 }
 
-// Process Scanned Barcode Immediately to DB
+// Process Scanned Barcode Immediately to DB & Synchronize Student Grade/Class/Section
 function eessProcessBarcodeAttendance(barcode) {
     if (!barcode) return;
     const cleanCode = barcode.trim();
@@ -239,11 +239,43 @@ function eessProcessBarcodeAttendance(barcode) {
     .then(res => {
         eessBarcodeProcessing = false;
         if (res.success) {
+            const stuName = (res.data && res.data.student_name) ? res.data.student_name : 'الطالب';
+            const className = (res.data && res.data.class_name) ? res.data.class_name : '';
+            const section = (res.data && res.data.section) ? res.data.section : '';
+
+            // Auto-select Grade and Section dropdowns if available
+            if (className) {
+                const gradeSelect = document.getElementById('at-grade-select');
+                if (gradeSelect) {
+                    for (let i = 0; i < gradeSelect.options.length; i++) {
+                        if (gradeSelect.options[i].value === className) {
+                            gradeSelect.selectedIndex = i;
+                            if (typeof atUpdateSections === 'function') atUpdateSections();
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (section) {
+                const sectionSelect = document.getElementById('at-section-select');
+                if (sectionSelect) {
+                    setTimeout(() => {
+                        for (let j = 0; j < sectionSelect.options.length; j++) {
+                            if (sectionSelect.options[j].value === section) {
+                                sectionSelect.selectedIndex = j;
+                                if (typeof atLoadStudents === 'function') atLoadStudents();
+                                break;
+                            }
+                        }
+                    }, 50);
+                }
+            }
+
             if (res.data && res.data.already_recorded) {
-                eessShowAttendanceToast('⚠️ الحضور مسجل بالفعل لهذا الطالب', 'duplicate');
+                eessShowAttendanceToast('⚠️ الحضور مسجل بالفعل لـ ' + stuName, 'duplicate');
             } else {
-                const stuName = (res.data && res.data.student_name) ? res.data.student_name : 'الطالب';
-                eessShowAttendanceToast('✅ تم تسجيل حضور: ' + stuName, 'success');
+                eessShowAttendanceToast('✅ تم تسجيل حضور: ' + stuName + (className ? ' (' + className + ' - ' + section + ')' : ''), 'success');
                 if (typeof atLoadStudents === 'function') atLoadStudents();
             }
         } else {

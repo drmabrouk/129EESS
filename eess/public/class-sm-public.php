@@ -4615,18 +4615,18 @@ class SM_Public {
         $barcode = sanitize_text_field($_POST['student_barcode'] ?? '');
         $student_id = intval($_POST['student_id'] ?? 0);
 
-        // Barcode resolution fallback if student_barcode provided
-        if ($student_id <= 0 && !empty($barcode)) {
-            $matched_id = $wpdb->get_var($wpdb->prepare(
-                "SELECT id FROM {$wpdb->prefix}sm_students WHERE student_code = %s OR national_id = %s OR id = %d",
-                $barcode, $barcode, intval($barcode)
-            ));
-            if ($matched_id) {
-                $student_id = intval($matched_id);
+        // Authoritative Student Barcode Recognition Logic matching Student Affairs & Discipline modules
+        $student = null;
+        if (!empty($barcode)) {
+            $student = SM_DB::get_student_by_code($barcode);
+            if ($student) {
+                $student_id = intval($student->id);
             }
         }
 
-        $student = SM_DB::get_student_by_id($student_id);
+        if (!$student && $student_id > 0) {
+            $student = SM_DB::get_student_by_id($student_id);
+        }
         if (!$student) wp_send_json_error('عفواً، لم يتم العثور على طالب به القيمة البارکود الممسوحة.');
 
         // Server-side school scope check
@@ -4660,6 +4660,8 @@ class SM_Public {
                 'already_recorded' => false,
                 'student_id'       => $student_id,
                 'student_name'     => $student->name,
+                'class_name'       => $student->class_name,
+                'section'          => $student->section,
                 'status'           => $status
             ));
         } else {
