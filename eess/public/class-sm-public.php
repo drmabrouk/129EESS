@@ -9185,8 +9185,8 @@ class SM_Public {
             });
 
             $school_info = SM_Settings::get_school_info();
-            $school_logo = !empty($school_info['logo_url']) ? $school_info['logo_url'] : '';
-            $school_name = !empty($school_info['name']) ? $school_info['name'] : 'مؤسسة الشعلة للتعليم والتطوير';
+            $school_logo = !empty($school_info['school_logo']) ? $school_info['school_logo'] : (!empty($school_info['logo_url']) ? $school_info['logo_url'] : '');
+            $school_name = !empty($school_info['school_name']) ? $school_info['school_name'] : (!empty($school_info['name']) ? $school_info['name'] : 'مؤسسة الشعلة للتعليم والتطوير');
 
             header('Content-Type: text/html; charset=utf-8');
             ?>
@@ -9228,14 +9228,14 @@ class SM_Public {
                 </div>
 
                 <div class="report-header">
-                    <div class="top-brand-bar">
-                        <div class="brand-box">
+                    <div class="top-brand-bar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; direction: rtl;">
+                        <div class="brand-box" style="display: flex; align-items: center; gap: 12px;">
                             <?php if ($school_logo): ?>
-                                <img src="<?php echo esc_url($school_logo); ?>" class="brand-logo" alt="Logo">
+                                <img src="<?php echo esc_url($school_logo); ?>" class="brand-logo" alt="Logo" style="width: 48px; height: 48px; object-fit: contain; flex-shrink: 0; display: block;">
                             <?php endif; ?>
-                            <div>
-                                <div style="font-size: 14px; font-weight: 900; color: #0f172a;"><?php echo esc_html($school_name); ?></div>
-                                <div style="font-size: 11px; color: #64748b; font-weight: 700;">إدارة الشؤون التعليمية والرقابة الأكاديمية</div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 14px; font-weight: 900; color: #0f172a; line-height: 1.2;"><?php echo esc_html($school_name); ?></div>
+                                <div style="font-size: 11px; color: #64748b; font-weight: 700; margin-top: 2px;">إدارة الشؤون التعليمية والرقابة الأكاديمية</div>
                             </div>
                         </div>
                         <div style="font-size: 11px; color: #64748b; font-weight: 700; text-align: left;">
@@ -9243,11 +9243,11 @@ class SM_Public {
                         </div>
                     </div>
 
-                    <h1 class="main-report-title">تقرير الكادر غير الملتزم بتسليم تحضير الدروس</h1>
+                    <h1 class="main-report-title" style="font-size: 18px; font-weight: 900; color: #881337; text-align: center; margin: 12px 0 6px 0;">تقرير الكادر غير الملتزم بتسليم تحضير الدروس</h1>
 
-                    <div class="main-report-date-box">
-                        <div class="main-report-date-title">الأسابيع الأكاديمية المستحقة المعتمدة</div>
-                        <div class="main-report-range">الأسبوع الأول إلى <?php echo esc_html($range_end_title); ?></div>
+                    <div class="main-report-date-box" style="text-align: center; font-size: 12px; color: #334155; font-weight: 700;">
+                        <div style="font-weight: 900; color: #0f172a;">الأسابيع الأكاديمية المستحقة المعتمدة</div>
+                        <div style="font-weight: 900; color: #881337; font-size: 13px; margin-top: 1px;">الأسبوع الأول إلى <?php echo esc_html($range_end_title); ?></div>
                     </div>
                 </div>
 
@@ -9310,10 +9310,15 @@ class SM_Public {
                     </tbody>
                 </table>
 
-                <!-- SECOND SEPARATE TABLE: COMPLIANT TEACHERS -->
-                <h2 style="font-size: 15px; font-weight: 900; color: #15803d; margin: 35px 0 10px 0; border-bottom: 2px solid #16a34a; padding-bottom: 8px;">
-                    ✓ الكادر الملتزم بتسليم جميع التحضيرات والتكليفات
+                <!-- SECOND SEPARATE SECTION: COMPLIANT TEACHERS -->
+                <h2 style="font-size: 16px; font-weight: 900; color: #15803d; text-align: center; margin: 35px 0 6px 0; border-bottom: 2px solid #16a34a; padding-bottom: 8px;">
+                    الكادر الملتزم بتسليم جميع التحضيرات والتكليفات
                 </h2>
+
+                <div style="text-align: center; font-size: 12px; color: #334155; font-weight: 700; margin-bottom: 15px;">
+                    <div style="font-weight: 900; color: #0f172a; font-size: 12px;">الأسابيع الأكاديمية المستحقة المعتمدة</div>
+                    <div style="font-weight: 900; color: #15803d; font-size: 13px; margin-top: 2px;">الأسبوع الأول إلى <?php echo esc_html($range_end_title); ?></div>
+                </div>
 
                 <table>
                     <thead>
@@ -9321,7 +9326,7 @@ class SM_Public {
                             <th style="width: 32px; text-align: center;">#</th>
                             <th style="width: 35%;">اسم الموظف / المعلم</th>
                             <th style="width: 30%;">المدرسة والصفوف المكلّف بها</th>
-                            <th style="width: 35%;">حالة الالتزام والتغطية</th>
+                            <th style="width: 35%; text-align: center;">حالة الالتزام والتغطية</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -9336,20 +9341,21 @@ class SM_Public {
                         ?>
                             <tr>
                                 <td style="text-align: center; font-weight: bold;"><?php echo ($idx + 1); ?></td>
-                                <td>
+                                <td style="text-align: right;">
                                     <div style="font-size: 12.5px; font-weight: 800; color: #0f172a; margin-bottom: 4px;"><?php echo esc_html($cs['user']->display_name); ?></div>
                                     <div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
                                         <span class="pill-emp"><?php echo esc_html($cs['emp_number']); ?></span>
                                         <span class="pill-subj"><?php echo esc_html($cs['subject']); ?></span>
                                     </div>
                                 </td>
-                                <td>
+                                <td style="text-align: right;">
                                     <div style="font-weight: 800; color: #0f172a; font-size: 11.5px;"><?php echo esc_html($cs['school_name']); ?></div>
                                     <div style="color: #475569; font-size: 10.5px; font-weight: 700; margin-top: 2px;">الصفوف: <?php echo esc_html($cs['grades_taught']); ?></div>
                                 </td>
-                                <td>
-                                    <span style="display: inline-block; padding: 4px 12px; border-radius: 9999px; background: #dcfce7; color: #15803d; border: 1px solid #86efac; font-weight: 900; font-size: 11px;">
-                                        ✓ مستوفي لكافة الأسابيع (الأسابيع 1 إلى <?php echo $current_acad_week; ?>)
+                                <td style="text-align: center; vertical-align: middle;">
+                                    <span style="display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 4px 14px; border-radius: 9999px; background: #dcfce7; color: #15803d; border: 1px solid #86efac; font-weight: 900; font-size: 11px;">
+                                        <span style="display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; background: #16a34a; color: #ffffff; font-size: 10px; font-weight: 900; line-height: 1;">✓</span>
+                                        <span>مستوفي كافة الأسابيع</span>
                                     </span>
                                 </td>
                             </tr>
