@@ -4343,6 +4343,67 @@ class SM_Public {
         wp_send_json_success(array('user_id' => $user_id));
     }
 
+    public function ajax_export_employees_excel() {
+        if (!is_user_logged_in()) wp_die('Unauthorized');
+        $user_roles = (array) wp_get_current_user()->roles;
+        $can_manage_hr = current_user_can('manage_options') || current_user_can('manage_hr') || in_array('administrator', $user_roles) || in_array('sm_system_admin', $user_roles) || in_array('sm_principal', $user_roles) || in_array('sm_hr', $user_roles);
+        if (!$can_manage_hr) wp_die('Unauthorized permissions');
+
+        if (!wp_verify_nonce($_GET['nonce'] ?? '', 'eess_hr_add_employee_nonce')) {
+            wp_die('Security check failed');
+        }
+
+        $role_map = array(
+            'administrator' => 'الإدارة المركزية (المطور)',
+            'sm_system_admin' => 'مدير النظام التقني',
+            'sm_principal' => 'مدير المدرسة',
+            'sm_supervisor' => 'مشرف تربوي',
+            'sm_coordinator' => 'منسق مادة',
+            'sm_hod' => 'رئيس قسم',
+            'sm_teacher' => 'معلم',
+            'sm_discipline_supervisor' => 'مشرف سلوك / انضباط',
+            'sm_activities_supervisor' => 'مشرف أنشطة',
+            'sm_transportation_supervisor' => 'مشرف نقل ومواصلات',
+            'sm_bus_supervisor' => 'مشرف حافلة',
+            'sm_clinic' => 'العيادة المدرسية',
+            'sm_hr' => 'الموارد البشرية (HR)'
+        );
+
+        $employees = get_users();
+        $employees = array_filter($employees, function($u) {
+            $user_roles = (array) $u->roles;
+            $primary_role = !empty($user_roles) ? $user_roles[0] : '';
+            return !in_array('administrator', $user_roles) && !in_array('sm_system_admin', $user_roles) && $primary_role !== 'sm_student' && $primary_role !== 'sm_parent';
+        });
+
+        $filename = 'EESS_Employees_Export_' . date('Y-m-d') . '.csv';
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename=' . $filename);
+
+        $output = fopen('php://output', 'w');
+        // Add UTF-8 BOM for Excel Arabic compatibility
+        fputs($output, "\xEF\xBB\xBF");
+
+        fputcsv($output, array('الرقم الوظيفي', 'الاسم الكامل', 'اسم المستخدم', 'البريد الإلكتروني', 'رقم الهاتف', 'المسمى الوظيفي', 'القسم / الإدارة', 'المادة / التخصص', 'المؤسسة / المدرسة', 'الحالة الوظيفية'));
+
+        foreach ($employees as $emp) {
+            $e_num   = get_user_meta($emp->ID, 'eess_employee_number', true) ?: '';
+            $e_role  = !empty($emp->roles) ? $emp->roles[0] : '';
+            $e_role_txt = $role_map[$e_role] ?? $e_role;
+            $e_dept  = get_user_meta($emp->ID, 'eess_department', true) ?: (get_user_meta($emp->ID, 'department', true) ?: '');
+            $e_spec  = get_user_meta($emp->ID, 'sm_specialization', true) ?: (get_user_meta($emp->ID, 'specialization', true) ?: '');
+            $e_sch   = get_user_meta($emp->ID, 'eess_school_name', true) ?: '';
+            $e_phone = get_user_meta($emp->ID, 'sm_phone', true) ?: '';
+            $e_stat  = get_user_meta($emp->ID, 'eess_hr_employment_status', true) ?: 'active';
+            $e_stat_txt = ($e_stat === 'active') ? 'نشط بالخدمة' : (($e_stat === 'restricted') ? 'مقيد الدخول' : 'غير نشط');
+
+            fputcsv($output, array($e_num, $emp->display_name, $emp->user_login, $emp->user_email, $e_phone, $e_role_txt, $e_dept, $e_spec, $e_sch, $e_stat_txt));
+        }
+
+        fclose($output);
+        exit;
+    }
+
     public function ajax_bulk_import_employees() {
         $user = wp_get_current_user();
         $roles = (array) $user->roles;
@@ -4364,7 +4425,7 @@ class SM_Public {
         }
 
         $success_count = 0;
-        $duplicate_count = 0;
+        $updated_count = 0;
 
         foreach ($records as $row) {
             $name = sanitize_text_field($row['name']);
@@ -4564,6 +4625,82 @@ class SM_Public {
         }
 
         wp_send_json_success($user_id);
+    }
+
+    public function ajax_trigger_force_password_reset() {
+        if (!is_user_logged_in()) wp_send_json_error('Unauthorized');
+        $user_roles = (array) wp_get_current_user()->roles;
+        $can_manage_hr = current_user_can('manage_options') || current_user_can('manage_hr') || in_array('administrator', $user_roles) || in_array('sm_system_admin', $user_roles) || in_array('sm_principal', $user_roles) || in_array('sm_hr', $user_roles);
+        if (!$can_manage_hr) wp_send_json_error('Unauthorized permissions');
+
+        if (!wp_verify_nonce($_POST['nonce'] ?? '', 'eess_photo_approval')) {
+            wp_send_json_error('Security check failed');
+        }
+
+        $emp_id = intval($_POST['employee_id']);
+        if ($emp_id > 0) {
+            update_user_meta($emp_id, 'eess_force_pass_reset', 'yes');
+            clean_user_cache($emp_id);
+            wp_cache_flush();
+            wp_send_json_success('Triggered');
+        }
+
+        wp_send_json_error('Invalid user');
+    }
+
+    public function ajax_manage_direct_profile_photo() {
+        if (!is_user_logged_in()) wp_send_json_error('Unauthorized');
+        $user_roles = (array) wp_get_current_user()->roles;
+        $can_manage_hr = current_user_can('manage_options') || current_user_can('manage_hr') || in_array('administrator', $user_roles) || in_array('sm_system_admin', $user_roles) || in_array('sm_principal', $user_roles) || in_array('sm_hr', $user_roles);
+        if (!$can_manage_hr) wp_send_json_error('Unauthorized permissions');
+
+        if (!wp_verify_nonce($_POST['nonce'] ?? '', 'eess_photo_approval')) {
+            wp_send_json_error('Security check failed');
+        }
+
+        $emp_id = intval($_POST['employee_id']);
+        $sub_action = sanitize_text_field($_POST['sub_action'] ?? '');
+
+        if ($sub_action === 'remove') {
+            delete_user_meta($emp_id, 'eess_profile_photo');
+            delete_user_meta($emp_id, 'eess_pending_profile_photo');
+            clean_user_cache($emp_id);
+            wp_cache_flush();
+            wp_send_json_success('Removed');
+        }
+
+        if ($sub_action === 'upload') {
+            if (empty($_FILES['profile_photo'])) {
+                wp_send_json_error('لم يتم تزويد صورة للرفع.');
+            }
+
+            $file = $_FILES['profile_photo'];
+
+            // Enforce 3MB Server-Side Maximum Size Validation
+            if ($file['size'] > 3 * 1024 * 1024) {
+                wp_send_json_error('حجم الصورة يتجاوز الحد الأقصى المسموح به (3 ميجابايت).');
+            }
+
+            require_once(ABSPATH . 'wp-admin/includes/file.php');
+            require_once(ABSPATH . 'wp-admin/includes/image.php');
+            require_once(ABSPATH . 'wp-admin/includes/media.php');
+
+            $upload = wp_handle_upload($file, array('test_form' => false));
+            if (isset($upload['error'])) {
+                wp_send_json_error($upload['error']);
+            }
+
+            $photo_url = $upload['url'];
+            update_user_meta($emp_id, 'eess_profile_photo', $photo_url);
+            delete_user_meta($emp_id, 'eess_pending_profile_photo');
+
+            clean_user_cache($emp_id);
+            wp_cache_flush();
+
+            wp_send_json_success(array('photo_url' => $photo_url));
+        }
+
+        wp_send_json_error('Invalid action');
     }
 
     public function ajax_upload_mobile_profile_photo() {
