@@ -54,6 +54,8 @@ class School_Management {
         $this->loader->add_action('wp_ajax_sm_save_record_ajax', $plugin_public, 'ajax_save_record');
         $this->loader->add_action('wp_ajax_sm_update_student_photo', $plugin_public, 'ajax_update_student_photo');
         $this->loader->add_action('wp_ajax_sm_update_record_status', $plugin_public, 'ajax_update_record_status');
+        $this->loader->add_action('wp_ajax_eess_trigger_force_password_reset', $plugin_public, 'ajax_trigger_force_password_reset');
+        $this->loader->add_action('wp_ajax_eess_manage_direct_profile_photo', $plugin_public, 'ajax_manage_direct_profile_photo');
         $this->loader->add_action('wp_ajax_sm_add_student_ajax', $plugin_public, 'ajax_add_student');
         $this->loader->add_action('wp_ajax_sm_update_student_ajax', $plugin_public, 'ajax_update_student');
         $this->loader->add_action('wp_ajax_sm_delete_student_ajax', $plugin_public, 'ajax_delete_student');
@@ -119,6 +121,7 @@ class School_Management {
         $this->loader->add_action('wp_ajax_sm_download_plans_zip', $plugin_public, 'ajax_download_plans_zip');
         $this->loader->add_action('wp_ajax_sm_refresh_system_cache_ajax', $plugin_public, 'ajax_refresh_system');
         $this->loader->add_action('wp_ajax_eess_hr_add_employee', $plugin_public, 'ajax_hr_add_employee');
+        $this->loader->add_action('wp_ajax_eess_export_employees_excel', $plugin_public, 'ajax_export_employees_excel');
         $this->loader->add_action('wp_ajax_eess_bulk_import_employees_ajax', $plugin_public, 'ajax_bulk_import_employees');
 
         // Forgot password AJAX actions (Multi-step Verification Without OTP)

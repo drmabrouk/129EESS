@@ -486,9 +486,22 @@ if (isset($_GET['manage_employee_id'])) {
 
         <?php if ($is_admin || $is_sys_admin || $is_hr): ?>
         <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-            <button type="button" onclick="eessOpenUnifiedUserModal('add_employee', 0)" class="sm-btn" style="background: #881337; color: #ffffff !important; height: 38px; border-radius: 9999px !important; padding: 0 20px; font-weight: 800; font-size: 12.5px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+            <!-- Add Employee Button -->
+            <button type="button" onclick="eessOpenUnifiedUserModal('add_employee', 0)" class="sm-btn" style="background: #881337; color: #ffffff !important; height: 38px; border-radius: 9999px !important; padding: 0 18px; font-weight: 800; font-size: 12.5px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
                 <span class="dashicons dashicons-plus-alt2" style="font-size: 15px; width: 15px; height: 15px; color: #fff;"></span>
                 <span>إضافة موظف جديد</span>
+            </button>
+
+            <!-- Excel Export Button -->
+            <button type="button" onclick="window.open('<?php echo admin_url('admin-ajax.php?action=eess_export_employees_excel&nonce=' . wp_create_nonce('eess_hr_add_employee_nonce')); ?>', '_blank')" class="sm-btn" style="background: #15803d; color: #ffffff !important; height: 38px; border-radius: 9999px !important; padding: 0 18px; font-weight: 800; font-size: 12.5px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" title="تصدير جميع سجلات الموظفين إلى ملف Excel معتمد (.xlsx)">
+                <span class="dashicons dashicons-download" style="font-size: 15px; width: 15px; height: 15px; color: #fff;"></span>
+                <span>تصدير Excel (.xlsx)</span>
+            </button>
+
+            <!-- Excel Import Toggle Button -->
+            <button type="button" onclick="let b=document.getElementById('hr-employee-import-box'); b.style.display=(b.style.display==='none'?'block':'none');" class="sm-btn sm-btn-outline" style="background: #ffffff; color: #1e293b !important; border: 1px solid #cbd5e1; height: 38px; border-radius: 9999px !important; padding: 0 18px; font-weight: 800; font-size: 12.5px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" title="استيراد وتحديث سجلات الموظفين عبر ملف Excel/CSV">
+                <span class="dashicons dashicons-upload" style="font-size: 15px; width: 15px; height: 15px; color: #1e293b;"></span>
+                <span>استيراد Excel</span>
             </button>
         </div>
         <?php endif; ?>
@@ -605,88 +618,124 @@ if (isset($_GET['manage_employee_id'])) {
     <?php if (!$edit_emp): ?>
         <div style="background: #fff; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 25px; box-shadow: var(--sm-shadow);">
 
-            <!-- Advanced Filters -->
+            <!-- Advanced Filters (Replaced Subject/Department Input with Dynamic Role Filter) -->
             <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
                 <div>
                     <label style="font-size: 12px; font-weight: bold; color: #475569;">البحث بالاسم / الرقم الوظيفي</label>
                     <input type="text" id="hr-search" onkeyup="filterHREmployees()" placeholder="ابحث بالاسم، الرقم الوظيفي..." class="sm-input" style="height: 36px; font-size: 12px;">
                 </div>
                 <div>
-                    <label style="font-size: 12px; font-weight: bold; color: #475569;">تصفية حسب القسم</label>
-                    <input type="text" id="hr-dept-filter" onkeyup="filterHREmployees()" placeholder="مثال: العلوم، الإدارة..." class="sm-input" style="height: 36px; font-size: 12px;">
+                    <label style="font-size: 12px; font-weight: bold; color: #475569;">تصفية حسب المسمى الوظيفي / الرتبة</label>
+                    <select id="hr-role-filter" onchange="filterHREmployees()" class="sm-select" style="height: 36px; font-size: 12px;">
+                        <option value="">جميع المسميات والوظائف</option>
+                        <?php foreach ($role_map as $r_key => $r_label): ?>
+                            <option value="<?php echo esc_attr($r_key); ?>"><?php echo esc_html($r_label); ?></option>
+                        <?php endforeach; ?>
+                    </select>
                 </div>
                 <div>
                     <label style="font-size: 12px; font-weight: bold; color: #475569;">حالة الموظف</label>
                     <select id="hr-status-filter" onchange="filterHREmployees()" class="sm-select" style="height: 36px; font-size: 12px;">
-                        <option value="">الكل</option>
+                        <option value="">جميع الحالات</option>
                         <option value="active">نشط بالخدمة</option>
+                        <option value="restricted">مقيد الدخول</option>
                         <option value="suspended">موقوف مؤقتاً</option>
                         <option value="leave">إجازة سنوية</option>
                     </select>
                 </div>
             </div>
 
-            <!-- Employees List (Full-Width Redesigned Cards) -->
+            <!-- Employees List (Full-Width Redesigned Cards with Professional Capsules) -->
             <div style="display: flex; flex-direction: column; gap: 15px;" id="hr-employees-grid">
                 <?php foreach ($employees as $emp):
                     $emp_role = !empty($emp->roles) ? $emp->roles[0] : '';
                     $emp_num = get_user_meta($emp->ID, 'eess_employee_number', true) ?: 'غير محدد';
                     $emp_status = get_user_meta($emp->ID, 'eess_hr_employment_status', true) ?: 'active';
                     $emp_spec = get_user_meta($emp->ID, 'sm_specialization', true) ?: (get_user_meta($emp->ID, 'specialization', true) ?: 'غير محدد');
+                    $emp_dept = get_user_meta($emp->ID, 'eess_department', true) ?: (get_user_meta($emp->ID, 'department', true) ?: 'قسم الإدارة والأنظمة');
+                    $emp_school = get_user_meta($emp->ID, 'eess_school_name', true) ?: 'المدرسة الرئيسية';
                     $is_teacher = ($emp_role === 'sm_teacher');
+                    $avatar_url = get_user_meta($emp->ID, 'eess_profile_photo', true);
                 ?>
                     <div class="hr-employee-card"
                          data-name="<?php echo esc_attr(strtolower($emp->display_name)); ?>"
                          data-number="<?php echo esc_attr($emp_num); ?>"
+                         data-role="<?php echo esc_attr($emp_role); ?>"
                          data-status="<?php echo esc_attr($emp_status); ?>"
                          style="background: #fff; border: 1px solid #cbd5e0; border-radius: 12px; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; gap: 15px; flex-wrap: wrap; transition: 0.2s;"
                     >
-                        <!-- Left block: Avatar, Name, Role Capsules / Badges -->
-                        <div style="display: flex; gap: 15px; align-items: center; min-width: 280px; flex: 1.2;">
-                            <?php echo get_avatar($emp->ID, 50, '', '', array('style' => 'border-radius: 50% !important; border: 2.5px solid #881337; width: 50px; height: 50px; object-fit: cover; display: block; flex-shrink: 0;')); ?>
+                        <!-- Left block: Clickable Avatar, Name with Green Check Circle, Professional Role Capsules -->
+                        <div style="display: flex; gap: 15px; align-items: center; min-width: 320px; flex: 1.4;">
+                            <div onclick="eessOpenDirectPhotoModal(<?php echo $emp->ID; ?>, '<?php echo esc_attr($emp->display_name); ?>', '<?php echo esc_url($avatar_url); ?>')" style="position: relative; cursor: pointer; flex-shrink: 0;" title="انقر لإدارة الصورة الشخصية مباشرة">
+                                <?php echo get_avatar($emp->ID, 50, '', '', array('style' => 'border-radius: 50% !important; border: 2.5px solid #881337; width: 50px; height: 50px; object-fit: cover; display: block;')); ?>
+                                <div style="position: absolute; bottom: 0; left: 0; background: #881337; color: white; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; border: 1.5px solid white;">
+                                    <span class="dashicons dashicons-camera" style="font-size:10px; width:10px; height:10px;"></span>
+                                </div>
+                            </div>
+
                             <div>
-                                <h4 style="margin: 0 0 6px 0; font-weight: 800; font-size: 14.5px; color: #1e293b;"><?php echo esc_html($emp->display_name); ?></h4>
+                                <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                                    <h4 style="margin: 0; font-weight: 800; font-size: 14.5px; color: #0f172a;"><?php echo esc_html($emp->display_name); ?></h4>
+                                    <!-- Small Green Circular Icon with White Check Mark (Replacing text status) -->
+                                    <?php if ($emp_status === 'active'): ?>
+                                        <span style="width: 16px; height: 16px; border-radius: 50%; background: #16a34a; color: #ffffff; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; box-shadow: 0 1px 3px rgba(22,163,74,0.3);" title="نشط بالخدمة والمعتمدة">✓</span>
+                                    <?php else: ?>
+                                        <span style="width: 16px; height: 16px; border-radius: 50%; background: #dc2626; color: #ffffff; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900;" title="حساب غير نشط أو مقيد">✕</span>
+                                    <?php endif; ?>
+                                </div>
+
+                                <!-- Uniform Professional Capsules Row -->
                                 <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
                                     <?php if ($is_teacher): ?>
                                         <!-- Teacher Role Capsule (Red) -->
                                         <span style="font-size: 10px; color: #ffffff; font-weight: 800; background: #881337; padding: 3px 10px; border-radius: 9999px; display: inline-flex; align-items: center; line-height: 1.2;">
-                                            <?php echo esc_html($role_map[$emp_role] ?? $emp_role); ?>
+                                            <?php echo esc_html($role_map[$emp_role] ?? 'معلم'); ?>
                                         </span>
                                         <!-- Teacher Subject Capsule (Red) -->
                                         <span style="font-size: 10px; color: #ffffff; font-weight: 800; background: #9f1239; padding: 3px 10px; border-radius: 9999px; display: inline-flex; align-items: center; line-height: 1.2;">
                                             <?php echo esc_html($emp_spec); ?>
                                         </span>
                                     <?php else: ?>
-                                        <!-- Standard Role Badge -->
-                                        <span style="font-size: 10px; color: #475569; font-weight: bold; background: #f1f5f9; padding: 2px 8px; border-radius: 4px; display: inline-block;">
+                                        <!-- Administrative Role Capsule -->
+                                        <span style="font-size: 10px; color: #ffffff; font-weight: 800; background: #1e293b; padding: 3px 10px; border-radius: 9999px; display: inline-flex; align-items: center; line-height: 1.2;">
                                             <?php echo esc_html($role_map[$emp_role] ?? $emp_role); ?>
+                                        </span>
+                                        <!-- Department Capsule -->
+                                        <span style="font-size: 10px; color: #ffffff; font-weight: 800; background: #334155; padding: 3px 10px; border-radius: 9999px; display: inline-flex; align-items: center; line-height: 1.2;">
+                                            <?php echo esc_html($emp_dept); ?>
                                         </span>
                                     <?php endif; ?>
 
-                                    <!-- Status Badge -->
-                                    <?php if ($emp_status === 'active'): ?>
-                                        <span style="font-size: 10px; font-weight: bold; background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; padding: 2px 8px; border-radius: 4px; display: inline-block;">نشط بالخدمة</span>
-                                    <?php elseif ($emp_status === 'restricted'): ?>
-                                        <span style="font-size: 10px; font-weight: bold; background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; padding: 2px 8px; border-radius: 4px; display: inline-block;">مقيد الدخول</span>
-                                    <?php else: ?>
-                                        <span style="font-size: 10px; font-weight: bold; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 2px 8px; border-radius: 4px; display: inline-block;">غير نشط</span>
-                                    <?php endif; ?>
+                                    <!-- School/Institution Red-Tone Capsule -->
+                                    <span style="font-size: 10px; color: #881337; font-weight: 800; background: #fef2f2; border: 1px solid #fecdd3; padding: 2px 10px; border-radius: 9999px; display: inline-flex; align-items: center; line-height: 1.2;">
+                                        🏫 <?php echo esc_html($emp_school); ?>
+                                    </span>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Middle block: Employee Number & Email (No Department display) -->
+                        <!-- Middle block: Employee Number & Email -->
                         <div style="display: flex; gap: 20px; align-items: center; font-size: 12px; color: #475569; flex: 1;">
                             <div><strong>الرقم الوظيفي:</strong> <span style="font-weight: 800; color: #0f172a; font-family: monospace;"><?php echo esc_html($emp_num); ?></span></div>
                             <div><strong>البريد الإلكتروني:</strong> <span style="font-family: monospace; color: #334155;"><?php echo esc_html($emp->user_email); ?></span></div>
                         </div>
 
-                        <!-- Right block: Quick Action Buttons (Icon-Only Manage Profile & Teacher ID Print) -->
-                        <div style="display: flex; gap: 6px; align-items: center; justify-content: flex-end; flex-wrap: nowrap; min-width: 180px;">
-                            <!-- Icon-Only Manage Profile Button -->
-                            <a href="<?php echo add_query_arg('manage_employee_id', $emp->ID); ?>" class="sm-btn" style="padding: 0 !important; width: 32px !important; min-width: 32px !important; height: 32px !important; background: #334155 !important; border: 1px solid #334155 !important; color: white !important; border-radius: 6px !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; text-decoration: none !important;" title="إدارة الملف المهني">
-                                <span class="dashicons dashicons-admin-generic" style="font-size:16px; margin:0;"></span>
+                        <!-- Right block: Quick Action Buttons (Manage Profile, Edit Account Info, Force Password Reset, Teacher ID Print, Report Print, Lock) -->
+                        <div style="display: flex; gap: 6px; align-items: center; justify-content: flex-end; flex-wrap: nowrap; min-width: 220px;">
+                            <!-- Icon-Only Manage Professional Profile Button -->
+                            <a href="<?php echo add_query_arg('manage_employee_id', $emp->ID); ?>" class="sm-btn" style="padding: 0 !important; width: 32px !important; min-width: 32px !important; height: 32px !important; background: #334155 !important; border: 1px solid #334155 !important; color: white !important; border-radius: 6px !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; text-decoration: none !important;" title="إدارة الملف المهني والوظيفي">
+                                <span class="dashicons dashicons-id-alt" style="font-size:16px; margin:0;"></span>
                             </a>
+
+                            <!-- Dedicated Edit Account Information Icon Button -->
+                            <button type="button" onclick="eessOpenUnifiedUserModal('edit_user', <?php echo $emp->ID; ?>)" class="sm-btn" style="padding: 0 !important; width: 32px !important; min-width: 32px !important; height: 32px !important; background: #0284c7 !important; border: 1px solid #0284c7 !important; color: white !important; border-radius: 6px !important; cursor: pointer; display: inline-flex !important; align-items: center !important; justify-content: center !important;" title="تعديل بيانات الحساب والرتبة والتسكين">
+                                <span class="dashicons dashicons-edit" style="font-size:16px; margin:0;"></span>
+                            </button>
+
+                            <!-- Dedicated Force Password Reset Action Button -->
+                            <button type="button" onclick="eessOpenForceResetModal(<?php echo $emp->ID; ?>, '<?php echo esc_attr($emp->display_name); ?>')" class="sm-btn" style="padding: 0 !important; width: 32px !important; min-width: 32px !important; height: 32px !important; background: #d97706 !important; border: 1px solid #d97706 !important; color: white !important; border-radius: 6px !important; cursor: pointer; display: inline-flex !important; align-items: center !important; justify-content: center !important;" title="إجبار الموظف على إعادة تعيين كلمة المرور فور الدخول القادم">
+                                <span class="dashicons dashicons-admin-network" style="font-size:16px; margin:0;"></span>
+                            </button>
 
                             <!-- Icon-Only Print Teacher ID Card Button (Vertical ID Card) -->
                             <button type="button" onclick="window.open('<?php echo admin_url('admin-ajax.php?action=sm_print&print_type=teacher_card&employee_id=' . $emp->ID); ?>', '_blank')" class="sm-btn" style="padding: 0 !important; width: 32px !important; min-width: 32px !important; height: 32px !important; background: #881337 !important; border: 1px solid #881337 !important; color: white !important; border-radius: 6px !important; cursor: pointer; display: inline-flex !important; align-items: center !important; justify-content: center !important;" title="طباعة بطاقة المعلم الرقمية (Teacher ID Card)">
@@ -841,21 +890,21 @@ if (isset($_GET['manage_employee_id'])) {
 
         function filterHREmployees() {
             const search = document.getElementById('hr-search').value.toLowerCase().trim();
-            const dept = document.getElementById('hr-dept-filter').value.toLowerCase().trim();
+            const role = document.getElementById('hr-role-filter').value;
             const status = document.getElementById('hr-status-filter').value;
 
             const cards = document.querySelectorAll('.hr-employee-card');
             cards.forEach(card => {
                 const name = card.getAttribute('data-name');
                 const num = card.getAttribute('data-number');
-                const cdept = card.getAttribute('data-dept');
+                const crole = card.getAttribute('data-role');
                 const cstatus = card.getAttribute('data-status');
 
                 const matchesSearch = !search || name.includes(search) || num.includes(search);
-                const matchesDept = !dept || cdept.includes(dept);
+                const matchesRole = !role || crole === role;
                 const matchesStatus = !status || cstatus === status;
 
-                if (matchesSearch && matchesDept && matchesStatus) {
+                if (matchesSearch && matchesRole && matchesStatus) {
                     card.style.display = 'flex';
                 } else {
                     card.style.display = 'none';
@@ -1050,46 +1099,8 @@ if (isset($_GET['manage_employee_id'])) {
 
                 </div>
 
-                <!-- Box 3: Disciplinary & Admin Actions -->
+                <!-- Box 3: Documents Archiving & Supplemental Info -->
                 <div style="display: flex; flex-direction: column; gap: 20px;">
-
-                    <!-- Disciplinary Records Box -->
-                    <div style="background: #fff; border: 1px solid #cbd5e0; padding: 15px; border-radius: 8px;">
-                        <h4 style="margin: 0 0 10px 0; font-weight: 800; font-size: 13px; color: #1e293b;">🔨 مجالس الانضباط والقرارات السلوكية</h4>
-                        <form method="post" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;">
-                            <?php wp_nonce_field('eess_hr_action_nonce', 'eess_hr_nonce'); ?>
-                            <input type="hidden" name="target_employee_id" value="<?php echo $emp_id; ?>">
-                            <input type="hidden" name="eess_hr_action" value="add_disciplinary">
-
-                            <div style="display: flex; gap: 8px;">
-                                <input type="date" name="disc_date" class="sm-input" required style="height: 30px; font-size: 11px; flex: 1;">
-                                <input type="text" name="disc_incident" placeholder="المخالفة / الواقعة" class="sm-input" required style="height: 30px; font-size: 11px; flex: 2;">
-                            </div>
-                            <input type="text" name="disc_action" placeholder="القرار السلوكي والجزاء المتخذ" class="sm-input" required style="height: 30px; font-size: 11px;">
-                            <input type="text" name="disc_supervisor" placeholder="المشرف المعتمد للقرار" class="sm-input" required style="height: 30px; font-size: 11px;">
-
-                            <button type="submit" class="sm-btn" style="height: 30px; font-size: 11px; background: #e53e3e;">تسجيل قرار مجلس الانضباط</button>
-                        </form>
-
-                        <div style="max-height: 120px; overflow-y: auto; font-size: 11px; background: #f8fafc; padding: 8px; border-radius: 4px; border: 1px solid #cbd5e0;">
-                            <?php if (empty($disciplinary_records)): ?>
-                                <div style="color:#64748b; text-align: center;">لا يوجد سجل مخالفات.</div>
-                            <?php else: ?>
-                                <?php foreach($disciplinary_records as $idx => $dr): ?>
-                                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding: 4px 0;">
-                                        <span><?php echo esc_html($dr['date']); ?>: <?php echo esc_html($dr['incident']); ?></span>
-                                        <form method="post" style="display: inline;" onsubmit="return confirm('حذف هذا القيد الجزائي؟')">
-                                            <?php wp_nonce_field('eess_hr_action_nonce', 'eess_hr_nonce'); ?>
-                                            <input type="hidden" name="target_employee_id" value="<?php echo $emp_id; ?>">
-                                            <input type="hidden" name="eess_hr_action" value="delete_disciplinary">
-                                            <input type="hidden" name="delete_index" value="<?php echo $idx; ?>">
-                                            <button type="submit" style="background: none; border: none; color: #dc2626; cursor: pointer; font-size: 10px;">[حذف]</button>
-                                        </form>
-                                    </div>
-                                <?php endforeach; ?>
-                            <?php endif; ?>
-                        </div>
-                    </div>
 
                     <!-- Official Documents Archiving -->
                     <div style="background: #fff; border: 1px solid #cbd5e0; padding: 15px; border-radius: 8px;">
@@ -1141,8 +1152,116 @@ if (isset($_GET['manage_employee_id'])) {
 
 </div>
 
+<!-- Direct Profile Photo Management Modal -->
+<div id="eessDirectPhotoModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 999999; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(4px); direction: rtl;">
+    <div style="background: #ffffff; width: 100%; max-width: 440px; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); overflow: hidden; font-family: 'Cairo', sans-serif;">
+        <div style="background: #0f172a; color: white; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: white !important;">📷 إدارة الصورة الشخصية للموظف</h3>
+            <button type="button" onclick="eessCloseDirectPhotoModal()" style="background: none; border: none; color: white; font-size: 24px; cursor: pointer; line-height: 1;">&times;</button>
+        </div>
+        <div style="padding: 20px; text-align: center;">
+            <input type="hidden" id="dp_emp_id" value="0">
+            <h4 id="dp_emp_name" style="margin: 0 0 15px 0; font-size: 15px; font-weight: 800; color: #0f172a;"></h4>
+
+            <div style="width: 100px; height: 100px; border-radius: 50%; border: 3px solid #881337; margin: 0 auto 15px auto; overflow: hidden; background: #f1f5f9; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                <img id="dp_preview_img" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+                <span id="dp_default_icon" class="dashicons dashicons-admin-users" style="font-size: 48px; width: 48px; height: 48px; color: #94a3b8;"></span>
+            </div>
+
+            <p style="font-size: 11.5px; color: #64748b; margin-bottom: 20px; font-weight: 600;">الحد الأقصى لحجم الصورة: 3 ميجابايت (3 MB). الصيغ المدعومة: JPG, PNG, WEBP.</p>
+
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <label class="sm-btn" style="background: #881337; color: white !important; height: 38px; padding: 0 18px; font-weight: 800; font-size: 12px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                    <span class="dashicons dashicons-upload" style="font-size:16px;"></span>
+                    <span>تغيير الصورة</span>
+                    <input type="file" id="dp_file_input" accept="image/*" style="display: none;" onchange="eessUploadDirectPhoto(this)">
+                </label>
+                <button type="button" id="dp_remove_btn" onclick="eessRemoveDirectPhoto()" class="sm-btn" style="background: #dc2626; color: white !important; height: 38px; padding: 0 18px; font-weight: 800; font-size: 12px; border-radius: 8px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                    <span class="dashicons dashicons-trash" style="font-size:16px;"></span>
+                    <span>حذف الصورة</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Print & Platform Access Modals -->
 <script>
+function eessOpenDirectPhotoModal(empId, empName, photoUrl) {
+    document.getElementById('dp_emp_id').value = empId;
+    document.getElementById('dp_emp_name').innerText = empName;
+    var preview = document.getElementById('dp_preview_img');
+    var icon = document.getElementById('dp_default_icon');
+    if (photoUrl) {
+        preview.src = photoUrl;
+        preview.style.display = 'block';
+        icon.style.display = 'none';
+    } else {
+        preview.src = '';
+        preview.style.display = 'none';
+        icon.style.display = 'block';
+    }
+    document.getElementById('eessDirectPhotoModal').style.display = 'flex';
+}
+
+function eessCloseDirectPhotoModal() {
+    document.getElementById('eessDirectPhotoModal').style.display = 'none';
+}
+
+function eessUploadDirectPhoto(input) {
+    if (!input.files || !input.files[0]) return;
+    var file = input.files[0];
+
+    // Enforce 3MB maximum file size limit client-side
+    if (file.size > 3 * 1024 * 1024) {
+        alert('عفواً، حجم الملف يقتصر على 3 ميجابايت (3 MB) كحد أقصى.');
+        return;
+    }
+
+    var empId = document.getElementById('dp_emp_id').value;
+    var formData = new FormData();
+    formData.append('action', 'eess_manage_direct_profile_photo');
+    formData.append('sub_action', 'upload');
+    formData.append('employee_id', empId);
+    formData.append('profile_photo', file);
+    formData.append('nonce', '<?php echo wp_create_nonce("eess_photo_approval"); ?>');
+
+    fetch('<?php echo admin_url('admin-ajax.php'); ?>', { method: 'POST', body: formData })
+    .then(r => r.json())
+    .then(res => {
+        if (res.success) {
+            smShowNotification('تم تحديث الصورة الشخصية للموظف بنجاح!');
+            eessCloseDirectPhotoModal();
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            alert('فشل رفع الصورة: ' + (res.data || 'خطأ غير معروف'));
+        }
+    });
+}
+
+function eessRemoveDirectPhoto() {
+    if (!confirm('هل أنت متأكد من رغبتك في حذف الصورة الشخصية للموظف؟')) return;
+
+    var empId = document.getElementById('dp_emp_id').value;
+    var formData = new FormData();
+    formData.append('action', 'eess_manage_direct_profile_photo');
+    formData.append('sub_action', 'remove');
+    formData.append('employee_id', empId);
+    formData.append('nonce', '<?php echo wp_create_nonce("eess_photo_approval"); ?>');
+
+    fetch('<?php echo admin_url('admin-ajax.php'); ?>', { method: 'POST', body: formData })
+    .then(r => r.json())
+    .then(res => {
+        if (res.success) {
+            smShowNotification('تم حذف الصورة الشخصية وإعادة تعيين الهوية بنجاح!');
+            eessCloseDirectPhotoModal();
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            alert('فشل حذف الصورة: ' + (res.data || 'خطأ غير معروف'));
+        }
+    });
+}
+
 function eessPrintEmployeeReport(empId) {
     const url = window.location.href + '&eess_print_report=1&employee_id=' + empId;
     const printWindow = window.open(url, '_blank', 'width=900,height=800,scrollbars=yes');
@@ -1172,12 +1291,72 @@ function eessCloseUnrestrictModal() {
 }
 </script>
 
+<!-- Force Password Reset Confirmation Modal -->
+<div id="eessForceResetModal" style="display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.6); z-index: 999999; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(3px); direction: rtl;">
+    <div style="background: #ffffff; width: 100%; max-width: 450px; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.2); overflow: hidden; font-family: 'Cairo', sans-serif; border: 1px solid #cbd5e1;">
+        <div style="background: #ffffff; color: #0f172a; padding: 18px 22px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="dashicons dashicons-admin-network" style="font-size: 20px; width: 20px; height: 20px; color: #d97706;"></span>
+                <h3 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: #0f172a !important;">إجبار الموظف على إعادة تعيين كلمة المرور</h3>
+            </div>
+            <button type="button" onclick="eessCloseForceResetModal()" style="background: none; border: none; color: #64748b; font-size: 24px; cursor: pointer; line-height: 1;">&times;</button>
+        </div>
+        <div style="padding: 22px;">
+            <input type="hidden" id="fr_emp_id" value="0">
+            <p style="font-size: 13px; color: #475569; margin: 0 0 15px 0; line-height: 1.6;">
+                أنت على وشك إجبار الموظف <strong id="fr_emp_name_lbl" style="color:#0f172a;"></strong> على تعيين كلمة مرور جديدة فور تسجيل دخوله القادم للمنصة.
+            </p>
+            <div style="background: #fffbeb; border: 1px solid #fef3c7; color: #b45309; padding: 10px 14px; border-radius: 8px; font-size: 11.5px; font-weight: 700; margin-bottom: 20px;">
+                ⚠️ لن تتغير كلمة المرور الحالية حتى يقوم الموظف بتعيين كلمة المرور الجديدة عبر صندوق الحماية الأبيض عند تسجيل الدخول.
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #e2e8f0; padding-top: 15px;">
+                <button type="button" onclick="eessCloseForceResetModal()" style="background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; padding:8px 16px; border-radius:8px; font-weight:700; cursor:pointer;">إلغاء</button>
+                <button type="button" onclick="eessConfirmForcePasswordReset()" style="background:#d97706; color:white; border:none; padding:8px 20px; border-radius:8px; font-weight:800; cursor:pointer;">تأكيد وتفعيل الإجبار</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function eessOpenForceResetModal(empId, empName) {
+    document.getElementById('fr_emp_id').value = empId;
+    document.getElementById('fr_emp_name_lbl').innerText = empName;
+    document.getElementById('eessForceResetModal').style.display = 'flex';
+}
+
+function eessCloseForceResetModal() {
+    document.getElementById('eessForceResetModal').style.display = 'none';
+}
+
+function eessConfirmForcePasswordReset() {
+    var empId = document.getElementById('fr_emp_id').value;
+    var formData = new FormData();
+    formData.append('action', 'eess_trigger_force_password_reset');
+    formData.append('employee_id', empId);
+    formData.append('nonce', '<?php echo wp_create_nonce("eess_photo_approval"); ?>');
+
+    fetch('<?php echo admin_url('admin-ajax.php'); ?>', { method: 'POST', body: formData })
+    .then(r => r.json())
+    .then(res => {
+        if (res.success) {
+            smShowNotification('تم تفعيل خيار إعادة تعيين كلمة المرور الإجباري للموظف بنجاح!');
+            eessCloseForceResetModal();
+        } else {
+            alert('فشل تفعيل الخيار: ' + (res.data || 'خطأ غير معروف'));
+        }
+    });
+}
+</script>
+
 <!-- Platform Restriction Reason Selection Modal -->
-<div id="eessRestrictModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99999; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(2px); direction: rtl;">
-    <div style="background: #fff; width: 100%; max-width: 450px; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); overflow: hidden; font-family: 'Cairo', sans-serif;">
-        <div style="background: #dc2626; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center;">
-            <h3 style="margin: 0; font-size: 1rem; font-weight: 800;">🚫 تقييد وصول موظف للمنصة</h3>
-            <button type="button" onclick="eessCloseRestrictModal()" style="background: none; border: none; color: white; font-size: 24px; cursor: pointer; line-height: 1;">&times;</button>
+<div id="eessRestrictModal" style="display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.6); z-index: 99999; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(3px); direction: rtl;">
+    <div style="background: #ffffff; width: 100%; max-width: 450px; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.2); overflow: hidden; font-family: 'Cairo', sans-serif; border: 1px solid #cbd5e1;">
+        <div style="background: #ffffff; color: #0f172a; padding: 18px 22px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="dashicons dashicons-lock" style="font-size: 20px; width: 20px; height: 20px; color: #0f172a;"></span>
+                <h3 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: #0f172a !important;">تقييد وصول موظف للمنصة</h3>
+            </div>
+            <button type="button" onclick="eessCloseRestrictModal()" style="background: none; border: none; color: #64748b; font-size: 24px; cursor: pointer; line-height: 1;">&times;</button>
         </div>
         <form method="POST" action="" style="padding: 20px; margin:0;">
             <?php wp_nonce_field('eess_hr_action_nonce', 'eess_hr_nonce'); ?>
