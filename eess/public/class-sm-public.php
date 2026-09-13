@@ -779,7 +779,7 @@ class SM_Public {
 
                     if (!empty($school_teacher_ids)) {
                         $placeholders = implode(',', array_fill(0, count($school_teacher_ids), '%d'));
-                        $submitted_teacher_ids = $wpdb->get_col($wpdb->prepare("SELECT DISTINCT teacher_id FROM {$wpdb->prefix}sm_lesson_preps WHERE teacher_id IN ($placeholders) AND status IN ('submitted', 'approved', 'revision_required', 'rejected', 'late')", ...$school_teacher_ids));
+                        $submitted_teacher_ids = $wpdb->get_col($wpdb->prepare("SELECT DISTINCT teacher_id FROM {$wpdb->prefix}sm_lesson_preps WHERE teacher_id IN ($placeholders) AND status IN ('submitted', 'approved', 'resubmitted', 'late')", ...$school_teacher_ids));
                         $m_late_count = intval($wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->prefix}sm_lesson_preps WHERE teacher_id IN ($placeholders) AND status = 'late'", ...$school_teacher_ids)));
                         $m_approved_count = intval($wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->prefix}sm_lesson_preps WHERE teacher_id IN ($placeholders) AND status = 'approved'", ...$school_teacher_ids)));
                     } else {
@@ -9134,18 +9134,14 @@ class SM_Public {
 
                 $submitted_weeks = array();
                 foreach ($preps as $p) {
-                    if (!empty($p->lesson_date) && $p->lesson_date !== '0000-00-00') {
-                        $ld_ts = strtotime($p->lesson_date);
-                        if ($ld_ts >= $acad_anchor_ts) {
-                            $w_num = intval(floor(($ld_ts - $acad_anchor_ts) / (7 * 86400))) + 1;
+                    $p_date_raw = (!empty($p->lesson_date) && $p->lesson_date !== '0000-00-00') ? $p->lesson_date : (!empty($p->submission_time) ? $p->submission_time : $p->created_at);
+                    if (!empty($p_date_raw) && $p_date_raw !== '0000-00-00' && $p_date_raw !== '0000-00-00 00:00:00') {
+                        $p_ts = strtotime($p_date_raw);
+                        if ($p_ts >= $acad_anchor_ts) {
+                            $w_num = intval(floor(($p_ts - $acad_anchor_ts) / (7 * 86400))) + 1;
                             $submitted_weeks[$w_num] = true;
-                        }
-                    }
-                    if (!empty($p->created_at) && $p->created_at !== '0000-00-00 00:00:00') {
-                        $ca_ts = strtotime($p->created_at);
-                        if ($ca_ts >= $acad_anchor_ts) {
-                            $w_num = intval(floor(($ca_ts - $acad_anchor_ts) / (7 * 86400))) + 1;
-                            $submitted_weeks[$w_num] = true;
+                        } else {
+                            $submitted_weeks[1] = true;
                         }
                     }
                 }
@@ -9733,16 +9729,18 @@ class SM_Public {
                     $acad_anchor_ts = strtotime('2026-08-30 00:00:00');
 
                     foreach ($teacher_preps as $p) {
-                        $p_date = !empty($p->lesson_date) ? $p->lesson_date : ($p->submission_time ?: $p->created_at);
-                        $p_ts = strtotime($p_date);
-                        if ($p_ts >= $acad_anchor_ts) {
-                            $diff_s = $p_ts - $acad_anchor_ts;
-                            $w_num = intval(floor($diff_s / (7 * 86400))) + 1;
-                        } else {
-                            $w_num = 1;
-                        }
-                        if ($w_num >= 1 && $w_num <= $current_acad_week) {
-                            $submitted_weeks[$w_num] = true;
+                        $p_date = (!empty($p->lesson_date) && $p->lesson_date !== '0000-00-00') ? $p->lesson_date : ($p->submission_time ?: $p->created_at);
+                        if (!empty($p_date) && $p_date !== '0000-00-00 00:00:00') {
+                            $p_ts = strtotime($p_date);
+                            if ($p_ts >= $acad_anchor_ts) {
+                                $diff_s = $p_ts - $acad_anchor_ts;
+                                $w_num = intval(floor($diff_s / (7 * 86400))) + 1;
+                            } else {
+                                $w_num = 1;
+                            }
+                            if ($w_num >= 1 && $w_num <= $current_acad_week) {
+                                $submitted_weeks[$w_num] = true;
+                            }
                         }
                     }
 
