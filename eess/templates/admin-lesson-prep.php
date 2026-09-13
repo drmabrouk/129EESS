@@ -2510,29 +2510,127 @@ $prep_report_total_late = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}sm
 
             <!-- Report 2: Not Submitted -->
             <div id="rep-not_submitted" class="eess-report-section" style="display: none;">
-                <h4 style="margin: 0 0 15px 0; color: #1e293b; font-weight: 800; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px;">❌ المعلمون المتأخرون عن التحضير والمستثنين اليوم</h4>
+                <h4 style="margin: 0 0 12px 0; color: #881337; font-weight: 800; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px;">❌ تقرير الكادر غير الملتزم بتسليم تحضير الدروس</h4>
+
+                <?php
+                $tab_acad_anchor = strtotime('2026-08-30 00:00:00');
+                $tab_curr_ts = current_time('timestamp');
+                if ($tab_curr_ts >= $tab_acad_anchor) {
+                    $tab_curr_week = intval(floor(($tab_curr_ts - $tab_acad_anchor) / (7 * 86400))) + 1;
+                } else {
+                    $tab_curr_week = 1;
+                }
+                $tab_curr_week = max(1, min(16, $tab_curr_week));
+
+                $pastel_palette_tab = array(
+                    1  => array('bg' => '#fef2f2', 'color' => '#881337', 'border' => '#fecdd3'),
+                    2  => array('bg' => '#fffbe3', 'color' => '#b45309', 'border' => '#fde68a'),
+                    3  => array('bg' => '#f0fdf4', 'color' => '#166534', 'border' => '#bbf7d0'),
+                    4  => array('bg' => '#e0f2fe', 'color' => '#0369a1', 'border' => '#bae6fd'),
+                    5  => array('bg' => '#f3e8ff', 'color' => '#6b21a8', 'border' => '#e9d5ff'),
+                    6  => array('bg' => '#fce7f3', 'color' => '#9d174d', 'border' => '#fbcfe8'),
+                    7  => array('bg' => '#ffedd5', 'color' => '#c2410c', 'border' => '#fed7aa'),
+                    8  => array('bg' => '#ecfdf5', 'color' => '#047857', 'border' => '#a7f3d0'),
+                    9  => array('bg' => '#f1f5f9', 'color' => '#334155', 'border' => '#cbd5e1'),
+                    10 => array('bg' => '#fee2e2', 'color' => '#991b1b', 'border' => '#fca5a5'),
+                    11 => array('bg' => '#e0e7ff', 'color' => '#3730a3', 'border' => '#c7d2fe'),
+                    12 => array('bg' => '#fae8ff', 'color' => '#86198f', 'border' => '#f5d0fe'),
+                    13 => array('bg' => '#ccfbf1', 'color' => '#0f766e', 'border' => '#99f6e4'),
+                    14 => array('bg' => '#fef9c3', 'color' => '#854d0e', 'border' => '#fef08a'),
+                    15 => array('bg' => '#f1f5f9', 'color' => '#1e293b', 'border' => '#cbd5e1'),
+                    16 => array('bg' => '#fee2e2', 'color' => '#b91c1c', 'border' => '#fca5a5')
+                );
+
+                $tab_non_submitters = array();
+                foreach ($prep_report_teachers as $t) {
+                    $t_preps = $wpdb->get_results($wpdb->prepare(
+                        "SELECT * FROM {$wpdb->prefix}sm_lesson_preps WHERE teacher_id = %d AND status IN ('submitted', 'approved', 'revision_required', 'rejected', 'late', 'resubmitted')",
+                        $t->ID
+                    ));
+
+                    $sub_weeks = array();
+                    foreach ($t_preps as $p) {
+                        $pt = strtotime($p->created_at ?: $p->lesson_date);
+                        $wn = ($pt >= $tab_acad_anchor) ? (intval(floor(($pt - $tab_acad_anchor) / (7 * 86400))) + 1) : 1;
+                        $sub_weeks[$wn] = true;
+                    }
+
+                    $m_weeks = array();
+                    for ($w = 1; $w <= $tab_curr_week; $w++) {
+                        if (!isset($sub_weeks[$w])) {
+                            $m_weeks[] = $w;
+                        }
+                    }
+
+                    if (!empty($m_weeks)) {
+                        $tab_non_submitters[] = array(
+                            'user'          => $t,
+                            'emp_number'    => get_user_meta($t->ID, 'eess_employee_number', true) ?: ('EMP-' . $t->ID),
+                            'school_name'   => get_user_meta($t->ID, 'eess_school_name', true) ?: 'المؤسسة الرئيسية',
+                            'dept_name'     => get_user_meta($t->ID, 'eess_department', true) ?: 'غير محدد',
+                            'subject'       => get_user_meta($t->ID, 'sm_specialization', true) ?: 'عام',
+                            'total_missing' => count($m_weeks),
+                            'missing_weeks' => $m_weeks
+                        );
+                    }
+                }
+
+                usort($tab_non_submitters, function($a, $b) {
+                    return $b['total_missing'] <=> $a['total_missing'];
+                });
+                ?>
+
+                <p style="margin: 0 0 15px 0; font-size: 12px; color: #475569; line-height: 1.6; font-weight: 600; background: #f8fafc; padding: 10px 14px; border-radius: 8px; border-right: 4px solid #881337;">
+                    يتضمن هذا التقرير كشف الموظفين والمعلمين الذين لم يقوموا برفع تحضير الدروس المطلوب لواحد أو أكثر من الأسابيع الأكاديمية المستحقة حتى تاريخه (الأسابيع من 1 إلى <?php echo $tab_curr_week; ?>). تم تحديد الأسابيع غير المسلمة بناءً على السجلات الفعلية بالمنظومة والتقويم الأكاديمي المعتمد مع استثناء التقديمات المتأخرة المستوفاة.
+                </p>
+
                 <div class="sm-table-container">
                     <table class="sm-table" id="table-rep-not-submitted" style="width: 100%;">
                         <thead>
-                            <tr><th>المعلم</th><th>المادة/التخصص</th><th>القسم</th><th>الحالة العامة</th></tr>
+                            <tr>
+                                <th style="width: 32px; text-align: center;">#</th>
+                                <th>اسم الموظف / المعلم</th>
+                                <th style="width: 110px;">الرقم الوظيفي</th>
+                                <th>المؤسسة / المدرسة</th>
+                                <th>القسم</th>
+                                <th>المادة / التخصص</th>
+                                <th style="width: 90px; text-align: center;">إجمالي المفقود</th>
+                                <th>تفاصيل الأسابيع غير المسلمة</th>
+                            </tr>
                         </thead>
                         <tbody>
-                            <?php $has_late_teachers = false;
-                            foreach ($prep_report_teachers as $t):
-                                $has_prep = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->prefix}sm_lesson_preps WHERE teacher_id = %d AND DATE(lesson_date) = CURDATE()", $t->ID));
-                                if (!$has_prep):
-                                    $has_late_teachers = true;
+                            <?php if (empty($tab_non_submitters)): ?>
+                                <tr>
+                                    <td colspan="8" style="text-align: center; color: #16a34a; font-weight: bold; padding: 20px;">
+                                        🎉 جميع المعلمين قاموا بتقديم كافة تحضيرات الدروس المطلوبة لكافة الأسابيع الأكاديمية المستحقة بنجاح!
+                                    </td>
+                                </tr>
+                            <?php else:
+                                foreach ($tab_non_submitters as $idx => $ns):
                             ?>
                                 <tr>
-                                    <td style="font-weight: 700; color: #dc2626;"><?php echo esc_html($t->display_name); ?></td>
-                                    <td><?php echo esc_html(get_user_meta($t->ID, 'sm_specialization', true) ?: 'غير محدد'); ?></td>
-                                    <td><?php echo esc_html(get_user_meta($t->ID, 'eess_department', true) ?: 'غير محدد'); ?></td>
-                                    <td><span style="background: #fee2e2; color: #991b1b; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 11px;">لم يقدّم اليوم</span></td>
+                                    <td style="text-align: center; font-weight: bold;"><?php echo ($idx + 1); ?></td>
+                                    <td style="font-weight: 700; color: #0f172a;"><?php echo esc_html($ns['user']->display_name); ?></td>
+                                    <td style="font-family: monospace; font-weight: bold; color: #881337;"><?php echo esc_html($ns['emp_number']); ?></td>
+                                    <td><?php echo esc_html($ns['school_name']); ?></td>
+                                    <td><?php echo esc_html($ns['dept_name']); ?></td>
+                                    <td><?php echo esc_html($ns['subject']); ?></td>
+                                    <td style="text-align: center;">
+                                        <span style="display: inline-block; padding: 2px 8px; border-radius: 9999px; background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; font-weight: 800; font-size: 11px;">
+                                            <?php echo $ns['total_missing']; ?> أسبوع
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <?php
+                                        foreach ($ns['missing_weeks'] as $mw) {
+                                            $st = $pastel_palette_tab[$mw] ?? $pastel_palette_tab[1];
+                                            echo '<span style="display: inline-block; padding: 2px 8px; margin: 2px; border-radius: 9999px; font-weight: 800; font-size: 10.5px; background: ' . $st['bg'] . '; color: ' . $st['color'] . '; border: 1px solid ' . $st['border'] . ';">الأسبوع ' . $mw . '</span>';
+                                        }
+                                        ?>
+                                    </td>
                                 </tr>
-                            <?php endif; endforeach;
-                            if (!$has_late_teachers): ?>
-                                <tr><td colspan="4" style="text-align: center; color: #16a34a; font-weight: bold;">جميع المعلمين قاموا بالتحضير اليوم بنجاح! 🎉</td></tr>
-                            <?php endif; ?>
+                            <?php endforeach;
+                            endif; ?>
                         </tbody>
                     </table>
                 </div>
