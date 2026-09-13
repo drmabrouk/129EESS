@@ -118,21 +118,38 @@ window.eessGoToStep = function(step) {
     if (eessCurrentStep < 1) eessCurrentStep = 1;
     if (eessCurrentStep > 5) eessCurrentStep = 5;
 
+    var pastelThemes = {
+        1: { bg: '#fce7f3', fg: '#9f1239', border: '#fbcfe8', numBg: '#9f1239' },
+        2: { bg: '#e0f2fe', fg: '#0369a1', border: '#bae6fd', numBg: '#0369a1' },
+        3: { bg: '#dcfce7', fg: '#15803d', border: '#bbf7d0', numBg: '#15803d' },
+        4: { bg: '#fef3c7', fg: '#b45309', border: '#fde68a', numBg: '#b45309' },
+        5: { bg: '#f3e8ff', fg: '#6b21a8', border: '#e9d5ff', numBg: '#6b21a8' }
+    };
+
     for (var i = 1; i <= 5; i++) {
         var container = document.getElementById('u_step_' + i + '_container');
         var indicator = document.getElementById('u_indicator_step' + i);
 
         if (container) container.style.display = (i === eessCurrentStep) ? 'block' : 'none';
         if (indicator) {
-            if (i === eessCurrentStep) {
-                indicator.style.background = '#881337';
-                indicator.style.color = 'white';
-            } else if (i < eessCurrentStep) {
-                indicator.style.background = '#16a34a';
-                indicator.style.color = 'white';
+            var numSpan = indicator.querySelector('span:first-child');
+            if (i === eessCurrentStep || i < eessCurrentStep) {
+                var theme = pastelThemes[i] || pastelThemes[1];
+                indicator.style.background = theme.bg;
+                indicator.style.color = theme.fg;
+                indicator.style.borderColor = theme.border;
+                if (numSpan) {
+                    numSpan.style.background = theme.numBg;
+                    numSpan.style.color = '#ffffff';
+                }
             } else {
-                indicator.style.background = '#f1f5f9';
+                indicator.style.background = '#f8fafc';
                 indicator.style.color = '#64748b';
+                indicator.style.borderColor = '#cbd5e1';
+                if (numSpan) {
+                    numSpan.style.background = '#cbd5e1';
+                    numSpan.style.color = '#334155';
+                }
             }
         }
     }
