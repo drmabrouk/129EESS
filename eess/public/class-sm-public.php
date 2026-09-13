@@ -455,15 +455,15 @@ class SM_Public {
                         <div style="font-size: 10.5px; color: #cbd5e1; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px;"><?php echo esc_html($m_role_display . ' · ' . $m_dept_display); ?></div>
                     </div>
                 </div>
-                <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
-                    <button type="button" onclick="window.location.reload();" title="تحديث الصفحة" style="width: 34px; height: 34px; background: rgba(255, 255, 255, 0.15); color: #ffffff !important; border-radius: 50%; border: 1px solid rgba(255,255,255,0.25); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display: block;">
+                <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                    <button type="button" onclick="window.location.reload();" title="تحديث الصفحة" style="width: 34px !important; min-width: 34px !important; max-width: 34px !important; height: 34px !important; border-radius: 9999px !important; padding: 0 !important; background: rgba(255, 255, 255, 0.15); color: #ffffff !important; border: 1px solid rgba(255,255,255,0.25); display: inline-flex !important; align-items: center !important; justify-content: center !important; cursor: pointer; flex-shrink: 0; box-sizing: border-box;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display: block; margin: 0 auto;">
                             <polyline points="23 4 23 10 17 10"></polyline>
                             <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
                         </svg>
                     </button>
-                    <a href="<?php echo wp_logout_url(home_url('/sm-login')); ?>" title="تسجيل الخروج" style="width: 34px; height: 34px; background: rgba(255, 255, 255, 0.15); color: #ffffff !important; border-radius: 50%; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.25); transition: background 0.2s;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display: block;">
+                    <a href="<?php echo wp_logout_url(home_url('/sm-login')); ?>" title="تسجيل الخروج" style="width: 34px !important; min-width: 34px !important; max-width: 34px !important; height: 34px !important; border-radius: 9999px !important; padding: 0 !important; background: rgba(255, 255, 255, 0.15); color: #ffffff !important; border: 1px solid rgba(255,255,255,0.25); display: inline-flex !important; align-items: center !important; justify-content: center !important; text-decoration: none; flex-shrink: 0; box-sizing: border-box;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display: block; margin: 0 auto;">
                             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
                             <polyline points="16 17 21 12 16 7"></polyline>
                             <line x1="21" y1="12" x2="9" y2="12"></line>
@@ -559,13 +559,13 @@ class SM_Public {
 
                 <!-- Exactly 2 Primary Action Boxes -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
-                    <!-- BOX 1: STUDENT INFORMATION (SCAN & PROFILE) -->
+                    <!-- BOX 1: STUDENT INQUIRY (NAME / CODE / BARCODE CAMERA SCAN) -->
                     <button type="button" onclick="eessOpenAdminMobileBox('student_info')" style="background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 16px; padding: 18px 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
                         <div style="width: 46px; height: 46px; background: #eff6ff; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #2563eb; margin-bottom: 10px;">
-                            <span class="dashicons dashicons-id" style="font-size: 24px; width: 24px; height: 24px;"></span>
+                            <span class="dashicons dashicons-search" style="font-size: 24px; width: 24px; height: 24px;"></span>
                         </div>
-                        <span style="font-weight: 800; font-size: 13.5px; color: #0f172a; margin-bottom: 4px;">بيانات الطالب</span>
-                        <span style="font-size: 10.5px; color: #64748b;">مسح البطاقة أو كود الطالب</span>
+                        <span style="font-weight: 800; font-size: 13.5px; color: #0f172a; margin-bottom: 4px;">استعلام عن طالب</span>
+                        <span style="font-size: 10.5px; color: #64748b;">اسم / كود / كاميرا البارکود</span>
                     </button>
 
                     <!-- BOX 2: RECORD VIOLATION (3 IDENTIFICATION METHODS) -->
@@ -578,29 +578,33 @@ class SM_Public {
                     </button>
                 </div>
 
-                <!-- BOX 1 CONTAINER: STUDENT INFORMATION PROFILE -->
+                <!-- BOX 1 CONTAINER: STUDENT INQUIRY (NAME / CODE / BARCODE CAMERA SCAN) -->
                 <div id="m-box-student-info" style="display: none; background: #ffffff; border-radius: 16px; padding: 18px; border: 1px solid #cbd5e1; margin-bottom: 16px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">
-                        <h4 style="margin: 0; font-size: 14.5px; font-weight: 800; color: #1e40af;">الاستعلام عن بيانات الطالب الشاملة</h4>
+                        <h4 style="margin: 0; font-size: 14.5px; font-weight: 800; color: #1e40af;">الاستعلام الشامل عن الطالب</h4>
                         <button type="button" onclick="eessCloseAdminMobileBox()" style="background: #f1f5f9; border: 1px solid #cbd5e1; color: #475569; padding: 4px 12px; border-radius: 9999px; font-size: 11.5px; font-weight: 800; cursor: pointer;">➔ إغلاق</button>
                     </div>
 
-                    <div style="margin-bottom: 12px;">
-                        <button type="button" onclick="eessStartMobileInfoCamera()" style="width: 100%; height: 40px; background: #1e40af; color: white; border: none; border-radius: 10px; font-weight: 800; font-size: 12.5px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                            <span class="dashicons dashicons-camera" style="font-size: 16px;"></span>
-                            <span>مسح باركود بطاقة الطالب بالكاميرا</span>
+                    <!-- Method 1: Camera Barcode Scan -->
+                    <div style="margin-bottom: 14px;">
+                        <button type="button" onclick="eessStartMobileInfoCamera()" style="width: 100%; height: 42px; background: #1e40af; color: white !important; border: none; border-radius: 10px; font-weight: 800; font-size: 12.5px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 2px 6px rgba(30,64,175,0.2);">
+                            <span class="dashicons dashicons-camera" style="font-size: 18px; width: 18px; height: 18px;"></span>
+                            <span>مسح بارکود كارت الطالب بالكاميرا المباشرة</span>
                         </button>
                         <div id="m-info-camera-reader" style="display: none; margin-top: 10px; border-radius: 12px; overflow: hidden; border: 2px solid #2563eb;"></div>
                     </div>
 
-                    <div style="margin-bottom: 12px; position: relative;">
-                        <label style="font-size: 11.5px; font-weight: 700; color: #334155; display: block; margin-bottom: 4px;">أو ادخل الهوية الوطنية / كود الطالب مباشرة:</label>
+                    <!-- Methods 2 & 3: Search by Name or Code -->
+                    <div style="margin-bottom: 14px; position: relative;">
+                        <label style="font-size: 11.5px; font-weight: 700; color: #334155; display: block; margin-bottom: 4px;">ابحث باسم الطالب، كود الطالب، أو الهوية الوطنية:</label>
                         <div style="display: flex; gap: 8px;">
-                            <input type="text" id="m_info_search_code" placeholder="أدخل الهوية الوطنية أو كود الطالب..." style="flex: 1; height: 40px; border-radius: 8px; border: 1px solid #cbd5e1; padding: 0 10px; font-size: 12.5px;">
-                            <button type="button" onclick="eessSearchStudentInfoByCode()" style="height: 40px; padding: 0 16px; background: #0f172a; color: white; border: none; border-radius: 8px; font-weight: 800; font-size: 12px; cursor: pointer;">بحث</button>
+                            <input type="text" id="m_info_search_input" onkeyup="eessMobileInquiryLiveSearch()" placeholder="أدخل اسم الطالب، كود الطالب، أو الهوية..." style="flex: 1; height: 42px; border-radius: 10px; border: 1px solid #cbd5e1; padding: 0 12px; font-size: 12.5px; box-sizing: border-box;">
+                            <button type="button" onclick="eessSearchStudentInfoByCode()" style="height: 42px; padding: 0 18px; background: #0f172a; color: white !important; border: none; border-radius: 10px; font-weight: 800; font-size: 12px; cursor: pointer;">بحث / تأكيد</button>
                         </div>
+                        <div id="m_info_name_results" style="display: none; position: absolute; top: 100%; right: 0; left: 0; z-index: 9999; background: white; border: 1px solid #cbd5e1; border-radius: 10px; max-height: 200px; overflow-y: auto; box-shadow: 0 10px 20px rgba(0,0,0,0.15);"></div>
                     </div>
 
+                    <!-- Comprehensive Mobile Profile Result Container -->
                     <div id="m-student-info-result" style="display: none; margin-top: 15px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px;"></div>
                 </div>
 
@@ -788,13 +792,55 @@ class SM_Public {
                 document.getElementById('m-box-record-violation').style.display = 'none';
             }
 
-            function eessSearchStudentInfoByCode() {
-                var code = document.getElementById('m_info_search_code').value.trim();
+            let mInquiryTimer = null;
+            function eessMobileInquiryLiveSearch() {
+                var val = document.getElementById('m_info_search_input').value.trim();
+                var resultsBox = document.getElementById('m_info_name_results');
+
+                if (mInquiryTimer) clearTimeout(mInquiryTimer);
+                if (val.length < 2) {
+                    resultsBox.style.display = 'none';
+                    resultsBox.innerHTML = '';
+                    return;
+                }
+
+                mInquiryTimer = setTimeout(function() {
+                    jQuery.post('<?php echo $ajax_url; ?>', {
+                        action: 'sm_search_students',
+                        query: val
+                    }, function(res) {
+                        if (res.success && res.data && res.data.length > 0) {
+                            var html = '';
+                            res.data.forEach(function(s) {
+                                var codeVal = s.student_code || s.national_id || s.id;
+                                html += '<div onclick="eessSelectMobileInquiryStudent(\'' + codeVal + '\', \'' + s.name.replace(/'/g, "\\'") + '\')" style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9; cursor: pointer; text-align: right;">' +
+                                        '<div style="font-weight: 800; font-size: 13px; color: #0f172a;">' + s.name + '</div>' +
+                                        '<div style="font-size: 11px; color: #64748b;">الصف: ' + (s.class_name || 'غير محدد') + ' (' + (s.section || 'أ') + ') · الكود: ' + codeVal + '</div>' +
+                                        '</div>';
+                            });
+                            resultsBox.innerHTML = html;
+                            resultsBox.style.display = 'block';
+                        } else {
+                            resultsBox.innerHTML = '<div style="padding: 10px; font-size: 11.5px; color: #94a3b8; text-align: center;">لم يتم العثور على طالب مطابق.</div>';
+                            resultsBox.style.display = 'block';
+                        }
+                    });
+                }, 250);
+            }
+
+            function eessSelectMobileInquiryStudent(codeVal, nameVal) {
+                document.getElementById('m_info_search_input').value = nameVal;
+                document.getElementById('m_info_name_results').style.display = 'none';
+                eessSearchStudentInfoByCode(codeVal);
+            }
+
+            function eessSearchStudentInfoByCode(overrideCode) {
+                var code = overrideCode || document.getElementById('m_info_search_input').value.trim();
                 if (!code) return;
 
                 var resBox = document.getElementById('m-student-info-result');
                 resBox.style.display = 'block';
-                resBox.innerHTML = '<div style="text-align:center; padding:15px; color:#64748b; font-weight:700;">جاري جلب ملف الطالب... ⏳</div>';
+                resBox.innerHTML = '<div style="text-align:center; padding:20px; color:#64748b; font-weight:700;">جاري جلب السجل والملف الشامل للطالب... ⏳</div>';
 
                 jQuery.post('<?php echo $ajax_url; ?>', {
                     action: 'sm_get_student',
@@ -802,16 +848,71 @@ class SM_Public {
                 }, function(res) {
                     if (res.success && res.data) {
                         var st = res.data;
-                        resBox.innerHTML = '<div style="font-weight:900; font-size:15px; color:#0f172a; margin-bottom:6px;">' + st.name + '</div>' +
-                                           '<div style="font-size:12px; color:#475569; line-height:1.6;">' +
-                                           '<strong>كود الطالب:</strong> ' + (st.student_code || st.id) + '<br>' +
-                                           '<strong>الهوية الوطنية:</strong> ' + (st.national_id || 'غير مدخلة') + '<br>' +
-                                           '<strong>الصف والفرع:</strong> ' + (st.class_name || '') + ' (' + (st.section || 'أ') + ')<br>' +
-                                           '<strong>ولي الأمر:</strong> ' + (st.guardian_name || 'غير مدخل') + '<br>' +
-                                           '<strong>رقم التواصل:</strong> ' + (st.guardian_phone || 'غير مدخل') +
-                                           '</div>';
+                        // Fetch Intelligence & Timeline
+                        jQuery.post('<?php echo $ajax_url; ?>', {
+                            action: 'sm_get_student_intelligence',
+                            student_id: st.id
+                        }, function(intelRes) {
+                            var intel = (intelRes.success && intelRes.data) ? intelRes.data : {};
+                            var timelineHtml = '';
+
+                            if (intel.timeline && intel.timeline.length > 0) {
+                                intel.timeline.forEach(function(t) {
+                                    var icon = (t.module === 'clinic') ? '🏥' : ((t.module === 'attendance') ? '⏰' : '⚠️');
+                                    timelineHtml += '<div style="position: relative; padding-right: 20px; border-right: 2px solid #cbd5e1; margin-bottom: 12px;">' +
+                                                    '<div style="position: absolute; right: -6px; top: 0; width: 10px; height: 10px; border-radius: 50%; background: #2563eb;"></div>' +
+                                                    '<div style="font-weight: 800; font-size: 12px; color: #0f172a;">' + icon + ' ' + t.title + '</div>' +
+                                                    '<div style="font-size: 10.5px; color: #64748b; margin: 2px 0;">' + t.date + '</div>' +
+                                                    '<div style="font-size: 11px; color: #334155;">' + t.details + '</div>' +
+                                                    '</div>';
+                                });
+                            } else {
+                                timelineHtml = '<div style="font-size: 11.5px; color: #94a3b8; text-align: center; padding: 10px;">لا توجد أحداث أو زيارات مسجلة في الخط الزمني لهذا العام.</div>';
+                            }
+
+                            // Medical Alerts Box
+                            var healthHtml = '';
+                            if (st.health_status || st.allergies || st.special_needs) {
+                                healthHtml = '<div style="background: #fef2f2; border: 1px solid #fecdd3; border-radius: 12px; padding: 12px; margin-bottom: 14px;">' +
+                                             '<div style="font-weight: 800; font-size: 12.5px; color: #991b1b; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">🏥 التنبيهات الصحية والسلامة المعتمدة</div>' +
+                                             '<div style="font-size: 11.5px; color: #7f1d1d; line-height: 1.5;">' +
+                                             '<strong>الحالة الصحية:</strong> ' + (st.health_status || 'سليم') + '<br>' +
+                                             '<strong>الحساسية والتحذيرات:</strong> ' + (st.allergies || 'لا توجد الحساسية مسجلة') + '<br>' +
+                                             '<strong>أصحاب الهمم:</strong> ' + (st.special_needs ? 'نعم' : 'لا') +
+                                             '</div></div>';
+                            }
+
+                            var avatarSrc = st.photo_url || intel.photo_url || '';
+                            var avatarHtml = avatarSrc ? '<img src="' + avatarSrc + '" style="width: 60px; height: 68px; border-radius: 12px; object-fit: cover; border: 2px solid #2563eb; flex-shrink: 0;">' :
+                                                         '<div style="width: 60px; height: 68px; border-radius: 12px; background: #e2e8f0; display: flex; align-items: center; justify-content: center; font-size: 24px; color: #64748b; flex-shrink: 0;">👤</div>';
+
+                            resBox.innerHTML = '<div style="display: flex; gap: 14px; align-items: center; background: #ffffff; padding: 14px; border-radius: 12px; border: 1px solid #cbd5e1; margin-bottom: 14px;">' +
+                                               avatarHtml +
+                                               '<div>' +
+                                               '<h3 style="margin: 0 0 4px 0; font-size: 15px; font-weight: 800; color: #0f172a;">' + st.name + '</h3>' +
+                                               '<div style="font-size: 11.5px; color: #475569; font-weight: 700;">' + (st.class_name || '') + ' (' + (st.section || 'أ') + ') · الكود: ' + (st.student_code || st.id) + '</div>' +
+                                               '<div style="font-size: 11px; color: #64748b; margin-top: 2px;">الهوية: ' + (st.national_id || 'غير مدخلة') + '</div>' +
+                                               '</div></div>' +
+
+                                               healthHtml +
+
+                                               '<!-- Basic & Guardian Info Card -->' +
+                                               '<div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; margin-bottom: 14px; font-size: 12px; color: #334155; line-height: 1.6;">' +
+                                               '<div style="font-weight: 800; font-size: 12.5px; color: #0f172a; margin-bottom: 6px; border-bottom: 1px solid #f1f5f9; padding-bottom: 4px;">📋 البيانات العامة والتواصل</div>' +
+                                               '<strong>المؤسسة / المدرسة:</strong> ' + (st.institution_name || 'المدرسة الرئيسية') + '<br>' +
+                                               '<strong>ولي الأمر:</strong> ' + (st.guardian_name || 'غير مدخل') + ' (' + (st.guardian_relationship || 'أب') + ')<br>' +
+                                               '<strong>رقم التواصل:</strong> ' + (st.guardian_phone || 'غير مدخل') + '<br>' +
+                                               '<strong>البريد الإلكتروني:</strong> ' + (st.parent_email || 'غير مدخل') +
+                                               '</div>' +
+
+                                               '<!-- Chronological Activity Timeline -->' +
+                                               '<div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; font-size: 12px; color: #334155;">' +
+                                               '<div style="font-weight: 800; font-size: 12.5px; color: #0f172a; margin-bottom: 10px; border-bottom: 1px solid #f1f5f9; padding-bottom: 4px;">📈 الخط الزمني للأنشطة والأحداث (Academic Year Timeline)</div>' +
+                                               timelineHtml +
+                                               '</div>';
+                        });
                     } else {
-                        resBox.innerHTML = '<div style="color:#dc2626; font-weight:800; text-align:center;">لم يتم العثور على طالب مطابق للكود المدخل.</div>';
+                        resBox.innerHTML = '<div style="color:#dc2626; font-weight:800; text-align:center; padding: 15px;">لم يتم العثور على طالب مطابق للبحث.</div>';
                     }
                 });
             }
@@ -3721,6 +3822,7 @@ class SM_Public {
 
     public function ajax_get_student_intelligence() {
         if (!is_user_logged_in() || !current_user_can('تسجيل_مخالفة')) wp_send_json_error('Unauthorized');
+        global $wpdb;
         $student_id = intval($_POST['student_id']);
         if (!$student_id) wp_send_json_error('Invalid ID');
 
@@ -3728,6 +3830,62 @@ class SM_Public {
         $records = SM_DB::get_records(array('student_id' => $student_id));
         $latest = array_slice($records, 0, 3); // Get 3 latest records
         $student = SM_DB::get_student_by_id($student_id);
+
+        // Fetch Clinic Records for Student Timeline
+        $clinic_records = $wpdb->get_results($wpdb->prepare(
+            "SELECT * FROM {$wpdb->prefix}sm_clinic WHERE student_id = %d ORDER BY created_at DESC LIMIT 10",
+            $student_id
+        ));
+
+        // Fetch Attendance Summary for Student Timeline
+        $attendance_records = $wpdb->get_results($wpdb->prepare(
+            "SELECT * FROM {$wpdb->prefix}sm_attendance WHERE student_id = %d ORDER BY date DESC LIMIT 10",
+            $student_id
+        ));
+
+        // Build Chronological Academic Year Student Activity Timeline
+        $timeline = array();
+
+        if (!empty($clinic_records)) {
+            foreach ($clinic_records as $c) {
+                $timeline[] = array(
+                    'module'  => 'clinic',
+                    'title'   => 'زيارة للعيادة المدرسية: ' . ($c->diagnosis ?: $c->symptoms ?: 'مراجعة صحية'),
+                    'date'    => $c->created_at ?: current_time('mysql'),
+                    'details' => 'الإجراء المتخذ: ' . ($c->action_taken ?: 'فحص روتيني') . ' · الحرارة: ' . ($c->temperature ?: 'طبيعية')
+                );
+            }
+        }
+
+        if (!empty($records)) {
+            foreach ($records as $r) {
+                $timeline[] = array(
+                    'module'  => 'behavior',
+                    'title'   => 'تسجيل ملاحظة سلوكية: ' . ($r->type ?: 'مخالفة انضباطية'),
+                    'date'    => $r->created_at ?: current_time('mysql'),
+                    'details' => 'الدرجة: ' . ($r->degree ?: 1) . ' · تفاصيل: ' . ($r->details ?: 'لا توجد تفاصيل إضافية')
+                );
+            }
+        }
+
+        if (!empty($attendance_records)) {
+            foreach ($attendance_records as $att) {
+                if ($att->status !== 'present') {
+                    $status_lbl = ($att->status === 'absent') ? 'غياب يومي' : (($att->status === 'late') ? 'تأخير صباحي' : 'بعذر رسمياً');
+                    $timeline[] = array(
+                        'module'  => 'attendance',
+                        'title'   => 'رصد حالة حضور: ' . $status_lbl,
+                        'date'    => $att->date . ' 08:00:00',
+                        'details' => 'التاريخ: ' . $att->date . ' · الحالة المعتمدة: ' . $status_lbl
+                    );
+                }
+            }
+        }
+
+        // Sort timeline descending by date
+        usort($timeline, function($a, $b) {
+            return strtotime($b['date']) - strtotime($a['date']);
+        });
 
         $actions = SM_Settings::get_disciplinary_actions();
         $last_action_index = 0;
@@ -3737,13 +3895,16 @@ class SM_Public {
         }
 
         wp_send_json_success(array(
-            'stats' => $stats,
-            'recent' => $latest,
-            'labels' => SM_Settings::get_violation_types(),
+            'student'              => $student,
+            'stats'                => $stats,
+            'recent'               => $latest,
+            'clinic'               => $clinic_records,
+            'timeline'             => array_slice($timeline, 0, 15),
+            'labels'               => SM_Settings::get_violation_types(),
             'disciplinary_actions' => $actions,
-            'last_action_index' => (int)$last_action_index,
-            'is_admin' => current_user_can('manage_options') || current_user_can('إدارة_النظام'),
-            'photo_url' => $student ? $student->photo_url : ''
+            'last_action_index'    => (int)$last_action_index,
+            'is_admin'             => current_user_can('manage_options') || current_user_can('إدارة_النظام'),
+            'photo_url'            => $student ? $student->photo_url : ''
         ));
     }
 
