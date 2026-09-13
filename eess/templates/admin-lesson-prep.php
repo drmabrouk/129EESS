@@ -838,24 +838,15 @@ $unique_subjects = array_unique(array_map(function($s){ return $s->name; }, $all
                         <span class="dashicons dashicons-search" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 15px; width: 15px; height: 15px; color: #94a3b8; pointer-events: none;"></span>
                     </div>
 
-                    <select name="filter_status" class="sm-select" style="height: 36px; font-size: 12px; border-radius: 9999px !important; border: 1px solid #cbd5e1; padding: 0 12px; font-weight: 700; color: #334155; background-color: #ffffff; box-sizing: border-box;">
-                        <option value="">جميع الحالات</option>
-                        <option value="pending" <?php selected(isset($_GET['filter_status']) && $_GET['filter_status'] === 'pending'); ?>>قيد المراجعة</option>
-                        <option value="submitted" <?php selected(isset($_GET['filter_status']) && $_GET['filter_status'] === 'submitted'); ?>>مرفوع للمراجعة</option>
-                        <option value="approved" <?php selected(isset($_GET['filter_status']) && $_GET['filter_status'] === 'approved'); ?>>معتمد رسمياً</option>
-                        <option value="revision_required" <?php selected(isset($_GET['filter_status']) && $_GET['filter_status'] === 'revision_required'); ?>>طلب تعديل</option>
-                        <option value="rejected" <?php selected(isset($_GET['filter_status']) && $_GET['filter_status'] === 'rejected'); ?>>مرفوض</option>
-                    </select>
-
                     <?php $cur_sort = isset($_GET['sort_dir']) && $_GET['sort_dir'] === 'asc' ? 'asc' : 'desc'; ?>
                     <input type="hidden" name="sort_dir" id="eess_sort_dir_val" value="<?php echo $cur_sort; ?>">
-                    <button type="button" onclick="const sInput = document.getElementById('eess_sort_dir_val'); sInput.value = (sInput.value === 'desc' ? 'asc' : 'desc'); this.form.submit();" title="<?php echo $cur_sort === 'asc' ? 'الترتيب الحقيقي: الأقدم أولاً' : 'الترتيب الحقيقي: الأحدث أولاً'; ?>" style="height: 36px; padding: 0 14px; border-radius: 9999px !important; background: #ffffff; color: #475569; border: 1px solid #cbd5e1; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; flex-shrink: 0;" onmouseover="this.style.borderColor='#881337'" onmouseout="this.style.borderColor='#cbd5e1'">
+                    <button type="button" onclick="const sInput = document.getElementById('eess_sort_dir_val'); sInput.value = (sInput.value === 'desc' ? 'asc' : 'desc'); this.form.submit();" title="<?php echo $cur_sort === 'asc' ? 'الترتيب: الأقدم أولاً' : 'الترتيب: الأحدث أولاً'; ?>" style="height: 36px; padding: 0 14px; border-radius: 9999px !important; background: #ffffff; color: #475569; border: 1px solid #cbd5e1; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; flex-shrink: 0;" onmouseover="this.style.borderColor='#881337'" onmouseout="this.style.borderColor='#cbd5e1'">
                         <span class="dashicons <?php echo $cur_sort === 'asc' ? 'dashicons-arrow-up-alt2' : 'dashicons-arrow-down-alt2'; ?>" style="font-size: 14px; width: 14px; height: 14px; margin: 0; color: #881337;"></span>
                         <span><?php echo $cur_sort === 'asc' ? 'الأقدم أولاً' : 'الأحدث أولاً'; ?></span>
                     </button>
 
                     <button type="submit" class="sm-btn" style="height: 36px; font-size: 12px; padding: 0 18px; background: #881337; border-radius: 9999px !important; color: #ffffff !important; font-weight: 800; border: none; cursor: pointer; white-space: nowrap; flex-shrink: 0; box-shadow: 0 1px 3px rgba(136,19,55,0.2);">بحث وتصفية</button>
-                    <?php if (!empty($_GET['s_query']) || !empty($_GET['filter_status']) || (isset($_GET['sort_dir']) && $_GET['sort_dir'] === 'asc')): ?>
+                    <?php if (!empty($_GET['s_query']) || (isset($_GET['sort_dir']) && $_GET['sort_dir'] === 'asc')): ?>
                         <a href="<?php echo esc_url(remove_query_arg(array('s_query', 'filter_status', 'sort_dir'))); ?>" class="sm-btn sm-btn-outline" style="height: 36px; font-size: 11.5px; padding: 0 12px; border-radius: 9999px !important; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; font-weight: 700; flex-shrink: 0;" title="إلغاء التصفية">
                             <span>إلغاء</span>
                             <span class="dashicons dashicons-dismiss" style="font-size: 12px; width: 12px; height: 12px; margin: 0;"></span>
@@ -931,11 +922,6 @@ $unique_subjects = array_unique(array_map(function($s){ return $s->name; }, $all
                             $params[] = sanitize_text_field($_GET['filter_date']);
                         }
 
-                        if (isset($_GET['filter_status']) && !empty($_GET['filter_status'])) {
-                            $conditions[] = "p.status = %s";
-                            $params[] = sanitize_text_field($_GET['filter_status']);
-                        }
-
                         if (isset($_GET['s_query']) && !empty($_GET['s_query'])) {
                             $conditions[] = "(p.title LIKE %s OR u.display_name LIKE %s OR p.subject LIKE %s)";
                             $like_param = '%' . $wpdb->esc_like(sanitize_text_field($_GET['s_query'])) . '%';
@@ -949,7 +935,7 @@ $unique_subjects = array_unique(array_map(function($s){ return $s->name; }, $all
                         }
 
                         $sort_dir = (isset($_GET['sort_dir']) && $_GET['sort_dir'] === 'asc') ? 'ASC' : 'DESC';
-                        $query .= " ORDER BY COALESCE(p.updated_at, p.created_at) {$sort_dir}, p.id {$sort_dir}";
+                        $query .= " ORDER BY CASE WHEN p.status IN ('submitted', 'resubmitted', 'pending') THEN 1 ELSE 2 END ASC, COALESCE(p.submission_time, p.updated_at, p.created_at) {$sort_dir}, p.id {$sort_dir}";
 
                         if (!empty($params)) {
                             $submissions = $wpdb->get_results($wpdb->prepare($query, $params));
@@ -1146,6 +1132,19 @@ $unique_subjects = array_unique(array_map(function($s){ return $s->name; }, $all
                             <!-- Column 8: Approval Status -->
                             <td style="text-align: center; vertical-align: middle;">
                                 <?php
+                                $approver_title = '';
+                                if ($sub->status === 'approved') {
+                                    if (!empty($sub->reviewed_by)) {
+                                        $rev_user = get_userdata($sub->reviewed_by);
+                                        if ($rev_user) {
+                                            $approver_title = 'تم الاعتماد بواسطة: ' . $rev_user->display_name;
+                                        }
+                                    }
+                                    if (empty($approver_title)) {
+                                        $approver_title = 'معتمد من قبل إدارة الشؤون التعليمية والرقابة الأكاديمية';
+                                    }
+                                }
+
                                 $status_labels = array(
                                     'draft' => array('label' => 'مسودة', 'bg' => '#f1f5f9', 'color' => '#475569', 'border' => '#cbd5e1'),
                                     'submitted' => array('label' => 'قيد المراجعة', 'bg' => '#e0f2fe', 'color' => '#0284c7', 'border' => '#bae6fd'),
@@ -1157,7 +1156,7 @@ $unique_subjects = array_unique(array_map(function($s){ return $s->name; }, $all
                                 );
                                 $badge = $status_labels[$sub->status] ?? array('label' => $sub->status, 'bg' => '#f1f5f9', 'color' => '#475569', 'border' => '#cbd5e1');
                                 ?>
-                                <span class="eess-table-capsule" style="background: <?php echo $badge['bg']; ?>; color: <?php echo $badge['color']; ?>; border: 1px solid <?php echo $badge['border']; ?>;">
+                                <span class="eess-table-capsule" <?php if (!empty($approver_title)) echo 'title="' . esc_attr($approver_title) . '"'; ?> style="background: <?php echo $badge['bg']; ?>; color: <?php echo $badge['color']; ?>; border: 1px solid <?php echo $badge['border']; ?>;">
                                     <?php echo esc_html($badge['label']); ?>
                                 </span>
                             </td>
