@@ -200,6 +200,19 @@ class EESS_Student_Data_Service {
 
         // Automatic Institution & School Scope Resolution
         $raw_input_org = intval($data['school_id'] ?? ($data['institution_id'] ?? 0));
+
+        // Enforce Institution Modification Restriction: Only System Administrators can change institution
+        $user_roles = (array) wp_get_current_user()->roles;
+        $is_sys_admin = in_array('administrator', $user_roles, true) || in_array('sm_system_admin', $user_roles, true) || current_user_can('manage_options');
+
+        if ($student_id > 0 && !$is_sys_admin) {
+            // Keep existing student institution unchanged if non-system admin
+            $existing_inst = $wpdb->get_var($wpdb->prepare("SELECT institution_id FROM {$wpdb->prefix}sm_students WHERE id = %d", $student_id));
+            if ($existing_inst) {
+                $raw_input_org = intval($existing_inst);
+            }
+        }
+
         if ($student_id == 0 && $raw_input_org <= 0) {
             $raw_input_org = 2; // Default institution for new students
         }

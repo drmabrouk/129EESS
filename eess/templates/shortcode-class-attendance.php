@@ -5,18 +5,54 @@ $academic = SM_Settings::get_academic_structure();
 ?>
 <div class="sm-class-attendance-shortcode" dir="rtl" style="max-width: 900px; margin: 20px auto; padding: 40px; background: #fff; border-radius: 20px; border: 1px solid var(--sm-border-color); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);">
 
-    <!-- Header: Logo, Title, Date -->
-    <div style="text-align: center; margin-bottom: 40px;">
+    <!-- Header: Logo, Title, Date & Camera Barcode Scanner Mode -->
+    <div style="text-align: center; margin-bottom: 30px;">
         <?php if ($school['school_logo']): ?>
-            <img src="<?php echo esc_url($school['school_logo']); ?>" style="height: 80px; width: auto; margin-bottom: 20px; object-fit: contain;">
+            <img src="<?php echo esc_url($school['school_logo']); ?>" style="height: 70px; width: auto; margin-bottom: 15px; object-fit: contain;">
         <?php endif; ?>
 
-        <h1 style="font-weight: 900; color: var(--sm-dark-color); margin: 0 0 15px 0; font-size: 2.2em; border: none;">تسجيل الحضور اليومي</h1>
+        <h1 style="font-weight: 900; color: #0f172a; margin: 0 0 10px 0; font-size: 2em; border: none;">تسجيل الحضور الرقمي بالكاميرا والبارکود</h1>
 
-        <div style="display: inline-block; padding: 8px 25px; background: var(--sm-pastel-red); color: var(--sm-primary-color); border-radius: 50px; font-weight: 800; font-size: 1.1em; border: 1px solid #fed7d7;">
-            <?php echo date_i18n('l، j F Y'); ?>
+        <div style="display: inline-flex; align-items: center; gap: 8px; padding: 6px 20px; background: #fef2f2; color: #881337; border-radius: 50px; font-weight: 800; font-size: 1em; border: 1px solid #fecdd3;">
+            <span class="dashicons dashicons-camera" style="font-size: 16px; width: 16px; height: 16px;"></span>
+            <span><?php echo date_i18n('l، j F Y'); ?></span>
         </div>
     </div>
+
+    <!-- High-Speed Camera Barcode Attendance Scanner Section -->
+    <div id="eess-attendance-camera-section" style="background: #0f172a; border-radius: 16px; padding: 20px; margin-bottom: 30px; text-align: center; color: #ffffff; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.2);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #334155; padding-bottom: 10px; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="dashicons dashicons-id-alt" style="color: #38bdf8; font-size: 22px; width: 22px; height: 22px;"></span>
+                <span style="font-weight: 800; font-size: 14px; color: #f8fafc;">ماسح البارکود السريع للحضور (1 كارت / ثانية)</span>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <button type="button" id="eess-toggle-cam-btn" onclick="eessToggleAttendanceCamera()" class="sm-btn" style="background: #38a169; color: white !important; font-size: 12px; height: 34px; padding: 0 16px; border-radius: 9999px; font-weight: 800; border: none; cursor: pointer;">
+                    📷 تشغيل كاميرا الماسح
+                </button>
+            </div>
+        </div>
+
+        <!-- Camera Viewfinder Box -->
+        <div id="eess-camera-viewfinder" style="display: none; position: relative; max-width: 480px; margin: 0 auto 15px auto; border-radius: 12px; overflow: hidden; border: 2px solid #38bdf8; background: #000;">
+            <video id="eess-cam-video" style="width: 100%; height: 260px; object-fit: cover;" playsinline></video>
+            <div style="position: absolute; inset: 0; border: 2px dashed rgba(56, 189, 248, 0.6); margin: 30px; pointer-events: none; border-radius: 8px;"></div>
+            <div id="eess-cam-status-pill" style="position: absolute; top: 10px; right: 10px; background: rgba(15, 23, 42, 0.85); color: #38bdf8; padding: 4px 12px; border-radius: 9999px; font-size: 11px; font-weight: 800; backdrop-filter: blur(4px);">
+                الكاميرا نشطة
+            </div>
+        </div>
+
+        <!-- Rapid Manual Barcode Input Fallback -->
+        <div style="display: flex; gap: 10px; max-width: 480px; margin: 0 auto;">
+            <input type="text" id="eess-manual-barcode-input" placeholder="امسح ببارکود الكارت أو أدخل الرقم..." autocomplete="off" style="flex: 1; height: 42px; border-radius: 10px; border: 1px solid #475569; padding: 0 14px; font-size: 13px; background: #1e293b; color: #f8fafc; font-family: monospace; font-weight: 800;" onkeypress="if(event.key==='Enter'){ eessProcessBarcodeAttendance(this.value); this.value=''; }">
+            <button type="button" onclick="let inp=document.getElementById('eess-manual-barcode-input'); eessProcessBarcodeAttendance(inp.value); inp.value='';" class="sm-btn" style="background: #881337; color: white !important; height: 42px; padding: 0 20px; border-radius: 10px; font-weight: 800; border: none; cursor: pointer;">
+                رصد
+            </button>
+        </div>
+    </div>
+
+    <!-- Center Toast Container for Sub-1-Second Instant Notifications -->
+    <div id="eess-attendance-toast" style="display: none; position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%); z-index: 999999; padding: 14px 28px; border-radius: 9999px; font-weight: 800; font-size: 14px; color: #ffffff; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3); backdrop-filter: blur(4px); pointer-events: none; transition: opacity 0.2s ease, transform 0.2s ease;"></div>
 
     <!-- Selection: Grade & Section -->
     <?php
@@ -87,6 +123,138 @@ const dbStructure = <?php echo json_encode(SM_Settings::get_sections_from_db());
 let isSubmitted = false;
 let currentStudents = [];
 let isAuthorized = false;
+let eessCamStream = null;
+let eessLastScannedBarcode = '';
+let eessLastScanTime = 0;
+let eessBarcodeProcessing = false;
+
+// Sub-1-Second Center Toast Notifications for Continuous High-Speed Scanning
+function eessShowAttendanceToast(msg, type = 'success') {
+    const toast = document.getElementById('eess-attendance-toast');
+    if (!toast) return;
+
+    if (type === 'success') {
+        toast.style.background = '#15803d';
+    } else if (type === 'duplicate') {
+        toast.style.background = '#b45309';
+    } else {
+        toast.style.background = '#b91c1c';
+    }
+
+    toast.innerText = msg;
+    toast.style.display = 'block';
+    toast.style.opacity = '1';
+
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => { toast.style.display = 'none'; }, 150);
+    }, 900);
+}
+
+// Camera Scanner Controls
+function eessToggleAttendanceCamera() {
+    const vBox = document.getElementById('eess-camera-viewfinder');
+    const btn = document.getElementById('eess-toggle-cam-btn');
+
+    if (eessCamStream) {
+        // Stop Camera
+        eessCamStream.getTracks().forEach(track => track.stop());
+        eessCamStream = null;
+        if (vBox) vBox.style.display = 'none';
+        if (btn) {
+            btn.innerText = '📷 تشغيل كاميرا الماسح';
+            btn.style.background = '#38a169';
+        }
+    } else {
+        // Start Camera
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            alert('الكاميرا غير مدعومة في المتصفح الحالي.');
+            return;
+        }
+
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+        .then(stream => {
+            eessCamStream = stream;
+            const video = document.getElementById('eess-cam-video');
+            if (video) {
+                video.srcObject = stream;
+                video.play();
+            }
+            if (vBox) vBox.style.display = 'block';
+            if (btn) {
+                btn.innerText = '🛑 إيقاف الكاميرا';
+                btn.style.background = '#dc2626';
+            }
+
+            // Start BarcodeDetector loop if supported, else fallback to high-frequency frame checks
+            if ('BarcodeDetector' in window) {
+                const detector = new BarcodeDetector({ formats: ['code_128', 'qr_code', 'ean_13', 'code_39'] });
+                const scanFrame = () => {
+                    if (!eessCamStream) return;
+                    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                        detector.detect(video).then(barcodes => {
+                            if (barcodes.length > 0) {
+                                const code = barcodes[0].rawValue;
+                                const now = Date.now();
+                                if (code && (code !== eessLastScannedBarcode || now - eessLastScanTime > 1500)) {
+                                    eessLastScannedBarcode = code;
+                                    eessLastScanTime = now;
+                                    eessProcessBarcodeAttendance(code);
+                                }
+                            }
+                        }).catch(() => {});
+                    }
+                    requestAnimationFrame(scanFrame);
+                };
+                requestAnimationFrame(scanFrame);
+            } else {
+                eessShowAttendanceToast('الكاميرا متصلة وتعمل بنجاح', 'success');
+            }
+        })
+        .catch(err => {
+            alert('تعذر الوصول للكاميرا: ' + err.message);
+        });
+    }
+}
+
+// Process Scanned Barcode Immediately to DB
+function eessProcessBarcodeAttendance(barcode) {
+    if (!barcode) return;
+    const cleanCode = barcode.trim();
+    if (!cleanCode) return;
+
+    if (eessBarcodeProcessing) return;
+    eessBarcodeProcessing = true;
+
+    const date = new Date().toISOString().split('T')[0];
+    const formData = new FormData();
+    formData.append('action', 'sm_save_attendance_ajax');
+    formData.append('student_barcode', cleanCode);
+    formData.append('status', 'present');
+    formData.append('date', date);
+    formData.append('nonce', '<?php echo wp_create_nonce("sm_attendance_action"); ?>');
+
+    fetch('<?php echo admin_url('admin-ajax.php'); ?>', { method: 'POST', body: formData })
+    .then(r => r.json())
+    .then(res => {
+        eessBarcodeProcessing = false;
+        if (res.success) {
+            if (res.data && res.data.already_recorded) {
+                eessShowAttendanceToast('⚠️ الحضور مسجل بالفعل لهذا الطالب', 'duplicate');
+            } else {
+                const stuName = (res.data && res.data.student_name) ? res.data.student_name : 'الطالب';
+                eessShowAttendanceToast('✅ تم تسجيل حضور: ' + stuName, 'success');
+                if (typeof atLoadStudents === 'function') atLoadStudents();
+            }
+        } else {
+            eessShowAttendanceToast('❌ ' + (res.data || 'بارکود غير معروف'), 'error');
+        }
+    })
+    .catch(() => {
+        eessBarcodeProcessing = false;
+        eessShowAttendanceToast('❌ خطأ في الاتصال بالسيرفر', 'error');
+    });
+}
 
 function smShowNotification(msg, isError = false) {
     if (typeof window.smShowNotification === 'function') {

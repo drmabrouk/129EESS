@@ -631,27 +631,39 @@ if (isset($_GET['manage_employee_id'])) {
                 <?php foreach ($employees as $emp):
                     $emp_role = !empty($emp->roles) ? $emp->roles[0] : '';
                     $emp_num = get_user_meta($emp->ID, 'eess_employee_number', true) ?: 'غير محدد';
-                    $emp_dept = get_user_meta($emp->ID, 'eess_department', true) ?: 'غير محدد';
                     $emp_status = get_user_meta($emp->ID, 'eess_hr_employment_status', true) ?: 'active';
+                    $emp_spec = get_user_meta($emp->ID, 'sm_specialization', true) ?: (get_user_meta($emp->ID, 'specialization', true) ?: 'غير محدد');
+                    $is_teacher = ($emp_role === 'sm_teacher');
                 ?>
                     <div class="hr-employee-card"
                          data-name="<?php echo esc_attr(strtolower($emp->display_name)); ?>"
                          data-number="<?php echo esc_attr($emp_num); ?>"
-                         data-dept="<?php echo esc_attr(strtolower($emp_dept)); ?>"
                          data-status="<?php echo esc_attr($emp_status); ?>"
                          style="background: #fff; border: 1px solid #cbd5e0; border-radius: 12px; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; gap: 15px; flex-wrap: wrap; transition: 0.2s;"
                     >
-                        <!-- Left block: Avatar, Name, Role & Status Badges -->
-                        <div style="display: flex; gap: 15px; align-items: center; min-width: 250px; flex: 1;">
-                            <?php echo get_avatar($emp->ID, 50, '', '', array('style' => 'border-radius: 50% !important; border: 2.5px solid var(--sm-primary-color); width: 50px; height: 50px; object-fit: cover; display: block;')); ?>
+                        <!-- Left block: Avatar, Name, Role Capsules / Badges -->
+                        <div style="display: flex; gap: 15px; align-items: center; min-width: 280px; flex: 1.2;">
+                            <?php echo get_avatar($emp->ID, 50, '', '', array('style' => 'border-radius: 50% !important; border: 2.5px solid #881337; width: 50px; height: 50px; object-fit: cover; display: block; flex-shrink: 0;')); ?>
                             <div>
-                                <h4 style="margin: 0 0 4px 0; font-weight: 800; font-size: 14px; color: #1e293b;"><?php echo esc_html($emp->display_name); ?></h4>
+                                <h4 style="margin: 0 0 6px 0; font-weight: 800; font-size: 14.5px; color: #1e293b;"><?php echo esc_html($emp->display_name); ?></h4>
                                 <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                                    <!-- Role Badge -->
-                                    <span style="font-size: 10px; color: #475569; font-weight: bold; background: #f1f5f9; padding: 2px 8px; border-radius: 4px; display: inline-block;">
-                                        <?php echo $role_map[$emp_role] ?? $emp_role; ?>
-                                    </span>
-                                    <!-- Status Badge directly below name matching Role badge dimensions -->
+                                    <?php if ($is_teacher): ?>
+                                        <!-- Teacher Role Capsule (Red) -->
+                                        <span style="font-size: 10px; color: #ffffff; font-weight: 800; background: #881337; padding: 3px 10px; border-radius: 9999px; display: inline-flex; align-items: center; line-height: 1.2;">
+                                            <?php echo esc_html($role_map[$emp_role] ?? $emp_role); ?>
+                                        </span>
+                                        <!-- Teacher Subject Capsule (Red) -->
+                                        <span style="font-size: 10px; color: #ffffff; font-weight: 800; background: #9f1239; padding: 3px 10px; border-radius: 9999px; display: inline-flex; align-items: center; line-height: 1.2;">
+                                            <?php echo esc_html($emp_spec); ?>
+                                        </span>
+                                    <?php else: ?>
+                                        <!-- Standard Role Badge -->
+                                        <span style="font-size: 10px; color: #475569; font-weight: bold; background: #f1f5f9; padding: 2px 8px; border-radius: 4px; display: inline-block;">
+                                            <?php echo esc_html($role_map[$emp_role] ?? $emp_role); ?>
+                                        </span>
+                                    <?php endif; ?>
+
+                                    <!-- Status Badge -->
                                     <?php if ($emp_status === 'active'): ?>
                                         <span style="font-size: 10px; font-weight: bold; background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; padding: 2px 8px; border-radius: 4px; display: inline-block;">نشط بالخدمة</span>
                                     <?php elseif ($emp_status === 'restricted'): ?>
@@ -659,18 +671,14 @@ if (isset($_GET['manage_employee_id'])) {
                                     <?php else: ?>
                                         <span style="font-size: 10px; font-weight: bold; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 2px 8px; border-radius: 4px; display: inline-block;">غير نشط</span>
                                     <?php endif; ?>
-                                    <span style="font-size: 10px; color: #64748b; font-family: monospace;">@<?php echo esc_html($emp->user_login); ?></span>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Middle block: Employee Metadata (Replaced Employee Number with Assigned School/Institution) -->
-                        <?php $emp_school = get_user_meta($emp->ID, 'eess_school_name', true) ?: 'المدرسة الرئيسية'; ?>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px 15px; min-width: 280px; flex: 1.5; font-size: 12px; color: #475569;">
-                            <div><strong>المؤسسة / المدرسة:</strong> <span style="font-weight: 800; color: #0f172a;"><?php echo esc_html($emp_school); ?></span></div>
-                            <div><strong>القسم / الإدارة:</strong> <span style="font-weight: 600;"><?php echo esc_html($emp_dept); ?></span></div>
-                            <div><strong>المادة / التخصص:</strong> <span style="color: var(--sm-primary-color); font-weight: 700;"><?php echo esc_html(get_user_meta($emp->ID, 'sm_specialization', true) ?: 'غير محدد'); ?></span></div>
-                            <div><strong>البريد الإلكتروني:</strong> <span style="font-family: monospace;"><?php echo esc_html($emp->user_email); ?></span></div>
+                        <!-- Middle block: Employee Number & Email (No Department display) -->
+                        <div style="display: flex; gap: 20px; align-items: center; font-size: 12px; color: #475569; flex: 1;">
+                            <div><strong>الرقم الوظيفي:</strong> <span style="font-weight: 800; color: #0f172a; font-family: monospace;"><?php echo esc_html($emp_num); ?></span></div>
+                            <div><strong>البريد الإلكتروني:</strong> <span style="font-family: monospace; color: #334155;"><?php echo esc_html($emp->user_email); ?></span></div>
                         </div>
 
                         <!-- Right block: Quick Action Buttons (Icon-Only Manage Profile & Teacher ID Print) -->

@@ -702,8 +702,8 @@ class SM_Activator {
                 'title'   => 'تسجيل حضور الفصول',
                 'content' => '[sm_class_attendance]',
             ),
-            'exit-card-portal' => array(
-                'title'   => 'بوابة تقديم وتتبع تصاريح الخروج الرقمية',
+            'card' => array(
+                'title'   => 'بوابة بطاقات الطلاب',
                 'content' => '[card]',
             ),
         );
@@ -718,11 +718,11 @@ class SM_Activator {
                     'post_type'    => 'page',
                     'post_name'    => $slug,
                 ));
-                if ($slug === 'exit-card-portal' && $page_id && !is_wp_error($page_id)) {
+                if ($slug === 'card' && $page_id && !is_wp_error($page_id)) {
                     update_option('eess_exit_card_portal_page_id', $page_id);
                 }
             } else {
-                if ($slug === 'exit-card-portal' && $page_exists->ID) {
+                if ($slug === 'card' && $page_exists->ID) {
                     update_option('eess_exit_card_portal_page_id', $page_exists->ID);
                 }
             }
