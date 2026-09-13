@@ -6361,6 +6361,7 @@ class SM_Public {
                         'name'          => sanitize_text_field($_POST['inst_name'] ?? ''),
                         'type'          => sanitize_text_field($_POST['inst_type'] ?? 'مدرسة'),
                         'country'       => sanitize_text_field($_POST['inst_country'] ?? 'الإمارات العربية المتحدة'),
+                        'emirate'       => sanitize_text_field($_POST['inst_emirate'] ?? 'الشارقة'),
                         'manager_id'    => !empty($_POST['inst_manager_id']) ? intval($_POST['inst_manager_id']) : null,
                         'director_name' => sanitize_text_field($_POST['inst_director_name'] ?? ''),
                         'phone'         => sanitize_text_field($_POST['inst_phone'] ?? ''),
