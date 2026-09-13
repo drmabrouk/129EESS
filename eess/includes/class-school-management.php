@@ -148,6 +148,9 @@ class School_Management {
         $this->loader->add_action('wp_ajax_sm_mark_announcement_viewed', $plugin_public, 'ajax_mark_announcement_viewed');
         $this->loader->add_action('wp_ajax_sm_mark_announcement_closed', $plugin_public, 'ajax_mark_announcement_closed');
         $this->loader->add_action('wp_ajax_sm_reset_user_announcement', $plugin_public, 'ajax_reset_user_announcement');
+        $this->loader->add_action('wp_ajax_eess_republish_system_announcement_ajax', $plugin_public, 'ajax_republish_system_announcement');
+        $this->loader->add_action('wp_ajax_eess_bulk_delete_read_stats_ajax', $plugin_public, 'ajax_bulk_delete_read_stats');
+        $this->loader->add_action('wp_ajax_eess_bulk_delete_user_interactions_ajax', $plugin_public, 'ajax_bulk_delete_read_stats');
         $this->loader->add_action('wp_ajax_sm_disable_system_announcement', $plugin_public, 'ajax_disable_system_announcement');
         $this->loader->add_action('wp_ajax_sm_delete_system_announcement', $plugin_public, 'ajax_delete_system_announcement');
         $this->loader->add_action('wp_ajax_sm_delete_user_announcement_log', $plugin_public, 'ajax_delete_user_announcement_log');
