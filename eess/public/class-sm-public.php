@@ -444,8 +444,8 @@ class SM_Public {
                 $m_role_display = $role_labels[$primary_role_key] ?? 'معلم';
                 $m_dept_display = get_user_meta($user->ID, 'eess_department', true) ?: (get_user_meta($user->ID, 'department', true) ?: 'قسم التربية البدنية والصحية');
             ?>
-            <!-- Solid Black Mobile Header Banner (Rendered ONLY after login) -->
-            <div style="position: sticky; top: 0; z-index: 99999; background: #000000; color: #ffffff; padding: 12px 16px; border-radius: 14px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 14px rgba(0,0,0,0.25);">
+            <!-- Solid Black Mobile Header Banner (Sticky Fixed Top) -->
+            <div style="position: sticky; top: 0; z-index: 999999; background: #000000; color: #ffffff; padding: 12px 16px; border-radius: 14px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 14px rgba(0,0,0,0.25); width: 100%; box-sizing: border-box;">
                 <div style="display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1;">
                     <div style="width: 32px; height: 32px; border-radius: 6px; background: #ffffff; padding: 2px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.2);">
                         <img src="<?php echo esc_url($m_sys_logo); ?>" style="width: 100%; height: 100%; object-fit: contain; border-radius: 4px;" alt="Logo">
@@ -550,6 +550,12 @@ class SM_Public {
                 in_array('sm_system_admin', $user_roles) ||
                 in_array('sm_principal', $user_roles) ||
                 in_array('sm_supervisor', $user_roles) ||
+                in_array('sm_coordinator', $user_roles) ||
+                in_array('sm_hod', $user_roles) ||
+                in_array('sm_teacher', $user_roles) ||
+                in_array('sm_activities_supervisor', $user_roles) ||
+                in_array('sm_clinic', $user_roles) ||
+                in_array('sm_hr', $user_roles) ||
                 in_array('sm_discipline_supervisor', $user_roles)
             );
             if ($is_admin_supervisor):
@@ -615,38 +621,28 @@ class SM_Public {
                         <button type="button" onclick="eessCloseAdminMobileBox()" style="background: #f1f5f9; border: 1px solid #cbd5e1; color: #475569; padding: 4px 12px; border-radius: 9999px; font-size: 11.5px; font-weight: 800; cursor: pointer;">➔ إغلاق</button>
                     </div>
 
-                    <!-- Identification Method Sub-Tabs (Formal text buttons, no icons) -->
-                    <div style="display: flex; gap: 8px; margin-bottom: 14px;">
-                        <button type="button" onclick="eessSwitchMobileIdentMethod('camera', this)" class="m-ident-tab active" style="flex: 1; height: 36px; border-radius: 8px; border: none; background: #dc2626; color: white; font-weight: 800; font-size: 12px; cursor: pointer;">مسح الباركود</button>
-                        <button type="button" onclick="eessSwitchMobileIdentMethod('search', this)" class="m-ident-tab" style="flex: 1; height: 36px; border-radius: 8px; border: 1px solid #cbd5e1; background: white; color: #475569; font-weight: 800; font-size: 12px; cursor: pointer;">البحث عن طالب</button>
-                    </div>
-
-                    <!-- Method 1: Camera Scanner & Image Upload -->
-                    <div id="m-ident-panel-camera" style="display: block; margin-bottom: 14px;">
-                        <div style="display: flex; gap: 8px;">
-                            <button type="button" onclick="eessStartMobileViolCamera()" style="flex: 1; height: 40px; background: #dc2626; color: white; border: none; border-radius: 10px; font-weight: 800; font-size: 12.5px; cursor: pointer;">الكاميرا</button>
-                            <label style="flex: 1; height: 40px; background: #0284c7; color: white; border: none; border-radius: 10px; font-weight: 800; font-size: 12.5px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
-                                <span>رفع باركوود</span>
-                                <input type="file" accept="image/*" onchange="eessMobileScanBarcodeImage(this)" style="display: none;">
-                            </label>
+                    <!-- Unified Same-Row Search & Camera Barcode Scanner (Upload Barcode Functionality Completely Removed) -->
+                    <div style="margin-bottom: 14px; position: relative;">
+                        <label style="font-size: 11.5px; font-weight: 700; color: #334155; display: block; margin-bottom: 4px;">ابحث عن طالب أو امسح البارکود بالكاميرا:</label>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <input type="text" id="m_viol_unified_input" onkeyup="eessMobileSearchStudentUnified()" placeholder="اسم الطالب، كود الطالب، أو الهوية..." style="flex: 1; height: 42px; border-radius: 10px; border: 1px solid #cbd5e1; padding: 0 12px; font-size: 12.5px; box-sizing: border-box;">
+                            <button type="button" onclick="eessStartMobileViolCamera()" style="height: 42px; padding: 0 14px; background: #dc2626; color: white !important; border: none; border-radius: 10px; font-weight: 800; font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; flex-shrink: 0;" title="مسح بارکود بطاقة الطالب بالكاميرا">
+                                <span class="dashicons dashicons-camera" style="font-size: 18px; width: 18px; height: 18px; margin: 0;"></span>
+                                <span>مسح بارکود</span>
+                            </button>
+                            <button type="button" onclick="eessMobileConfirmSearchStudentByCode()" style="height: 42px; padding: 0 14px; background: #0f172a; color: white !important; border: none; border-radius: 10px; font-weight: 800; font-size: 12px; cursor: pointer; flex-shrink: 0;">تأكيد</button>
                         </div>
                         <div id="m-viol-camera-reader" style="display: none; margin-top: 10px; border-radius: 12px; overflow: hidden; border: 2px solid #dc2626;"></div>
+                        <div id="m_viol_name_results" style="display: none; position: absolute; top: 100%; right: 0; left: 0; z-index: 9999; background: white; border: 1px solid #cbd5e1; border-radius: 10px; max-height: 180px; overflow-y: auto; box-shadow: 0 10px 20px rgba(0,0,0,0.15);"></div>
                     </div>
 
-                    <!-- Method 2: Unified Search Engine (Name or Code) -->
-                    <div id="m-ident-panel-search" style="display: none; margin-bottom: 14px; position: relative;">
-                        <label style="font-size: 11.5px; font-weight: 700; color: #334155; display: block; margin-bottom: 4px;">ابحث باسم الطالب أو الهوية أو الكود:</label>
-                        <div style="display: flex; gap: 8px;">
-                            <input type="text" id="m_viol_unified_input" onkeyup="eessMobileSearchStudentUnified()" placeholder="أدخل اسم الطالب، كود الطالب، أو الهوية..." style="flex: 1; height: 40px; border-radius: 8px; border: 1px solid #cbd5e1; padding: 0 10px; font-size: 12.5px; box-sizing: border-box;">
-                            <button type="button" onclick="eessMobileConfirmSearchStudentByCode()" style="height: 40px; padding: 0 16px; background: #0f172a; color: white; border: none; border-radius: 8px; font-weight: 800; font-size: 12px; cursor: pointer;">بحث / تأكيد</button>
+                    <!-- Selected Students Capsules Container (Multi-Student Continuous Barcode Accumulation) -->
+                    <div id="m-selected-student-box" style="display: none; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 12px; margin-bottom: 14px;">
+                        <div style="font-size: 11.5px; font-weight: 800; color: #15803d; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                            <span>👥 الطلاب المحددون لرصد المخالفة:</span>
+                            <span id="m_sel_stu_count" style="background: #15803d; color: white; padding: 2px 8px; border-radius: 9999px; font-size: 10.5px;">0</span>
                         </div>
-                        <div id="m_viol_name_results" style="display: none; position: absolute; top: 100%; right: 0; left: 0; z-index: 9999; background: white; border: 1px solid #cbd5e1; border-radius: 8px; max-height: 180px; overflow-y: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1);"></div>
-                    </div>
-
-                    <!-- Selected Student Card Indicator -->
-                    <div id="m-selected-student-box" style="display: none; background: #dcfce7; border: 1px solid #86efac; border-radius: 12px; padding: 12px; margin-bottom: 14px;">
-                        <div style="font-weight: 800; font-size: 13px; color: #15803d; margin-bottom: 2px;" id="m_sel_stu_name"></div>
-                        <div style="font-size: 11px; color: #166534;" id="m_sel_stu_meta"></div>
+                        <div id="m_sel_stu_capsules_list" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
                     </div>
 
                     <!-- Violation Details Form -->
@@ -748,7 +744,7 @@ class SM_Public {
                 ?>
                 <!-- Administrative Statistics Panel -->
                 <div style="background: #ffffff; border-radius: 16px; padding: 16px; border: 1px solid #cbd5e1; margin-bottom: 16px;">
-                    <h4 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 800; color: #0f172a; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">📊 إحصائيات متابعة التحضير اليومية (<?php echo $is_act_supervisor ? 'التربية البدنية والصحية' : 'إحصائيات المدرسة'; ?>)</h4>
+                    <h4 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 800; color: #0f172a; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">📊 إحصائيات متابعة التحضير اليومية</h4>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                         <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 10px; text-align: center;">
                             <div style="font-size: 18px; font-weight: 900; color: #16a34a;"><?php echo $m_total_submitted; ?> / <?php echo $teacher_count; ?></div>
@@ -886,6 +882,24 @@ class SM_Public {
                             var avatarHtml = avatarSrc ? '<img src="' + avatarSrc + '" style="width: 60px; height: 68px; border-radius: 12px; object-fit: cover; border: 2px solid #2563eb; flex-shrink: 0;">' :
                                                          '<div style="width: 60px; height: 68px; border-radius: 12px; background: #e2e8f0; display: flex; align-items: center; justify-content: center; font-size: 24px; color: #64748b; flex-shrink: 0;">👤</div>';
 
+                            // Normalize Guardian WhatsApp Number
+                            var rawPhone = (st.guardian_phone || '').replace(/[^0-9+]/g, '');
+                            var waPhone = '';
+                            if (rawPhone) {
+                                if (rawPhone.indexOf('+') === 0) {
+                                    waPhone = rawPhone.replace('+', '');
+                                } else if (rawPhone.indexOf('00') === 0) {
+                                    waPhone = rawPhone.substring(2);
+                                } else if (rawPhone.indexOf('0') === 0) {
+                                    waPhone = '971' + rawPhone.substring(1);
+                                } else {
+                                    waPhone = '971' + rawPhone;
+                                }
+                            }
+
+                            var whatsappBtn = waPhone ? '<a href="https://wa.me/' + waPhone + '" target="_blank" style="display: inline-flex; align-items: center; gap: 4px; background: #25d366; color: white !important; font-size: 10.5px; font-weight: 800; padding: 2px 10px; border-radius: 9999px; text-decoration: none; margin-right: 6px;" title="مراسلة عبر واتساب">' +
+                                                        '<span>واتساب</span></a>' : '';
+
                             resBox.innerHTML = '<div style="display: flex; gap: 14px; align-items: center; background: #ffffff; padding: 14px; border-radius: 12px; border: 1px solid #cbd5e1; margin-bottom: 14px;">' +
                                                avatarHtml +
                                                '<div>' +
@@ -901,7 +915,7 @@ class SM_Public {
                                                '<div style="font-weight: 800; font-size: 12.5px; color: #0f172a; margin-bottom: 6px; border-bottom: 1px solid #f1f5f9; padding-bottom: 4px;">📋 البيانات العامة والتواصل</div>' +
                                                '<strong>المؤسسة / المدرسة:</strong> ' + (st.institution_name || 'المدرسة الرئيسية') + '<br>' +
                                                '<strong>ولي الأمر:</strong> ' + (st.guardian_name || 'غير مدخل') + ' (' + (st.guardian_relationship || 'أب') + ')<br>' +
-                                               '<strong>رقم التواصل:</strong> ' + (st.guardian_phone || 'غير مدخل') + '<br>' +
+                                               '<strong>رقم التواصل:</strong> ' + (st.guardian_phone || 'غير مدخل') + whatsappBtn + '<br>' +
                                                '<strong>البريد الإلكتروني:</strong> ' + (st.parent_email || 'غير مدخل') +
                                                '</div>' +
 
@@ -920,20 +934,42 @@ class SM_Public {
             let mInfoScannerInstance = null;
             function eessStartMobileInfoCamera() {
                 var reader = document.getElementById('m-info-camera-reader');
+                if (!reader) return;
                 reader.style.display = 'block';
 
                 if (typeof Html5Qrcode !== 'undefined') {
+                    if (mInfoScannerInstance) {
+                        mInfoScannerInstance.stop().catch(function(){}).then(function(){
+                            mInfoScannerInstance = null;
+                            eessStartMobileInfoCamera();
+                        });
+                        return;
+                    }
                     mInfoScannerInstance = new Html5Qrcode("m-info-camera-reader");
                     mInfoScannerInstance.start({ facingMode: "environment" }, { fps: 15, qrbox: 250 }, function(decodedText) {
-                        mInfoScannerInstance.stop().then(function() {
+                        var cleanCode = decodedText.trim();
+                        if (mInfoScannerInstance) {
+                            mInfoScannerInstance.stop().then(function() {
+                                mInfoScannerInstance = null;
+                                reader.style.display = 'none';
+                                var searchInp = document.getElementById('m_info_search_input');
+                                if (searchInp) searchInp.value = cleanCode;
+                                eessSearchStudentInfoByCode(cleanCode);
+                            }).catch(function() {
+                                mInfoScannerInstance = null;
+                                reader.style.display = 'none';
+                                eessSearchStudentInfoByCode(cleanCode);
+                            });
+                        } else {
                             reader.style.display = 'none';
-                            document.getElementById('m_info_search_code').value = decodedText.trim();
-                            eessSearchStudentInfoByCode();
-                        });
+                            eessSearchStudentInfoByCode(cleanCode);
+                        }
                     }).catch(function(err) {
-                        alert('تعذر فتح الكاميرا: ' + err);
+                        alert('تعذر فتح كاميرا الاستعلام: ' + err);
                         reader.style.display = 'none';
                     });
+                } else {
+                    alert('مكتبة الكاميرا غير جاهزة حالياً.');
                 }
             }
 
@@ -1053,19 +1089,55 @@ class SM_Public {
                 });
             }
 
+            let selectedMobileViolStudents = []; // Array of objects { id, name, code }
+
             function eessSelectMobileViolStudent(id, name, className, codeVal) {
-                document.getElementById('m_viol_student_id').value = id;
-                document.getElementById('m_sel_stu_name').innerText = '✓ تم اختيار الطالب: ' + name;
-                document.getElementById('m_sel_stu_meta').innerText = 'الصف: ' + (className || 'غير محدد');
+                var exists = selectedMobileViolStudents.some(function(s) { return String(s.id) === String(id); });
+                if (exists) {
+                    eessShowMobileToast('الطالب مضاف بالفعل للقائمة', 1000);
+                    return;
+                }
+
+                selectedMobileViolStudents.push({ id: id, name: name, code: codeVal });
+                eessRenderMobileViolStudentCapsules();
+
                 document.getElementById('m-selected-student-box').style.display = 'block';
                 document.getElementById('eess_mobile_violation_form').style.display = 'block';
                 document.getElementById('m_viol_name_results').style.display = 'none';
+
                 if (codeVal && !scannedMobileStudentCodes.includes(codeVal)) {
                     scannedMobileStudentCodes.push(codeVal);
                 }
-                if (id && !scannedMobileStudentCodes.includes(String(id))) {
-                    scannedMobileStudentCodes.push(String(id));
+            }
+
+            function eessRemoveMobileViolStudent(id) {
+                selectedMobileViolStudents = selectedMobileViolStudents.filter(function(s) { return String(s.id) !== String(id); });
+                eessRenderMobileViolStudentCapsules();
+                if (selectedMobileViolStudents.length === 0) {
+                    document.getElementById('m-selected-student-box').style.display = 'none';
+                    document.getElementById('eess_mobile_violation_form').style.display = 'none';
                 }
+            }
+
+            function eessRenderMobileViolStudentCapsules() {
+                var listContainer = document.getElementById('m_sel_stu_capsules_list');
+                var countBadge = document.getElementById('m_sel_stu_count');
+                var hiddenInput = document.getElementById('m_viol_student_id');
+
+                if (countBadge) countBadge.innerText = selectedMobileViolStudents.length;
+                if (hiddenInput) {
+                    hiddenInput.value = selectedMobileViolStudents.map(function(s) { return s.id; }).join(',');
+                }
+
+                if (!listContainer) return;
+                var html = '';
+                selectedMobileViolStudents.forEach(function(s) {
+                    html += '<div style="background: #ffffff; border: 1px solid #86efac; color: #15803d; padding: 4px 10px; border-radius: 9999px; font-size: 11.5px; font-weight: 800; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">' +
+                            '<span>' + s.name + '</span>' +
+                            '<span onclick="eessRemoveMobileViolStudent(' + s.id + ')" style="cursor: pointer; font-size: 14px; line-height: 1; color: #dc2626; font-weight: 900;">&times;</span>' +
+                            '</div>';
+                });
+                listContainer.innerHTML = html;
             }
 
             let mViolSubmitting = false;
