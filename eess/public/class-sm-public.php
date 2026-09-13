@@ -4609,28 +4609,61 @@ class SM_Public {
     public function ajax_save_attendance() {
         if (!wp_verify_nonce($_POST['nonce'], 'sm_attendance_action')) wp_send_json_error('Security check failed');
 
-        $student_id = intval($_POST['student_id']);
-        $status = sanitize_text_field($_POST['status']);
-        $date = sanitize_text_field($_POST['date']);
-        $code = sanitize_text_field($_POST['security_code'] ?? '');
+        global $wpdb;
+        $date = !empty($_POST['date']) ? sanitize_text_field($_POST['date']) : current_time('Y-m-d');
+        $status = !empty($_POST['status']) ? sanitize_text_field($_POST['status']) : 'present';
+        $barcode = sanitize_text_field($_POST['student_barcode'] ?? '');
+        $student_id = intval($_POST['student_id'] ?? 0);
 
-        // Get student info to check class
-        $student = SM_DB::get_student_by_id($student_id);
-        if (!$student) wp_send_json_error('Student not found');
-
-        $is_staff = is_user_logged_in() && current_user_can('إدارة_الطلاب');
-        $valid_code = (SM_Settings::get_class_security_code($student->class_name, $student->section) === $code);
-
-        if (!$is_staff && !$valid_code) {
-            wp_send_json_error('Unauthorized');
+        // Barcode resolution fallback if student_barcode provided
+        if ($student_id <= 0 && !empty($barcode)) {
+            $matched_id = $wpdb->get_var($wpdb->prepare(
+                "SELECT id FROM {$wpdb->prefix}sm_students WHERE student_code = %s OR national_id = %s OR id = %d",
+                $barcode, $barcode, intval($barcode)
+            ));
+            if ($matched_id) {
+                $student_id = intval($matched_id);
+            }
         }
 
-        $teacher_id = get_current_user_id(); // 0 for public
+        $student = SM_DB::get_student_by_id($student_id);
+        if (!$student) wp_send_json_error('عفواً، لم يتم العثور على طالب به القيمة البارکود الممسوحة.');
+
+        // Server-side school scope check
+        $user_scope = EESS_Org_Helper::get_user_scope();
+        if (!$user_scope['unrestricted'] && !empty($user_scope['schools'])) {
+            $st_sch = intval($student->institution_id ?: $student->school_id);
+            if ($st_sch > 0 && !in_array($st_sch, $user_scope['schools'], true)) {
+                wp_send_json_error('عفواً، لا تمتلك صلاحية تسجل حضور طلاب خارج نطاق مدرستك.');
+            }
+        }
+
+        // Duplicate Check for the same date/session
+        $already = $wpdb->get_var($wpdb->prepare(
+            "SELECT id FROM {$wpdb->prefix}sm_attendance WHERE student_id = %d AND date = %s",
+            $student_id, $date
+        ));
+
+        if ($already && !empty($barcode)) {
+            wp_send_json_success(array(
+                'already_recorded' => true,
+                'student_id'       => $student_id,
+                'student_name'     => $student->name,
+                'message'          => 'الحضور مسجل بالفعل لهذا الطالب اليوم'
+            ));
+        }
+
+        $teacher_id = get_current_user_id();
 
         if (SM_DB::save_attendance($student_id, $status, $date, $teacher_id)) {
-            wp_send_json_success('Saved');
+            wp_send_json_success(array(
+                'already_recorded' => false,
+                'student_id'       => $student_id,
+                'student_name'     => $student->name,
+                'status'           => $status
+            ));
         } else {
-            wp_send_json_error('Failed to save');
+            wp_send_json_error('فشل تسجيل الحضور بجدول البيانات.');
         }
     }
 
