@@ -815,6 +815,18 @@ class EESS_Org_Helper {
     }
 
     /**
+     * Resolves Department Name automatically from Subject Name
+     */
+    public static function get_department_name_for_subject($subject_input) {
+        $dept_code = self::resolve_department_from_subject($subject_input);
+        $official_depts = self::get_official_departments();
+        if (isset($official_depts[$dept_code])) {
+            return $official_depts[$dept_code]['name'];
+        }
+        return 'قسم المواد الدراسية';
+    }
+
+    /**
      * Centralized Assignment Saver
      */
     public static function save_user_assignments($user_id, $data) {

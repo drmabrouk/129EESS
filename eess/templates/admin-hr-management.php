@@ -200,16 +200,29 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['eess_hr_actio
     $action_type = sanitize_text_field($_POST['eess_hr_action']);
 
     if ($action_type === 'save_employment') {
+        $spec_input = sanitize_text_field($_POST['specialization']);
+        $dept_input = sanitize_text_field($_POST['department']);
+
+        if (!empty($spec_input) && class_exists('EESS_Org_Helper')) {
+            $auto_dept = EESS_Org_Helper::get_department_name_for_subject($spec_input);
+            if (!empty($auto_dept)) {
+                $dept_input = $auto_dept;
+            }
+        }
+
         update_user_meta($emp_id, 'eess_employee_number', sanitize_text_field($_POST['employee_number']));
-        update_user_meta($emp_id, 'eess_department', sanitize_text_field($_POST['department']));
+        update_user_meta($emp_id, 'eess_department', $dept_input);
+        update_user_meta($emp_id, 'department', $dept_input);
+        update_user_meta($emp_id, 'sm_department', $dept_input);
         update_user_meta($emp_id, 'eess_school_name', sanitize_text_field($_POST['school_name']));
-        update_user_meta($emp_id, 'sm_specialization', sanitize_text_field($_POST['specialization']));
+        update_user_meta($emp_id, 'sm_specialization', $spec_input);
+        update_user_meta($emp_id, 'specialization', $spec_input);
         update_user_meta($emp_id, 'eess_hr_employment_date', sanitize_text_field($_POST['employment_date']));
         update_user_meta($emp_id, 'eess_hr_employment_status', sanitize_text_field($_POST['employment_status']));
         update_user_meta($emp_id, 'sm_phone', sanitize_text_field($_POST['phone']));
 
         wp_update_user(array('ID' => $emp_id, 'display_name' => sanitize_text_field($_POST['display_name'])));
-        $status_message = 'تم تحديث بيانات التعيين والسجل الوظيفي للموظف بنجاح.';
+        $status_message = 'تم تحديث بيانات التعيين والسجل الوظيفي للموظف وتزامن القسم التلقائي بنجاح.';
         SM_Logger::log('تحديث السجل الوظيفي', "تم تحديث السجل الوظيفي للموظف المعرف: $emp_id");
     }
 
@@ -628,49 +641,49 @@ if (isset($_GET['manage_employee_id'])) {
                          data-status="<?php echo esc_attr($emp_status); ?>"
                          style="background: #fff; border: 1px solid #cbd5e0; border-radius: 12px; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; gap: 15px; flex-wrap: wrap; transition: 0.2s;"
                     >
-                        <!-- Left block: Avatar, Name & Role -->
+                        <!-- Left block: Avatar, Name, Role & Status Badges -->
                         <div style="display: flex; gap: 15px; align-items: center; min-width: 250px; flex: 1;">
                             <?php echo get_avatar($emp->ID, 50, '', '', array('style' => 'border-radius: 50% !important; border: 2.5px solid var(--sm-primary-color); width: 50px; height: 50px; object-fit: cover; display: block;')); ?>
                             <div>
                                 <h4 style="margin: 0 0 4px 0; font-weight: 800; font-size: 14px; color: #1e293b;"><?php echo esc_html($emp->display_name); ?></h4>
-                                <div style="display: flex; align-items: center; gap: 6px;">
-                                    <span style="font-size: 10px; color: #475569; font-weight: bold; background: #f1f5f9; padding: 2px 8px; border-radius: 4px;">
+                                <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                                    <!-- Role Badge -->
+                                    <span style="font-size: 10px; color: #475569; font-weight: bold; background: #f1f5f9; padding: 2px 8px; border-radius: 4px; display: inline-block;">
                                         <?php echo $role_map[$emp_role] ?? $emp_role; ?>
                                     </span>
+                                    <!-- Status Badge directly below name matching Role badge dimensions -->
+                                    <?php if ($emp_status === 'active'): ?>
+                                        <span style="font-size: 10px; font-weight: bold; background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; padding: 2px 8px; border-radius: 4px; display: inline-block;">نشط بالخدمة</span>
+                                    <?php elseif ($emp_status === 'restricted'): ?>
+                                        <span style="font-size: 10px; font-weight: bold; background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; padding: 2px 8px; border-radius: 4px; display: inline-block;">مقيد الدخول</span>
+                                    <?php else: ?>
+                                        <span style="font-size: 10px; font-weight: bold; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 2px 8px; border-radius: 4px; display: inline-block;">غير نشط</span>
+                                    <?php endif; ?>
                                     <span style="font-size: 10px; color: #64748b; font-family: monospace;">@<?php echo esc_html($emp->user_login); ?></span>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Middle block: Employee Metadata -->
+                        <!-- Middle block: Employee Metadata (Replaced Employee Number with Assigned School/Institution) -->
+                        <?php $emp_school = get_user_meta($emp->ID, 'eess_school_name', true) ?: 'المدرسة الرئيسية'; ?>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px 15px; min-width: 280px; flex: 1.5; font-size: 12px; color: #475569;">
-                            <div><strong>الرقم الوظيفي:</strong> <code style="background: #f8fafc; padding: 2px 6px; border-radius: 4px; font-weight:bold;"><?php echo esc_html($emp_num); ?></code></div>
+                            <div><strong>المؤسسة / المدرسة:</strong> <span style="font-weight: 800; color: #0f172a;"><?php echo esc_html($emp_school); ?></span></div>
                             <div><strong>القسم / الإدارة:</strong> <span style="font-weight: 600;"><?php echo esc_html($emp_dept); ?></span></div>
                             <div><strong>المادة / التخصص:</strong> <span style="color: var(--sm-primary-color); font-weight: 700;"><?php echo esc_html(get_user_meta($emp->ID, 'sm_specialization', true) ?: 'غير محدد'); ?></span></div>
                             <div><strong>البريد الإلكتروني:</strong> <span style="font-family: monospace;"><?php echo esc_html($emp->user_email); ?></span></div>
                         </div>
 
-                        <!-- Status Badge -->
-                        <div style="min-width: 120px; display: flex; flex-direction: column; gap: 4px; align-items: center; justify-content: center;">
-                            <?php if ($emp_status === 'active'): ?>
-                                <span style="display:inline-block; padding: 3px 12px; font-size: 11px; font-weight: bold; background: #dcfce7; color: #15803d; border-radius: 50px; border: 1px solid #bbf7d0; text-align:center; width:100%;">نشط بالخدمة</span>
-                            <?php elseif ($emp_status === 'restricted'): ?>
-                                <span style="display:inline-block; padding: 3px 12px; font-size: 11px; font-weight: bold; background: #fee2e2; color: #991b1b; border-radius: 50px; border: 1px solid #fca5a5; text-align:center; width:100%;">مقيد الدخول</span>
-                            <?php else: ?>
-                                <span style="display:inline-block; padding: 3px 12px; font-size: 11px; font-weight: bold; background: #f1f5f9; color: #475569; border-radius: 50px; border: 1px solid #cbd5e1; text-align:center; width:100%;">غير نشط</span>
-                            <?php endif; ?>
-
-                            <?php if (get_user_meta($emp->ID, 'eess_access_restricted', true) === 'yes'): ?>
-                                <div style="font-size: 10px; color: #991b1b; font-weight: bold; text-align: center;">السبب: <?php echo esc_html(get_user_meta($emp->ID, 'eess_restriction_reason', true) ?: 'غير محدد'); ?></div>
-                            <?php endif; ?>
-                        </div>
-
-                        <!-- Right block: Quick Action Buttons -->
+                        <!-- Right block: Quick Action Buttons (Icon-Only Manage Profile & Teacher ID Print) -->
                         <div style="display: flex; gap: 6px; align-items: center; justify-content: flex-end; flex-wrap: nowrap; min-width: 180px;">
-                            <a href="<?php echo add_query_arg('manage_employee_id', $emp->ID); ?>" class="sm-btn" style="padding: 0 10px !important; font-size: 11px !important; height: 32px !important; line-height: 32px !important; background: #334155 !important; border: 1px solid #334155 !important; color: white !important; border-radius: 6px !important; display: inline-flex !important; align-items: center !important; gap: 4px !important; text-decoration: none !important;" title="إدارة الملف المهني">
-                                <span class="dashicons dashicons-admin-generic" style="font-size:14px; margin:0;"></span>
-                                <span>إدارة الملف</span>
+                            <!-- Icon-Only Manage Profile Button -->
+                            <a href="<?php echo add_query_arg('manage_employee_id', $emp->ID); ?>" class="sm-btn" style="padding: 0 !important; width: 32px !important; min-width: 32px !important; height: 32px !important; background: #334155 !important; border: 1px solid #334155 !important; color: white !important; border-radius: 6px !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; text-decoration: none !important;" title="إدارة الملف المهني">
+                                <span class="dashicons dashicons-admin-generic" style="font-size:16px; margin:0;"></span>
                             </a>
+
+                            <!-- Icon-Only Print Teacher ID Card Button (Vertical ID Card) -->
+                            <button type="button" onclick="window.open('<?php echo admin_url('admin-ajax.php?action=sm_print&print_type=teacher_card&employee_id=' . $emp->ID); ?>', '_blank')" class="sm-btn" style="padding: 0 !important; width: 32px !important; min-width: 32px !important; height: 32px !important; background: #881337 !important; border: 1px solid #881337 !important; color: white !important; border-radius: 6px !important; cursor: pointer; display: inline-flex !important; align-items: center !important; justify-content: center !important;" title="طباعة بطاقة المعلم الرقمية (Teacher ID Card)">
+                                <span class="dashicons dashicons-id" style="font-size:16px; margin:0; color:white;"></span>
+                            </button>
 
                             <!-- Print Employee Report (Blue Printer Icon only, without text) -->
                             <button type="button" onclick="eessPrintEmployeeReport(<?php echo $emp->ID; ?>)" class="sm-btn" style="padding: 0 !important; width: 32px !important; min-width: 32px !important; height: 32px !important; background: #3182ce !important; border: 1px solid #3182ce !important; color: white !important; border-radius: 6px !important; cursor: pointer; display: inline-flex !important; align-items: center !important; justify-content: center !important;" title="طباعة التقرير المهني">

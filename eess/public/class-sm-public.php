@@ -9905,6 +9905,248 @@ class SM_Public {
             </html>
             <?php
             exit;
+        } elseif ($print_type === 'teacher_card' || $print_type === 'teacher_id_card') {
+            $emp_ids = array();
+            if (!empty($_GET['employee_id'])) {
+                $emp_ids[] = intval($_GET['employee_id']);
+            } elseif (!empty($_GET['employee_ids'])) {
+                $emp_ids = array_map('intval', explode(',', $_GET['employee_ids']));
+            }
+
+            if (empty($emp_ids)) {
+                wp_die('لم يتم تحديد كادر تعليمي أو وظيفي للطباعة.');
+            }
+
+            $school_info = SM_Settings::get_school_info();
+            $sys_logo = !empty($school_info['school_logo']) ? $school_info['school_logo'] : (!empty($school_info['logo_url']) ? $school_info['logo_url'] : SM_PLUGIN_URL . 'assets/images/logo.png');
+
+            $role_map = array(
+                'administrator' => 'الإدارة المركزية',
+                'sm_system_admin' => 'مدير النظام التقني',
+                'sm_principal' => 'مدير المدرسة',
+                'sm_supervisor' => 'مشرف تربوي',
+                'sm_coordinator' => 'منسق مادة',
+                'sm_hod' => 'رئيس قسم',
+                'sm_teacher' => 'معلم أخصائي',
+                'sm_discipline_supervisor' => 'مشرف سلوك / انضباط',
+                'sm_activities_supervisor' => 'مشرف أنشطة',
+                'sm_transportation_supervisor' => 'مشرف نقل ومواصلات',
+                'sm_bus_supervisor' => 'مشرف حافلة',
+                'sm_clinic' => 'العيادة المدرسية',
+                'sm_hr' => 'الموارد البشرية (HR)'
+            );
+            ?>
+            <!DOCTYPE html>
+            <html lang="ar" dir="rtl">
+            <head>
+                <meta charset="UTF-8">
+                <title>بطاقة الهوية الرقمية الموحّدة للكوادر المدرسية (Teacher ID)</title>
+                <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+                <style>
+                    * { box-sizing: border-box; }
+                    body {
+                        font-family: 'Cairo', sans-serif;
+                        direction: rtl;
+                        background: #e2e8f0;
+                        margin: 0;
+                        padding: 20px;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        gap: 20px;
+                    }
+                    .cards-container {
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 20px;
+                        justify-content: center;
+                    }
+                    /* Vertical ID Card Layout (58mm x 92mm Standard Vertical Ratio) */
+                    .vertical-id-card {
+                        width: 58mm;
+                        height: 92mm;
+                        background: #ffffff;
+                        border-radius: 12px;
+                        border: 1px solid #cbd5e1;
+                        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12);
+                        position: relative;
+                        overflow: hidden;
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: space-between;
+                        padding: 0;
+                        box-sizing: border-box;
+                    }
+                    .vcard-top-bar {
+                        background: #0f172a;
+                        color: #ffffff;
+                        padding: 8px 10px;
+                        text-align: center;
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        border-bottom: 2px solid #881337;
+                    }
+                    .vcard-logo {
+                        width: 24px;
+                        height: 24px;
+                        object-fit: contain;
+                        background: white;
+                        border-radius: 4px;
+                        padding: 2px;
+                    }
+                    .vcard-inst-title {
+                        font-size: 8.5px;
+                        font-weight: 900;
+                        line-height: 1.2;
+                        color: #ffffff;
+                    }
+                    .vcard-body {
+                        padding: 8px 10px;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        text-align: center;
+                        flex: 1;
+                        justify-content: space-between;
+                    }
+                    .vcard-photo-box {
+                        width: 32mm;
+                        height: 36mm;
+                        border-radius: 10px;
+                        overflow: hidden;
+                        border: 2px solid #0f172a;
+                        margin: 2px auto 6px auto;
+                        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                        background: #f1f5f9;
+                    }
+                    .vcard-photo {
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
+                        display: block;
+                    }
+                    .vcard-emp-name {
+                        font-size: 11.5px;
+                        font-weight: 900;
+                        color: #0f172a;
+                        margin-bottom: 3px;
+                        line-height: 1.25;
+                    }
+                    .vcard-role-badge {
+                        display: inline-block;
+                        padding: 2px 8px;
+                        background: #f1f5f9;
+                        color: #881337;
+                        border: 1px solid #fecdd3;
+                        border-radius: 9999px;
+                        font-size: 8.5px;
+                        font-weight: 800;
+                        margin-bottom: 4px;
+                    }
+                    .vcard-meta-line {
+                        font-size: 8px;
+                        color: #475569;
+                        font-weight: 700;
+                        margin-bottom: 2px;
+                        line-height: 1.3;
+                    }
+                    .vcard-barcode-box {
+                        width: 100%;
+                        max-width: 48mm;
+                        height: 11mm;
+                        margin-top: 4px;
+                    }
+                    .vcard-barcode-box svg {
+                        width: 100%;
+                        height: 100%;
+                        display: block;
+                    }
+                    .vcard-footer {
+                        background: #f8fafc;
+                        border-top: 1px solid #e2e8f0;
+                        padding: 4px 8px;
+                        font-size: 6.5px;
+                        color: #64748b;
+                        font-weight: 800;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                    }
+                    @media print {
+                        @page { size: A4 portrait; margin: 10mm; }
+                        body { background: white; padding: 0; }
+                        .no-print { display: none !important; }
+                        .cards-container { gap: 6mm; justify-content: flex-start; }
+                        .vertical-id-card { box-shadow: none; border: 1px solid #94a3b8; page-break-inside: avoid; }
+                    }
+                </style>
+            </head>
+            <body>
+
+                <div class="no-print" style="text-align: center; margin-bottom: 10px;">
+                    <button onclick="window.print()" style="background: #881337; color: white; border: none; padding: 10px 26px; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 14px; font-family: 'Cairo';">🖨️ طباعة بطاقة الهوية الرسمية (Vertical Teacher ID)</button>
+                </div>
+
+                <div class="cards-container">
+                    <?php foreach ($emp_ids as $eid):
+                        $emp = get_userdata($eid);
+                        if (!$emp) continue;
+
+                        $emp_num   = get_user_meta($eid, 'eess_employee_number', true) ?: (get_user_meta($eid, 'sm_employee_id', true) ?: $emp->user_login);
+                        $emp_role  = !empty($emp->roles) ? $emp->roles[0] : 'sm_teacher';
+                        $emp_role_lbl = $role_map[$emp_role] ?? 'كادر تعليمي';
+                        $emp_spec  = get_user_meta($eid, 'sm_specialization', true) ?: (get_user_meta($eid, 'specialization', true) ?: '');
+                        $emp_dept  = get_user_meta($eid, 'eess_department', true) ?: (get_user_meta($eid, 'department', true) ?: '');
+                        if (empty($emp_dept) && !empty($emp_spec) && class_exists('EESS_Org_Helper')) {
+                            $emp_dept = EESS_Org_Helper::get_department_name_for_subject($emp_spec);
+                        }
+                        $emp_school = get_user_meta($eid, 'eess_school_name', true) ?: 'مؤسسة الشعلة للتعليم والتطوير';
+
+                        $custom_photo = get_user_meta($eid, 'sm_profile_photo_url', true) ?: get_user_meta($eid, 'eess_profile_photo', true);
+                        $photo_src    = $custom_photo ?: get_avatar_url($eid, array('size' => 180));
+
+                        // Re-use exact same barcode technology & SVG generator as Student ID
+                        $barcode_svg = $this->eess_generate_qr_code_svg($emp_num);
+                    ?>
+                        <div class="vertical-id-card">
+                            <div class="vcard-top-bar">
+                                <img src="<?php echo esc_url($sys_logo); ?>" class="vcard-logo" alt="Logo" onerror="this.style.display='none'">
+                                <div class="vcard-inst-title"><?php echo esc_html($emp_school); ?></div>
+                            </div>
+
+                            <div class="vcard-body">
+                                <div class="vcard-photo-box">
+                                    <img src="<?php echo esc_url($photo_src); ?>" class="vcard-photo" alt="Photo">
+                                </div>
+
+                                <div>
+                                    <div class="vcard-emp-name"><?php echo esc_html($emp->display_name); ?></div>
+                                    <div class="vcard-role-badge"><?php echo esc_html($emp_role_lbl); ?></div>
+                                    <div class="vcard-meta-line"><strong>القسم:</strong> <?php echo esc_html($emp_dept ?: 'الكادر الأكاديمي'); ?></div>
+                                    <?php if (!empty($emp_spec)): ?>
+                                        <div class="vcard-meta-line"><strong>التخصص:</strong> <?php echo esc_html($emp_spec); ?></div>
+                                    <?php endif; ?>
+                                    <div class="vcard-meta-line"><strong>الرقم الوظيفي:</strong> <span style="font-family: monospace; font-weight: 900; color: #881337;"><?php echo esc_html($emp_num); ?></span></div>
+                                </div>
+
+                                <div class="vcard-barcode-box" title="<?php echo esc_attr($emp_num); ?>">
+                                    <?php echo $barcode_svg; ?>
+                                </div>
+                            </div>
+
+                            <div class="vcard-footer">
+                                <span>بطاقة هوية رسمية معتمدة</span>
+                                <span style="font-family: monospace;">EESS VERIFIED STAFF</span>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+
+            </body>
+            </html>
+            <?php
+            exit;
         } else {
             wp_die('نوع الطباعة غير مدعوم.');
         }
@@ -10665,6 +10907,12 @@ class SM_Public {
         $school_id      = intval($_POST['school_id'] ?? 0);
         $department     = sanitize_text_field($_POST['department'] ?? '');
         $specialization = sanitize_text_field($_POST['specialization'] ?? '');
+        if (!empty($specialization) && class_exists('EESS_Org_Helper')) {
+            $auto_dept = EESS_Org_Helper::get_department_name_for_subject($specialization);
+            if (!empty($auto_dept)) {
+                $department = $auto_dept;
+            }
+        }
         $nationality    = sanitize_text_field($_POST['nationality'] ?? '');
         $dob            = sanitize_text_field($_POST['dob'] ?? '');
         $gender         = sanitize_text_field($_POST['gender'] ?? '');
