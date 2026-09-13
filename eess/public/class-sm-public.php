@@ -545,26 +545,29 @@ class SM_Public {
             <?php endif; ?>
 
             <?php
-            $is_admin_supervisor = is_user_logged_in() && (
+            $can_record_violation = is_user_logged_in() && (
                 in_array('administrator', $user_roles) ||
                 in_array('sm_system_admin', $user_roles) ||
                 in_array('sm_principal', $user_roles) ||
                 in_array('sm_supervisor', $user_roles) ||
-                in_array('sm_coordinator', $user_roles) ||
-                in_array('sm_hod', $user_roles) ||
-                in_array('sm_teacher', $user_roles) ||
-                in_array('sm_activities_supervisor', $user_roles) ||
-                in_array('sm_clinic', $user_roles) ||
-                in_array('sm_hr', $user_roles) ||
                 in_array('sm_discipline_supervisor', $user_roles)
             );
-            if ($is_admin_supervisor):
+            $can_access_inquiry = is_user_logged_in() && (
+                $can_record_violation ||
+                in_array('sm_teacher', $user_roles) ||
+                in_array('sm_coordinator', $user_roles) ||
+                in_array('sm_hod', $user_roles) ||
+                in_array('sm_activities_supervisor', $user_roles) ||
+                in_array('sm_clinic', $user_roles) ||
+                in_array('sm_hr', $user_roles)
+            );
+            if ($can_access_inquiry):
             ?>
-            <!-- MOBILE ADMIN / PRINCIPAL / SUPERVISOR / DISCIPLINE DASHBOARD (EXACTLY 2 PRIMARY BOXES) -->
+            <!-- MOBILE DASHBOARD PRIMARY ACTION BOXES -->
             <div id="m-admin-dashboard" style="margin-bottom: 20px;">
 
-                <!-- Exactly 2 Primary Action Boxes -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                <!-- Action Boxes Container (Dynamic Grid) -->
+                <div style="display: grid; grid-template-columns: <?php echo $can_record_violation ? '1fr 1fr' : '1fr 1fr'; ?>; gap: 12px; margin-bottom: 16px;">
                     <!-- BOX 1: STUDENT INQUIRY (NAME / CODE / BARCODE CAMERA SCAN) -->
                     <button type="button" onclick="eessOpenAdminMobileBox('student_info')" style="background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 16px; padding: 18px 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
                         <div style="width: 46px; height: 46px; background: #eff6ff; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #2563eb; margin-bottom: 10px;">
@@ -574,14 +577,27 @@ class SM_Public {
                         <span style="font-size: 10.5px; color: #64748b;">اسم / كود / كاميرا البارکود</span>
                     </button>
 
-                    <!-- BOX 2: RECORD VIOLATION (3 IDENTIFICATION METHODS) -->
-                    <button type="button" onclick="eessOpenAdminMobileBox('record_violation')" style="background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 16px; padding: 18px 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
-                        <div style="width: 46px; height: 46px; background: #fef2f2; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #dc2626; margin-bottom: 10px;">
-                            <span class="dashicons dashicons-warning" style="font-size: 24px; width: 24px; height: 24px;"></span>
+                    <!-- BOX 2: BARCODE ATTENDANCE (FAST CAMERA SCANNING) -->
+                    <button type="button" onclick="eessOpenAdminMobileBox('barcode_attendance')" style="background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 16px; padding: 18px 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
+                        <div style="width: 46px; height: 46px; background: #f0fdf4; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #16a34a; margin-bottom: 10px;">
+                            <span class="dashicons dashicons-clock" style="font-size: 24px; width: 24px; height: 24px;"></span>
                         </div>
-                        <span style="font-weight: 800; font-size: 13.5px; color: #0f172a; margin-bottom: 4px;">رصد مخالفة سلوكية</span>
-                        <span style="font-size: 10.5px; color: #64748b;">كاميرا / اسم / كود الطالب</span>
+                        <span style="font-weight: 800; font-size: 13.5px; color: #0f172a; margin-bottom: 4px;">تسجيل الحضور بالبارکود</span>
+                        <span style="font-size: 10.5px; color: #64748b;">رصد سريع للكاميرا للفصل</span>
                     </button>
+
+                    <?php if ($can_record_violation): ?>
+                    <!-- BOX 3: RECORD VIOLATION (AUTHORIZED ADMIN/SUPERVISOR ROLES ONLY) -->
+                    <button type="button" onclick="eessOpenAdminMobileBox('record_violation')" style="grid-column: span 2; background: #ffffff; border: 1.5px solid #fecdd3; border-radius: 16px; padding: 16px 12px; display: flex; align-items: center; justify-content: center; gap: 12px; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
+                        <div style="width: 38px; height: 38px; background: #fef2f2; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #dc2626; flex-shrink: 0;">
+                            <span class="dashicons dashicons-warning" style="font-size: 20px; width: 20px; height: 20px;"></span>
+                        </div>
+                        <div style="text-align: right;">
+                            <span style="font-weight: 800; font-size: 13.5px; color: #991b1b; display: block;">رصد مخالفة سلوكية</span>
+                            <span style="font-size: 10.5px; color: #64748b;">خاص بمدير المدرسة والمشرفين الإداريين</span>
+                        </div>
+                    </button>
+                    <?php endif; ?>
                 </div>
 
                 <!-- BOX 1 CONTAINER: STUDENT INQUIRY (NAME / CODE / BARCODE CAMERA SCAN) -->
@@ -612,6 +628,51 @@ class SM_Public {
 
                     <!-- Comprehensive Mobile Profile Result Container -->
                     <div id="m-student-info-result" style="display: none; margin-top: 15px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px;"></div>
+                </div>
+
+                <!-- BOX 2 CONTAINER: MOBILE BARCODE ATTENDANCE (HIGH-SPEED SCANNING) -->
+                <div id="m-box-barcode-attendance" style="display: none; background: #ffffff; border-radius: 16px; padding: 18px; border: 1px solid #cbd5e1; margin-bottom: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">
+                        <h4 style="margin: 0; font-size: 14.5px; font-weight: 800; color: #15803d;">رصد الحضور اليومي السريع بالبارکود</h4>
+                        <button type="button" onclick="eessCloseAdminMobileBox()" style="background: #f1f5f9; border: 1px solid #cbd5e1; color: #475569; padding: 4px 12px; border-radius: 9999px; font-size: 11.5px; font-weight: 800; cursor: pointer;">➔ إغلاق</button>
+                    </div>
+
+                    <!-- Dynamic Grade & Section Assignment Selector -->
+                    <div style="background: #f8fafc; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 14px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                            <div>
+                                <label style="font-size: 11px; font-weight: 800; color: #334155; display: block; margin-bottom: 3px;">الصف الدراسي:</label>
+                                <select id="m_att_grade_select" onchange="eessUpdateMobileAttendanceSections()" style="width: 100%; height: 38px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 12px; padding: 0 8px; font-family: 'Cairo';">
+                                    <option value="">-- اختر الصف --</option>
+                                    <?php
+                                    $m_db_sections = SM_Settings::get_sections_from_db();
+                                    foreach ($m_db_sections as $m_g_num => $m_secs): ?>
+                                        <option value="الصف <?php echo $m_g_num; ?>" data-gnum="<?php echo $m_g_num; ?>">الصف <?php echo $m_g_num; ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size: 11px; font-weight: 800; color: #334155; display: block; margin-bottom: 3px;">الشعبة / الفصل:</label>
+                                <select id="m_att_section_select" style="width: 100%; height: 38px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 12px; padding: 0 8px; font-family: 'Cairo';" disabled>
+                                    <option value="">-- اختر الشعبة --</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Camera Scanner Toggle Button -->
+                        <button type="button" id="m_att_cam_toggle_btn" onclick="eessToggleMobileAttendanceCamera()" style="width: 100%; height: 42px; background: #16a34a; color: white !important; border: none; border-radius: 10px; font-weight: 800; font-size: 12.5px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 2px 6px rgba(22,163,74,0.2);">
+                            <span class="dashicons dashicons-camera" style="font-size: 18px; width: 18px; height: 18px;"></span>
+                            <span>📷 تشغيل كاميرا ماسح الحضور المستمر</span>
+                        </button>
+                    </div>
+
+                    <!-- Camera Viewfinder Box -->
+                    <div id="m-att-camera-reader" style="display: none; border-radius: 12px; overflow: hidden; border: 2px solid #16a34a; margin-bottom: 14px; position: relative;"></div>
+
+                    <!-- Rapid Scan Session Summary Pill -->
+                    <div id="m-att-scan-summary" style="display: none; background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; border-radius: 10px; padding: 8px 12px; font-size: 11.5px; font-weight: 800; text-align: center; margin-bottom: 10px;">
+                        تم رصد الحضور لـ <span id="m_att_scan_count">0</span> طالب في هذه الجلسة الحالية
+                    </div>
                 </div>
 
                 <!-- BOX 2 CONTAINER: VIOLATION RECORDING -->
@@ -777,15 +838,135 @@ class SM_Public {
 
             <script>
             function eessOpenAdminMobileBox(boxKey) {
-                document.getElementById('m-box-student-info').style.display = (boxKey === 'student_info') ? 'block' : 'none';
-                document.getElementById('m-box-record-violation').style.display = (boxKey === 'record_violation') ? 'block' : 'none';
-                var target = document.getElementById(boxKey === 'student_info' ? 'm-box-student-info' : 'm-box-record-violation');
+                var infoBox = document.getElementById('m-box-student-info');
+                var attBox  = document.getElementById('m-box-barcode-attendance');
+                var violBox = document.getElementById('m-box-record-violation');
+
+                if (infoBox) infoBox.style.display = (boxKey === 'student_info') ? 'block' : 'none';
+                if (attBox)  attBox.style.display  = (boxKey === 'barcode_attendance') ? 'block' : 'none';
+                if (violBox) violBox.style.display = (boxKey === 'record_violation') ? 'block' : 'none';
+
+                var targetId = (boxKey === 'student_info') ? 'm-box-student-info' : ((boxKey === 'barcode_attendance') ? 'm-box-barcode-attendance' : 'm-box-record-violation');
+                var target = document.getElementById(targetId);
                 if (target) target.scrollIntoView({ behavior: 'smooth' });
             }
 
             function eessCloseAdminMobileBox() {
-                document.getElementById('m-box-student-info').style.display = 'none';
-                document.getElementById('m-box-record-violation').style.display = 'none';
+                var infoBox = document.getElementById('m-box-student-info');
+                var attBox  = document.getElementById('m-box-barcode-attendance');
+                var violBox = document.getElementById('m-box-record-violation');
+
+                if (infoBox) infoBox.style.display = 'none';
+                if (attBox)  attBox.style.display  = 'none';
+                if (violBox) violBox.style.display = 'none';
+
+                if (mAttScannerInstance) {
+                    mAttScannerInstance.stop().catch(function(){}).then(function(){ mAttScannerInstance = null; });
+                }
+            }
+
+            function eessUpdateMobileAttendanceSections() {
+                var gradeSelect = document.getElementById('m_att_grade_select');
+                var sectionSelect = document.getElementById('m_att_section_select');
+                if (!gradeSelect || !sectionSelect) return;
+
+                var opt = gradeSelect.options[gradeSelect.selectedIndex];
+                var gNum = opt ? opt.getAttribute('data-gnum') : null;
+
+                sectionSelect.innerHTML = '<option value="">-- اختر الشعبة --</option>';
+                if (!gNum) {
+                    sectionSelect.disabled = true;
+                    return;
+                }
+
+                var dbSections = <?php echo json_encode(SM_Settings::get_sections_from_db()); ?>;
+                var secs = dbSections[gNum] || ['أ', 'ب', 'ج', 'د'];
+                secs.forEach(function(s) {
+                    var o = document.createElement('option');
+                    o.value = s;
+                    o.innerText = 'شعبة ' + s;
+                    sectionSelect.appendChild(o);
+                });
+                sectionSelect.disabled = false;
+            }
+
+            let mAttScannerInstance = null;
+            let mAttScannedCount = 0;
+            let mAttLastScannedCode = '';
+            let mAttLastScanTime = 0;
+
+            function eessToggleMobileAttendanceCamera() {
+                var reader = document.getElementById('m-att-camera-reader');
+                var btn = document.getElementById('m_att_cam_toggle_btn');
+                if (!reader) return;
+
+                if (mAttScannerInstance) {
+                    mAttScannerInstance.stop().then(function() {
+                        mAttScannerInstance = null;
+                        reader.style.display = 'none';
+                        if (btn) btn.innerText = '📷 تشغيل كاميرا ماسح الحضور المستمر';
+                    }).catch(function() {
+                        mAttScannerInstance = null;
+                        reader.style.display = 'none';
+                    });
+                    return;
+                }
+
+                reader.style.display = 'block';
+                if (btn) btn.innerText = '🛑 إيقاف الكاميرا';
+
+                if (typeof Html5Qrcode !== 'undefined') {
+                    mAttScannerInstance = new Html5Qrcode("m-att-camera-reader");
+                    mAttScannerInstance.start({ facingMode: "environment" }, { fps: 15, qrbox: 250 }, function(decodedText) {
+                        var code = decodedText.trim();
+                        var now = Date.now();
+                        if (code && (code !== mAttLastScannedCode || now - mAttLastScanTime > 1500)) {
+                            mAttLastScannedCode = code;
+                            mAttLastScanTime = now;
+                            eessProcessMobileBarcodeAttendance(code);
+                        }
+                    }).catch(function(err) {
+                        alert('تعذر فتح كاميرا الحضور: ' + err);
+                        reader.style.display = 'none';
+                        if (btn) btn.innerText = '📷 تشغيل كاميرا ماسح الحضور المستمر';
+                    });
+                } else {
+                    alert('مكتبة الكاميرا غير جاهزة حالياً.');
+                }
+            }
+
+            function eessProcessMobileBarcodeAttendance(barcode) {
+                var date = new Date().toISOString().split('T')[0];
+                var formData = new FormData();
+                formData.append('action', 'sm_save_attendance_ajax');
+                formData.append('student_barcode', barcode);
+                formData.append('status', 'present');
+                formData.append('date', date);
+                formData.append('nonce', '<?php echo wp_create_nonce("sm_attendance_action"); ?>');
+
+                fetch('<?php echo admin_url('admin-ajax.php'); ?>', { method: 'POST', body: formData })
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success) {
+                        var stuName = (res.data && res.data.student_name) ? res.data.student_name : 'الطالب';
+                        if (res.data && res.data.already_recorded) {
+                            eessShowMobileToast('⚠️ الحضور مسجل بالفعل لـ ' + stuName, 900);
+                        } else {
+                            mAttScannedCount++;
+                            var countEl = document.getElementById('m_att_scan_count');
+                            var sumBox  = document.getElementById('m-att-scan-summary');
+                            if (countEl) countEl.innerText = mAttScannedCount;
+                            if (sumBox)  sumBox.style.display = 'block';
+
+                            eessShowMobileToast('✅ تم تسجيل حضور: ' + stuName, 900);
+                        }
+                    } else {
+                        eessShowMobileToast('❌ ' + (res.data || 'بارکود غير معروف'), 900);
+                    }
+                })
+                .catch(function() {
+                    eessShowMobileToast('❌ خطأ في الاتصال بالخادم', 900);
+                });
             }
 
             let mInquiryTimer = null;
