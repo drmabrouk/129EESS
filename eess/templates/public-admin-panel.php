@@ -1972,71 +1972,118 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
                             <?php include SM_PLUGIN_DIR . 'templates/admin-system-announcements.php'; ?>
                         </div>
                         <div id="activity-logs" class="sm-internal-tab" style="display:none;">
-                            <div style="background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:30px;">
-                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                            <div style="background:#fff; border:1px solid #e2e8f0; border-radius:16px; padding:24px; box-shadow: 0 4px 18px rgba(0,0,0,0.02);">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:15px;">
                                     <div>
-                                        <h4 style="margin:0;">سجل نشاطات النظام الشامل</h4>
-                                        <div style="font-size:12px; color:#718096; margin-top:5px;">يتم الاحتفاظ بآخر 200 نشاط فقط تلقائياً.</div>
+                                        <h4 style="margin:0; font-size:16px; font-weight:800; color:#0f172a;">سجل نشاطات النظام الشامل (Activity Log)</h4>
+                                        <div style="font-size:12px; color:#64748b; margin-top:3px;">يتم الاحتفاظ تلقائياً بأحدث 100 نشاط مع موثوقية الهوية ومصدر الجهاز.</div>
                                     </div>
-                                    <button onclick="smDeleteAllLogs()" class="sm-btn" style="background:#e53e3e; width:auto; font-size:12px;">مسح كافة النشاطات</button>
+                                    <div style="display:flex; gap:10px; align-items:center;">
+                                        <button type="button" onclick="smDeleteAllLogs()" class="sm-btn" style="background:#fee2e2; color:#b91c1c !important; border:1px solid #fca5a5; height:36px; padding:0 16px; font-size:12px; border-radius:9999px; font-weight:800; cursor:pointer;" title="مسح كافة سجلات النشاط">
+                                            <span class="dashicons dashicons-trash" style="font-size:14px; margin:0;"></span>
+                                            <span>مسح كافة النشاطات</span>
+                                        </button>
+                                    </div>
                                 </div>
+
+                                <!-- Live Search Input Engine -->
+                                <div style="margin-bottom: 20px;">
+                                    <input type="text" id="eess-activity-log-search" onkeyup="eessFilterActivityLog()" placeholder="ابحث باسم المستخدم، الرقم الوظيفي، الرتبة، أو تفاصيل الإجراء..." class="sm-input" style="height: 40px; border-radius: 10px; font-size: 12.5px; border: 1px solid #cbd5e1; padding: 0 14px; width: 100%; box-sizing: border-box;">
+                                </div>
+
                                 <div class="sm-table-container">
-                                    <table class="sm-table">
+                                    <table class="sm-table" id="eess-activity-log-table">
                                         <thead>
                                             <tr>
-                                                <th>الوقت</th>
-                                                <th>المستخدم</th>
-                                                <th>الإجراء</th>
-                                                <th>التفاصيل</th>
-                                                <th>الإجراءات</th>
+                                                <th style="width: 220px;">المستخدم والجهة</th>
+                                                <th style="width: 150px;">الإجراء</th>
+                                                <th>التفاصيل والوصف</th>
+                                                <th style="width: 140px;">التاريخ واليوم</th>
+                                                <th style="width: 90px; text-align:center;">المصدر</th>
+                                                <th style="width: 80px; text-align:center;">التحكم</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             <?php 
-                                            $limit = 20;
-                                            $page_num = isset($_GET['log_page']) ? max(1, intval($_GET['log_page'])) : 1;
-                                            $offset = ($page_num - 1) * $limit;
-                                            $all_logs = SM_Logger::get_logs($limit, $offset);
-                                            $total_logs = SM_Logger::get_total_logs();
-                                            $total_pages = ceil($total_logs / $limit);
+                                            $all_logs = SM_Logger::get_logs(100, 0);
 
-                                            foreach ($all_logs as $log):
-                                                $can_rollback = strpos($log->details, 'ROLLBACK_DATA:') === 0;
-                                                $details_display = $can_rollback ? 'بيانات مستعادة' : esc_html($log->details);
-                                            ?>
+                                            if (empty($all_logs)): ?>
                                                 <tr>
-                                                    <td style="font-size: 0.85em; color: #718096;"><?php echo esc_html($log->created_at); ?></td>
-                                                    <td style="font-weight: 600;">
-                                                        <?php echo esc_html($log->display_name ?: 'مستخدم غير معروف'); ?>
-                                                    </td>
-                                                    <td style="font-weight:700; color:var(--sm-primary-color);"><?php echo esc_html($log->action); ?></td>
-                                                    <td style="font-size:0.9em;"><?php echo $details_display; ?></td>
+                                                    <td colspan="6" style="text-align:center; color:#94a3b8; padding:30px; font-weight:700;">لا توجد نشاطات مسجلة حالياً بالمنظومة.</td>
+                                                </tr>
+                                            <?php else:
+                                                foreach ($all_logs as $log):
+                                                    $can_rollback = strpos($log->details, 'ROLLBACK_DATA:') === 0;
+                                                    $details_display = $can_rollback ? 'سجل بيانات مستعادة' : esc_html($log->details);
+                                                    $is_mobile_source = ($log->device_source === 'mobile');
+                                            ?>
+                                                <tr class="eess-log-row" data-search="<?php echo esc_attr(strtolower($log->display_name . ' ' . $log->employee_number . ' ' . $log->role_label . ' ' . $log->action . ' ' . $log->details)); ?>">
                                                     <td>
-                                                        <div style="display:flex; gap:8px;">
+                                                        <div style="display:flex; gap:10px; align-items:center;">
+                                                            <img src="<?php echo esc_url($log->profile_photo); ?>" style="width:38px; height:38px; border-radius:50%; object-fit:cover; border:1.5px solid #cbd5e1; flex-shrink:0;">
+                                                            <div>
+                                                                <div style="font-weight:800; font-size:12.5px; color:#0f172a;"><?php echo esc_html($log->display_name); ?></div>
+                                                                <div style="font-size:10.5px; color:#64748b; font-weight:600;">
+                                                                    #<?php echo esc_html($log->employee_number); ?> · <?php echo esc_html($log->role_label); ?>
+                                                                </div>
+                                                                <div style="font-size:10px; color:#881337; font-weight:700;">🏫 <?php echo esc_html($log->school_name); ?></div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <span style="font-weight:800; font-size:12px; color:#881337; background:#fef2f2; border:1px solid #fecdd3; padding:2px 8px; border-radius:6px; display:inline-block;">
+                                                            <?php echo esc_html($log->action); ?>
+                                                        </span>
+                                                    </td>
+                                                    <td style="font-size:12px; color:#334155; line-height:1.5; font-weight:600;">
+                                                        <?php echo $details_display; ?>
+                                                    </td>
+                                                    <td style="font-size:11px; color:#475569;">
+                                                        <div style="font-weight:800; color:#0f172a;"><?php echo esc_html($log->day_ar); ?> (<?php echo esc_html($log->formatted_date); ?>)</div>
+                                                        <div style="color:#64748b; font-family:monospace;"><?php echo esc_html($log->formatted_time); ?></div>
+                                                    </td>
+                                                    <td style="text-align:center;">
+                                                        <?php if ($is_mobile_source): ?>
+                                                            <span style="font-size:10px; font-weight:800; background:#fef3c7; color:#b45309; border:1px solid #fde68a; padding:2px 8px; border-radius:9999px;" title="تم الإجراء من تطبيق الموبايل">📱 موبايل</span>
+                                                        <?php else: ?>
+                                                            <span style="font-size:10px; font-weight:800; background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd; padding:2px 8px; border-radius:9999px;" title="تم الإجراء من كمبيوتر المكتب">💻 كمبيوتر</span>
+                                                        <?php endif; ?>
+                                                    </td>
+                                                    <td style="text-align:center;">
+                                                        <div style="display:flex; gap:4px; justify-content:center;">
                                                             <?php if ($can_rollback): ?>
-                                                                <button onclick="smRollbackLog(<?php echo $log->id; ?>)" class="sm-btn" style="width:auto; height:28px; padding:0 12px; font-size:11px; background:#2d3748;">استعادة</button>
+                                                                <button type="button" onclick="smRollbackLog(<?php echo $log->id; ?>)" class="sm-btn" style="padding:0 !important; width:28px !important; min-width:28px !important; height:28px !important; background:#dcfce7 !important; border:1px solid #86efac !important; color:#15803d !important; border-radius:6px !important; cursor:pointer; display:inline-flex !alignment; align-items:center; justify-content:center;" title="استعادة هذه العملية">
+                                                                    <span class="dashicons dashicons-undo" style="font-size:14px; margin:0;"></span>
+                                                                </button>
                                                             <?php endif; ?>
-                                                            <button onclick="smDeleteLog(<?php echo $log->id; ?>)" class="sm-btn" style="width:auto; height:28px; padding:0 12px; font-size:11px; background:#e53e3e;">حذف</button>
+                                                            <button type="button" onclick="smDeleteLog(<?php echo $log->id; ?>)" class="sm-btn" style="padding:0 !important; width:28px !important; min-width:28px !important; height:28px !important; background:#fee2e2 !important; border:1px solid #fca5a5 !important; color:#b91c1c !important; border-radius:6px !important; cursor:pointer; display:inline-flex !alignment; align-items:center; justify-content:center;" title="حذف هذا السجل">
+                                                                <span class="dashicons dashicons-trash" style="font-size:14px; margin:0;"></span>
+                                                            </button>
                                                         </div>
                                                     </td>
                                                 </tr>
-                                            <?php endforeach; ?>
+                                            <?php endforeach;
+                                            endif; ?>
                                         </tbody>
                                     </table>
                                 </div>
-                                <?php if ($total_pages > 1): ?>
-                                    <div style="display:flex; justify-content:center; gap:10px; margin-top:20px;">
-                                        <?php if ($page_num > 1): ?>
-                                            <a href="<?php echo add_query_arg('log_page', $page_num - 1); ?>" class="sm-btn sm-btn-outline" style="width:auto; padding:5px 15px; text-decoration:none;">السابق</a>
-                                        <?php endif; ?>
-                                        <span style="align-self:center; font-size:13px;">صفحة <?php echo $page_num; ?> من <?php echo $total_pages; ?></span>
-                                        <?php if ($page_num < $total_pages): ?>
-                                            <a href="<?php echo add_query_arg('log_page', $page_num + 1); ?>" class="sm-btn sm-btn-outline" style="width:auto; padding:5px 15px; text-decoration:none;">التالي</a>
-                                        <?php endif; ?>
-                                    </div>
-                                <?php endif; ?>
                             </div>
                         </div>
+
+                        <script>
+                        function eessFilterActivityLog() {
+                            var query = document.getElementById('eess-activity-log-search').value.toLowerCase().trim();
+                            var rows = document.querySelectorAll('.eess-log-row');
+                            rows.forEach(function(row) {
+                                var text = row.getAttribute('data-search') || '';
+                                if (!query || text.indexOf(query) !== -1) {
+                                    row.style.display = '';
+                                } else {
+                                    row.style.display = 'none';
+                                }
+                            });
+                        }
+                        </script>
                         <?php endif; ?>
                         <?php
                     }
