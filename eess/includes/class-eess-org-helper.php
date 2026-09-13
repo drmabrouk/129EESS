@@ -312,6 +312,46 @@ class EESS_Org_Helper {
         return $res;
     }
 
+    public static function format_assigned_grades($user_id) {
+        $raw_meta = get_user_meta($user_id, 'sm_assigned_grades', true);
+        if (empty($raw_meta)) $raw_meta = get_user_meta($user_id, 'eess_assigned_grades', true);
+        if (empty($raw_meta)) $raw_meta = get_user_meta($user_id, 'sm_grade_level', true);
+
+        if (empty($raw_meta)) return 'جميع المراحل المكلّف بها';
+
+        $grades_arr = array();
+        if (is_array($raw_meta)) {
+            $grades_arr = $raw_meta;
+        } elseif (is_string($raw_meta)) {
+            $unserialized = maybe_unserialize($raw_meta);
+            if (is_array($unserialized)) {
+                $grades_arr = $unserialized;
+            } else {
+                $json = json_decode($raw_meta, true);
+                if (is_array($json)) {
+                    $grades_arr = $json;
+                } else {
+                    $grades_arr = array_map('trim', explode(',', $raw_meta));
+                }
+            }
+        }
+
+        $clean = array();
+        foreach ($grades_arr as $g) {
+            if (is_string($g) || is_numeric($g)) {
+                $item = trim((string)$g, " \t\n\r\0\x0B\"'[]");
+                if (!empty($item)) {
+                    $clean[] = $item;
+                }
+            }
+        }
+
+        if (!empty($clean)) {
+            return implode('، ', array_unique($clean));
+        }
+        return 'جميع المراحل المكلّف بها';
+    }
+
     public static function get_grade_student_count($grade_code_or_name) {
         global $wpdb;
         $cache_key = 'grade_stu_count_' . sanitize_key($grade_code_or_name);
