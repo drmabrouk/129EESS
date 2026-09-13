@@ -4,7 +4,18 @@ if (!defined('ABSPATH')) exit;
 $institutions = class_exists('EESS_Org_Helper') ? EESS_Org_Helper::get_institutions() : array();
 $all_schools  = class_exists('EESS_Org_Helper') ? EESS_Org_Helper::get_all_schools() : array();
 $subjects     = class_exists('EESS_Org_Helper') ? array_column(EESS_Org_Helper::get_official_subjects(), 'name', 'code') : array();
-$departments  = class_exists('EESS_Org_Helper') ? array_column(EESS_Org_Helper::get_official_departments(), 'name', 'code') : array();
+$departments_objs = class_exists('EESS_Org_Helper') ? EESS_Org_Helper::get_departments_by_institution(1) : array();
+$departments = array();
+if (!empty($departments_objs)) {
+    foreach ($departments_objs as $d_obj) {
+        if (!empty($d_obj->name)) {
+            $departments[$d_obj->code ?: $d_obj->id] = $d_obj->name;
+        }
+    }
+}
+if (empty($departments) && class_exists('EESS_Org_Helper')) {
+    $departments = array_column(EESS_Org_Helper::get_official_departments(), 'name', 'code');
+}
 ?>
 
 <!-- UNIFIED USER & EMPLOYEE MANAGEMENT MODAL -->
@@ -20,28 +31,28 @@ $departments  = class_exists('EESS_Org_Helper') ? array_column(EESS_Org_Helper::
             <button type="button" class="sm-modal-close" onclick="eessCloseUnifiedUserModal()" style="background: transparent; border: none; font-size: 26px; color: #000000; cursor: pointer; line-height: 1;">&times;</button>
         </div>
 
-        <!-- 5-Step Indicator Bar -->
-        <div style="padding: 14px 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; position: relative;">
+        <!-- 5-Step Pastel Indicator Bar -->
+        <div style="padding: 14px 20px; background: #ffffff; border-bottom: 1px solid #e2e8f0; position: relative;">
             <div style="position: absolute; top: 50%; left: 5%; right: 5%; height: 2px; background: #e2e8f0; z-index: 1; transform: translateY(-50%);"></div>
-            <div style="display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 2; width: 100%; gap: 6px;">
-                <div id="u_indicator_step1" class="u-step-indicator active" style="background: #881337; color: white; padding: 5px 10px; border-radius: 9999px; font-size: 11px; font-weight: 800; display: flex; align-items: center; gap: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                    <span style="background: rgba(255,255,255,0.2); width: 18px; height: 18px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10px;">1</span>
+            <div style="display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 2; width: 100%; gap: 6px; flex-wrap: wrap;">
+                <div id="u_indicator_step1" class="u-step-indicator active" style="background: #fce7f3; color: #9f1239; border: 1px solid #fbcfe8; padding: 5px 12px; border-radius: 9999px; font-size: 11px; font-weight: 800; display: flex; align-items: center; gap: 6px; transition: all 0.2s ease;">
+                    <span style="background: #9f1239; color: white; width: 18px; height: 18px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900;">1</span>
                     <span>البيانات الشخصية</span>
                 </div>
-                <div id="u_indicator_step2" class="u-step-indicator" style="background: #f1f5f9; color: #64748b; padding: 5px 10px; border-radius: 9999px; font-size: 11px; font-weight: 800; display: flex; align-items: center; gap: 5px; border: 1px solid #cbd5e1;">
-                    <span style="background: #cbd5e1; color: #334155; width: 18px; height: 18px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10px;">2</span>
+                <div id="u_indicator_step2" class="u-step-indicator" style="background: #f8fafc; color: #64748b; border: 1px solid #cbd5e1; padding: 5px 12px; border-radius: 9999px; font-size: 11px; font-weight: 800; display: flex; align-items: center; gap: 6px; transition: all 0.2s ease;">
+                    <span style="background: #cbd5e1; color: #334155; width: 18px; height: 18px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900;">2</span>
                     <span>التواصل والإقامة</span>
                 </div>
-                <div id="u_indicator_step3" class="u-step-indicator" style="background: #f1f5f9; color: #64748b; padding: 5px 10px; border-radius: 9999px; font-size: 11px; font-weight: 800; display: flex; align-items: center; gap: 5px; border: 1px solid #cbd5e1;">
-                    <span style="background: #cbd5e1; color: #334155; width: 18px; height: 18px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10px;">3</span>
+                <div id="u_indicator_step3" class="u-step-indicator" style="background: #f8fafc; color: #64748b; border: 1px solid #cbd5e1; padding: 5px 12px; border-radius: 9999px; font-size: 11px; font-weight: 800; display: flex; align-items: center; gap: 6px; transition: all 0.2s ease;">
+                    <span style="background: #cbd5e1; color: #334155; width: 18px; height: 18px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900;">3</span>
                     <span>التسكين المهني والأكاديمي</span>
                 </div>
-                <div id="u_indicator_step4" class="u-step-indicator" style="background: #f1f5f9; color: #64748b; padding: 5px 10px; border-radius: 9999px; font-size: 11px; font-weight: 800; display: flex; align-items: center; gap: 5px; border: 1px solid #cbd5e1;">
-                    <span style="background: #cbd5e1; color: #334155; width: 18px; height: 18px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10px;">4</span>
+                <div id="u_indicator_step4" class="u-step-indicator" style="background: #f8fafc; color: #64748b; border: 1px solid #cbd5e1; padding: 5px 12px; border-radius: 9999px; font-size: 11px; font-weight: 800; display: flex; align-items: center; gap: 6px; transition: all 0.2s ease;">
+                    <span style="background: #cbd5e1; color: #334155; width: 18px; height: 18px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900;">4</span>
                     <span>بيانات الدخول</span>
                 </div>
-                <div id="u_indicator_step5" class="u-step-indicator" style="background: #f1f5f9; color: #64748b; padding: 5px 10px; border-radius: 9999px; font-size: 11px; font-weight: 800; display: flex; align-items: center; gap: 5px; border: 1px solid #cbd5e1;">
-                    <span style="background: #cbd5e1; color: #334155; width: 18px; height: 18px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10px;">5</span>
+                <div id="u_indicator_step5" class="u-step-indicator" style="background: #f8fafc; color: #64748b; border: 1px solid #cbd5e1; padding: 5px 12px; border-radius: 9999px; font-size: 11px; font-weight: 800; display: flex; align-items: center; gap: 6px; transition: all 0.2s ease;">
+                    <span style="background: #cbd5e1; color: #334155; width: 18px; height: 18px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900;">5</span>
                     <span>التأكيد وحفظ البيانات</span>
                 </div>
             </div>
