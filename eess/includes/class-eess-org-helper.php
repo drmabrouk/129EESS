@@ -167,17 +167,191 @@ class EESS_Org_Helper {
     /**
      * Seeds and normalizes the 6 mandatory institutions and hierarchy
      */
+    public static function get_uae_emirates() {
+        return array(
+            'الشارقة'     => 'الشارقة (Sharjah)',
+            'أبوظبي'      => 'أبوظبي (Abu Dhabi)',
+            'دبي'         => 'دبي (Dubai)',
+            'عجمان'       => 'عجمان (Ajman)',
+            'أم القيوين'  => 'أم القيوين (Umm Al Quwain)',
+            'رأس الخيمة'  => 'رأس الخيمة (Ras Al Khaimah)',
+            'الفجيرة'     => 'الفجيرة (Fujairah)'
+        );
+    }
+
+    public static function get_working_days_config($institution_id_or_emirate = null, $role_key = 'sm_teacher') {
+        $emirate = 'الشارقة';
+        if ($institution_id_or_emirate) {
+            if (is_numeric($institution_id_or_emirate)) {
+                $inst = self::get_institution_by_id($institution_id_or_emirate);
+                if ($inst && !empty($inst->emirate)) {
+                    $emirate = $inst->emirate;
+                }
+            } else {
+                $emirate = (string)$institution_id_or_emirate;
+            }
+        }
+
+        $is_sharjah = (mb_strpos($emirate, 'الشارقة') !== false || mb_stristr($emirate, 'Sharjah') !== false);
+        $is_teacher = ($role_key === 'sm_teacher' || $role_key === 'sm_coordinator' || $role_key === 'sm_hod');
+
+        if ($is_sharjah && $is_teacher) {
+            return array(
+                'emirate'            => $emirate,
+                'role'               => $role_key,
+                'holidays'           => array('Friday', 'Saturday', 'Sunday'),
+                'holidays_ar'        => array('الجمعة', 'السبت', 'الأحد'),
+                'working_days'       => array('Monday', 'Tuesday', 'Wednesday', 'Thursday'),
+                'working_days_ar'    => array('الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'),
+                'working_days_count' => 4,
+                'description'        => 'عطلة أسبوعية: الجمعة، السبت والأحد (4 أيام عمل أسبوعياً)'
+            );
+        } else {
+            return array(
+                'emirate'            => $emirate,
+                'role'               => $role_key,
+                'holidays'           => array('Saturday', 'Sunday'),
+                'holidays_ar'        => array('السبت', 'الأحد'),
+                'working_days'       => array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'),
+                'working_days_ar'    => array('الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'),
+                'working_days_count' => 5,
+                'description'        => 'عطلة أسبوعية: السبت والأحد (5 أيام عمل أسبوعياً)'
+            );
+        }
+    }
+
+    public static function get_institution_employee_count($inst_id) {
+        global $wpdb;
+        $inst_id = intval($inst_id);
+        if (isset(self::$cache['inst_emp_count_' . $inst_id])) {
+            return self::$cache['inst_emp_count_' . $inst_id];
+        }
+
+        $excluded_users = $wpdb->get_col("
+            SELECT DISTINCT user_id FROM {$wpdb->usermeta}
+            WHERE meta_key = '{$wpdb->prefix}capabilities'
+            AND (meta_value LIKE '%sm_student%' OR meta_value LIKE '%sm_parent%')
+        ");
+        $exclude_sql = !empty($excluded_users) ? "AND u.ID NOT IN (" . implode(',', array_map('intval', $excluded_users)) . ")" : "";
+
+        $count = $wpdb->get_var($wpdb->prepare("
+            SELECT COUNT(DISTINCT u.ID)
+            FROM {$wpdb->users} u
+            LEFT JOIN {$wpdb->prefix}eess_user_assignments a ON u.ID = a.user_id
+            LEFT JOIN {$wpdb->usermeta} um ON u.ID = um.user_id AND um.meta_key IN ('eess_institution_id', 'institution_id')
+            WHERE (a.institution_id = %d OR um.meta_value = %d)
+            $exclude_sql
+        ", $inst_id, $inst_id));
+
+        $res = intval($count);
+        self::$cache['inst_emp_count_' . $inst_id] = $res;
+        return $res;
+    }
+
+    public static function get_department_member_count($dept_id) {
+        global $wpdb;
+        $dept_id = intval($dept_id);
+        if (isset(self::$cache['dept_emp_count_' . $dept_id])) {
+            return self::$cache['dept_emp_count_' . $dept_id];
+        }
+
+        $dept_row = $wpdb->get_row($wpdb->prepare("SELECT id, code, name FROM {$wpdb->prefix}eess_departments WHERE id = %d", $dept_id));
+        if (!$dept_row) return 0;
+
+        $excluded_users = $wpdb->get_col("
+            SELECT DISTINCT user_id FROM {$wpdb->usermeta}
+            WHERE meta_key = '{$wpdb->prefix}capabilities'
+            AND (meta_value LIKE '%sm_student%' OR meta_value LIKE '%sm_parent%')
+        ");
+        $exclude_sql = !empty($excluded_users) ? "AND u.ID NOT IN (" . implode(',', array_map('intval', $excluded_users)) . ")" : "";
+
+        $count = $wpdb->get_var($wpdb->prepare("
+            SELECT COUNT(DISTINCT u.ID)
+            FROM {$wpdb->users} u
+            LEFT JOIN {$wpdb->prefix}eess_user_assignments a ON u.ID = a.user_id
+            LEFT JOIN {$wpdb->usermeta} um ON u.ID = um.user_id AND um.meta_key IN ('eess_department', 'department', 'sm_department')
+            WHERE (a.department_id = %d OR um.meta_value = %s)
+            $exclude_sql
+        ", $dept_id, $dept_row->name));
+
+        $res = intval($count);
+        self::$cache['dept_emp_count_' . $dept_id] = $res;
+        return $res;
+    }
+
+    public static function get_subject_teacher_count($subject_id) {
+        global $wpdb;
+        $subject_id = intval($subject_id);
+        if (isset(self::$cache['subj_teacher_count_' . $subject_id])) {
+            return self::$cache['subj_teacher_count_' . $subject_id];
+        }
+
+        $subj_row = $wpdb->get_row($wpdb->prepare("SELECT id, code, name FROM {$wpdb->prefix}eess_subjects WHERE id = %d", $subject_id));
+        if (!$subj_row) return 0;
+
+        $teacher_users = $wpdb->get_col("
+            SELECT DISTINCT user_id FROM {$wpdb->usermeta}
+            WHERE meta_key = '{$wpdb->prefix}capabilities'
+            AND (meta_value LIKE '%sm_teacher%' OR meta_value LIKE '%sm_coordinator%' OR meta_value LIKE '%sm_hod%')
+        ");
+        if (empty($teacher_users)) return 0;
+
+        $teacher_sql = "AND u.ID IN (" . implode(',', array_map('intval', $teacher_users)) . ")";
+
+        $count = $wpdb->get_var($wpdb->prepare("
+            SELECT COUNT(DISTINCT u.ID)
+            FROM {$wpdb->users} u
+            LEFT JOIN {$wpdb->prefix}eess_user_assignments a ON u.ID = a.user_id
+            LEFT JOIN {$wpdb->usermeta} um ON u.ID = um.user_id AND um.meta_key IN ('sm_specialization', 'specialization', 'eess_assigned_subjects')
+            WHERE (a.subject_id = %d OR um.meta_value LIKE %s)
+            $teacher_sql
+        ", $subject_id, '%' . $wpdb->esc_like($subj_row->name) . '%'));
+
+        $res = intval($count);
+        self::$cache['subj_teacher_count_' . $subject_id] = $res;
+        return $res;
+    }
+
+    public static function get_grade_student_count($grade_code_or_name) {
+        global $wpdb;
+        $cache_key = 'grade_stu_count_' . sanitize_key($grade_code_or_name);
+        if (isset(self::$cache[$cache_key])) {
+            return self::$cache[$cache_key];
+        }
+
+        $grade_name = '';
+        if (is_numeric($grade_code_or_name)) {
+            $official_grades = self::get_official_grades();
+            $g_code = intval($grade_code_or_name);
+            if (isset($official_grades[$g_code])) {
+                $grade_name = $official_grades[$g_code]['name'];
+            }
+        }
+
+        if (empty($grade_name)) $grade_name = (string)$grade_code_or_name;
+
+        $count = $wpdb->get_var($wpdb->prepare("
+            SELECT COUNT(*)
+            FROM {$wpdb->prefix}sm_students
+            WHERE (class_name = %s OR class_name LIKE %s OR grade_id = %d)
+        ", $grade_name, '%' . $wpdb->esc_like($grade_name) . '%', intval($grade_code_or_name)));
+
+        $res = intval($count);
+        self::$cache[$cache_key] = $res;
+        return $res;
+    }
+
     public static function seed_mandatory_institutions() {
         global $wpdb;
         self::ensure_institutions_columns_exist();
 
         $mandatory_list = array(
-            1 => array('name' => 'مؤسسة الشعلة للتعليم والتطوير', 'parent_id' => null, 'type' => 'مؤسسة إدارية'),
-            2 => array('name' => 'مدرسة الشعلة الخاصة - الصناعية', 'parent_id' => null, 'type' => 'مدرسة'),
-            3 => array('name' => 'مدرسة الشعلة الخاصة - الفلاح', 'parent_id' => null, 'type' => 'مدرسة'),
-            4 => array('name' => 'مدرسة منارة الشارقة الخاصة', 'parent_id' => null, 'type' => 'مدرسة'),
-            5 => array('name' => 'مدرسة الشعلة الخاصة - عجمان', 'parent_id' => null, 'type' => 'مدرسة'),
-            6 => array('name' => 'مدرسة الشعلة الأمريكية', 'parent_id' => null, 'type' => 'مدرسة')
+            1 => array('name' => 'مؤسسة الشعلة للتعليم والتطوير', 'parent_id' => null, 'type' => 'مؤسسة إدارية', 'emirate' => 'الشارقة'),
+            2 => array('name' => 'مدرسة الشعلة الخاصة - الصناعية', 'parent_id' => null, 'type' => 'مدرسة', 'emirate' => 'الشارقة'),
+            3 => array('name' => 'مدرسة الشعلة الخاصة - الفلاح', 'parent_id' => null, 'type' => 'مدرسة', 'emirate' => 'الشارقة'),
+            4 => array('name' => 'مدرسة منارة الشارقة الخاصة', 'parent_id' => null, 'type' => 'مدرسة', 'emirate' => 'الشارقة'),
+            5 => array('name' => 'مدرسة الشعلة الخاصة - عجمان', 'parent_id' => null, 'type' => 'مدرسة', 'emirate' => 'عجمان'),
+            6 => array('name' => 'مدرسة الشعلة الأمريكية', 'parent_id' => null, 'type' => 'مدرسة', 'emirate' => 'عجمان')
         );
 
         // 1. Ensure Parent Institution (Code 1) exists first
@@ -188,6 +362,7 @@ class EESS_Org_Helper {
                 'parent_id' => null,
                 'name'      => $mandatory_list[1]['name'],
                 'type'      => 'مؤسسة إدارية',
+                'emirate'   => 'الشارقة',
                 'status'    => 'active'
             ));
             $parent_db_id = $wpdb->insert_id;
@@ -196,6 +371,7 @@ class EESS_Org_Helper {
                 'code'      => 1,
                 'parent_id' => null,
                 'name'      => $mandatory_list[1]['name'],
+                'emirate'   => 'الشارقة',
                 'status'    => 'active'
             ), array('id' => $parent_db_id));
         }
@@ -212,6 +388,7 @@ class EESS_Org_Helper {
                     'parent_id' => $parent_db_id,
                     'name'      => $info['name'],
                     'type'      => 'مدرسة',
+                    'emirate'   => $info['emirate'],
                     'status'    => 'active'
                 ));
                 $child_db_id = $wpdb->insert_id;
@@ -220,6 +397,7 @@ class EESS_Org_Helper {
                     'code'      => $code,
                     'parent_id' => $parent_db_id,
                     'name'      => $info['name'],
+                    'emirate'   => $info['emirate'],
                     'status'    => 'active'
                 ), array('id' => $child_db_id));
             }
@@ -987,6 +1165,7 @@ class EESS_Org_Helper {
             'type' => "VARCHAR(100) DEFAULT 'مؤسسة إدارية' NOT NULL",
             'logo_url' => "VARCHAR(255) DEFAULT '' NOT NULL",
             'country' => "VARCHAR(100) DEFAULT 'الإمارات العربية المتحدة' NOT NULL",
+            'emirate' => "VARCHAR(100) DEFAULT 'الشارقة' NOT NULL",
             'address' => "TEXT DEFAULT NULL",
             'phone' => "VARCHAR(50) DEFAULT '' NOT NULL",
             'email' => "VARCHAR(100) DEFAULT '' NOT NULL",
@@ -1069,6 +1248,7 @@ class EESS_Org_Helper {
             'type'          => sanitize_text_field($data['type'] ?? 'مدرسة'),
             'logo_url'      => esc_url_raw($data['logo_url'] ?? ''),
             'country'       => sanitize_text_field($data['country'] ?? 'الإمارات العربية المتحدة'),
+            'emirate'       => sanitize_text_field($data['emirate'] ?? 'الشارقة'),
             'address'       => sanitize_textarea_field($data['address'] ?? ''),
             'phone'         => sanitize_text_field($data['phone'] ?? ''),
             'manager_id'    => !empty($data['manager_id']) ? intval($data['manager_id']) : null,
@@ -1093,6 +1273,7 @@ class EESS_Org_Helper {
             'type'          => sanitize_text_field($data['type'] ?? 'مدرسة'),
             'logo_url'      => esc_url_raw($data['logo_url'] ?? ''),
             'country'       => sanitize_text_field($data['country'] ?? 'الإمارات العربية المتحدة'),
+            'emirate'       => sanitize_text_field($data['emirate'] ?? 'الشارقة'),
             'address'       => sanitize_textarea_field($data['address'] ?? ''),
             'phone'         => sanitize_text_field($data['phone'] ?? ''),
             'manager_id'    => !empty($data['manager_id']) ? intval($data['manager_id']) : null,
