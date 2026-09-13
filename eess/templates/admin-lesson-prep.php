@@ -2544,17 +2544,30 @@ $prep_report_total_late = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}sm
                 $tab_range_end_title = $tab_arabic_week_names[$tab_curr_week] ?? ('الأسبوع ' . $tab_curr_week);
 
                 $tab_non_submitters = array();
+                $tab_compliant_teachers = array();
+
                 foreach ($prep_report_teachers as $t) {
                     $t_preps = $wpdb->get_results($wpdb->prepare(
-                        "SELECT * FROM {$wpdb->prefix}sm_lesson_preps WHERE teacher_id = %d AND status IN ('submitted', 'approved', 'revision_required', 'rejected', 'late', 'resubmitted')",
+                        "SELECT * FROM {$wpdb->prefix}sm_lesson_preps WHERE teacher_id = %d AND status != 'deleted'",
                         $t->ID
                     ));
 
                     $sub_weeks = array();
                     foreach ($t_preps as $p) {
-                        $pt = strtotime($p->created_at ?: $p->lesson_date);
-                        $wn = ($pt >= $tab_acad_anchor) ? (intval(floor(($pt - $tab_acad_anchor) / (7 * 86400))) + 1) : 1;
-                        $sub_weeks[$wn] = true;
+                        if (!empty($p->lesson_date) && $p->lesson_date !== '0000-00-00') {
+                            $ld_ts = strtotime($p->lesson_date);
+                            if ($ld_ts >= $tab_acad_anchor) {
+                                $wn = intval(floor(($ld_ts - $tab_acad_anchor) / (7 * 86400))) + 1;
+                                $sub_weeks[$wn] = true;
+                            }
+                        }
+                        if (!empty($p->created_at) && $p->created_at !== '0000-00-00 00:00:00') {
+                            $ca_ts = strtotime($p->created_at);
+                            if ($ca_ts >= $tab_acad_anchor) {
+                                $wn = intval(floor(($ca_ts - $tab_acad_anchor) / (7 * 86400))) + 1;
+                                $sub_weeks[$wn] = true;
+                            }
+                        }
                     }
 
                     $m_weeks = array();
@@ -2564,26 +2577,20 @@ $prep_report_total_late = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}sm
                         }
                     }
 
-                    if (!empty($m_weeks)) {
-                        $raw_grades = get_user_meta($t->ID, 'sm_assigned_grades', true) ?: (get_user_meta($t->ID, 'eess_assigned_grades', true) ?: (get_user_meta($t->ID, 'sm_grade_level', true) ?: ''));
-                        if (is_array($raw_grades)) {
-                            $grades_taught = implode('، ', array_filter($raw_grades));
-                        } else {
-                            $grades_taught = (string)$raw_grades;
-                        }
-                        if (empty($grades_taught)) {
-                            $grades_taught = 'جميع المراحل المكلّف بها';
-                        }
+                    $tab_entry = array(
+                        'user'          => $t,
+                        'emp_number'    => get_user_meta($t->ID, 'eess_employee_number', true) ?: ($t->ID),
+                        'school_name'   => get_user_meta($t->ID, 'eess_school_name', true) ?: 'المؤسسة الرئيسية',
+                        'grades_taught' => EESS_Org_Helper::format_assigned_grades($t->ID),
+                        'subject'       => get_user_meta($t->ID, 'sm_specialization', true) ?: 'عام',
+                        'total_missing' => count($m_weeks),
+                        'missing_weeks' => $m_weeks
+                    );
 
-                        $tab_non_submitters[] = array(
-                            'user'          => $t,
-                            'emp_number'    => get_user_meta($t->ID, 'eess_employee_number', true) ?: ('EMP-' . $t->ID),
-                            'school_name'   => get_user_meta($t->ID, 'eess_school_name', true) ?: 'المؤسسة الرئيسية',
-                            'grades_taught' => $grades_taught,
-                            'subject'       => get_user_meta($t->ID, 'sm_specialization', true) ?: 'عام',
-                            'total_missing' => count($m_weeks),
-                            'missing_weeks' => $m_weeks
-                        );
+                    if (!empty($m_weeks)) {
+                        $tab_non_submitters[] = $tab_entry;
+                    } else {
+                        $tab_compliant_teachers[] = $tab_entry;
                     }
                 }
 
@@ -2635,7 +2642,7 @@ $prep_report_total_late = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}sm
                                     <td>
                                         <div style="font-size: 12.5px; font-weight: 800; color: #0f172a; margin-bottom: 4px;"><?php echo esc_html($ns['user']->display_name); ?></div>
                                         <div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
-                                            <span style="background: #881337; color: #ffffff; padding: 2px 8px; border-radius: 9999px; font-size: 10px; font-weight: 800; font-family: monospace;">#<?php echo esc_html($ns['emp_number']); ?></span>
+                                            <span style="background: #881337; color: #ffffff; padding: 2px 8px; border-radius: 9999px; font-size: 10px; font-weight: 800; font-family: monospace;"><?php echo esc_html($ns['emp_number']); ?></span>
                                             <span style="background: #dc2626; color: #ffffff; padding: 2px 8px; border-radius: 9999px; font-size: 10px; font-weight: 800;"><?php echo esc_html($ns['subject']); ?></span>
                                         </div>
                                     </td>
@@ -2650,6 +2657,56 @@ $prep_report_total_late = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}sm
                                             echo '<span style="display: inline-block; padding: 3px 9px; margin: 2px 3px; border-radius: 9999px; font-weight: 800; font-size: 10.5px; ' . $capsule_style . '">' . esc_html($w_label) . '</span>';
                                         }
                                         ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach;
+                            endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- TAB SECOND TABLE: COMPLIANT TEACHERS -->
+                <h4 style="margin: 25px 0 10px 0; color: #15803d; font-weight: 900; font-size: 15px; border-bottom: 2px solid #16a34a; padding-bottom: 6px;">
+                    ✓ الكادر الملتزم بتسليم جميع التحضيرات والتكليفات
+                </h4>
+
+                <div class="sm-table-container">
+                    <table class="sm-table" style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th style="width: 32px; text-align: center;">#</th>
+                                <th style="width: 35%;">اسم الموظف / المعلم</th>
+                                <th style="width: 30%;">المدرسة والصفوف المكلّف بها</th>
+                                <th style="width: 35%;">حالة الالتزام والتغطية</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (empty($tab_compliant_teachers)): ?>
+                                <tr>
+                                    <td colspan="4" style="text-align: center; color: #64748b; padding: 15px;">
+                                        لا يوجد كادر مستوفي لجميع الأسابيع حالياً.
+                                    </td>
+                                </tr>
+                            <?php else:
+                                foreach ($tab_compliant_teachers as $idx => $cs):
+                            ?>
+                                <tr>
+                                    <td style="text-align: center; font-weight: bold;"><?php echo ($idx + 1); ?></td>
+                                    <td>
+                                        <div style="font-size: 12.5px; font-weight: 800; color: #0f172a; margin-bottom: 4px;"><?php echo esc_html($cs['user']->display_name); ?></div>
+                                        <div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
+                                            <span style="background: #881337; color: #ffffff; padding: 2px 8px; border-radius: 9999px; font-size: 10px; font-weight: 800; font-family: monospace;"><?php echo esc_html($cs['emp_number']); ?></span>
+                                            <span style="background: #dc2626; color: #ffffff; padding: 2px 8px; border-radius: 9999px; font-size: 10px; font-weight: 800;"><?php echo esc_html($cs['subject']); ?></span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div style="font-weight: 800; color: #0f172a; font-size: 11.5px;"><?php echo esc_html($cs['school_name']); ?></div>
+                                        <div style="color: #475569; font-size: 10.5px; font-weight: 700; margin-top: 2px;">الصفوف: <?php echo esc_html($cs['grades_taught']); ?></div>
+                                    </td>
+                                    <td>
+                                        <span style="display: inline-block; padding: 4px 12px; border-radius: 9999px; background: #dcfce7; color: #15803d; border: 1px solid #86efac; font-weight: 900; font-size: 11px;">
+                                            ✓ مستوفي لكافة الأسابيع (الأسابيع 1 إلى <?php echo $tab_curr_week; ?>)
+                                        </span>
                                     </td>
                                 </tr>
                             <?php endforeach;

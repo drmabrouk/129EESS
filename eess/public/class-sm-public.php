@@ -9123,23 +9123,31 @@ class SM_Public {
             $range_end_title = $arabic_week_names[$current_acad_week] ?? ('الأسبوع ' . $current_acad_week);
 
             $non_submitters = array();
+            $compliant_teachers = array();
             $total_missing_preps = 0;
 
             foreach ($teachers as $t) {
                 $preps = $wpdb->get_results($wpdb->prepare(
-                    "SELECT * FROM {$wpdb->prefix}sm_lesson_preps WHERE teacher_id = %d AND status IN ('submitted', 'approved', 'revision_required', 'rejected', 'late', 'resubmitted')",
+                    "SELECT * FROM {$wpdb->prefix}sm_lesson_preps WHERE teacher_id = %d AND status != 'deleted'",
                     $t->ID
                 ));
 
                 $submitted_weeks = array();
                 foreach ($preps as $p) {
-                    $p_time = strtotime($p->created_at ?: $p->lesson_date);
-                    if ($p_time >= $acad_anchor_ts) {
-                        $w_num = intval(floor(($p_time - $acad_anchor_ts) / (7 * 86400))) + 1;
-                    } else {
-                        $w_num = 1;
+                    if (!empty($p->lesson_date) && $p->lesson_date !== '0000-00-00') {
+                        $ld_ts = strtotime($p->lesson_date);
+                        if ($ld_ts >= $acad_anchor_ts) {
+                            $w_num = intval(floor(($ld_ts - $acad_anchor_ts) / (7 * 86400))) + 1;
+                            $submitted_weeks[$w_num] = true;
+                        }
                     }
-                    $submitted_weeks[$w_num] = true;
+                    if (!empty($p->created_at) && $p->created_at !== '0000-00-00 00:00:00') {
+                        $ca_ts = strtotime($p->created_at);
+                        if ($ca_ts >= $acad_anchor_ts) {
+                            $w_num = intval(floor(($ca_ts - $acad_anchor_ts) / (7 * 86400))) + 1;
+                            $submitted_weeks[$w_num] = true;
+                        }
+                    }
                 }
 
                 $missing_weeks = array();
@@ -9149,32 +9157,26 @@ class SM_Public {
                     }
                 }
 
+                $emp_number    = get_user_meta($t->ID, 'eess_employee_number', true) ?: ($t->ID);
+                $sch_name      = get_user_meta($t->ID, 'eess_school_name', true) ?: 'المؤسسة الرئيسية';
+                $grades_taught = EESS_Org_Helper::format_assigned_grades($t->ID);
+                $subject       = get_user_meta($t->ID, 'sm_specialization', true) ?: (get_user_meta($t->ID, 'specialization', true) ?: 'عام');
+
+                $t_entry = array(
+                    'user'          => $t,
+                    'emp_number'    => $emp_number,
+                    'school_name'   => $sch_name,
+                    'grades_taught' => $grades_taught,
+                    'subject'       => $subject,
+                    'total_missing' => count($missing_weeks),
+                    'missing_weeks' => $missing_weeks
+                );
+
                 if (!empty($missing_weeks)) {
-                    $emp_number = get_user_meta($t->ID, 'eess_employee_number', true) ?: ('EMP-' . $t->ID);
-                    $sch_name   = get_user_meta($t->ID, 'eess_school_name', true) ?: 'المؤسسة الرئيسية';
-
-                    $raw_grades = get_user_meta($t->ID, 'sm_assigned_grades', true) ?: (get_user_meta($t->ID, 'eess_assigned_grades', true) ?: (get_user_meta($t->ID, 'sm_grade_level', true) ?: ''));
-                    if (is_array($raw_grades)) {
-                        $grades_taught = implode('، ', array_filter($raw_grades));
-                    } else {
-                        $grades_taught = (string)$raw_grades;
-                    }
-                    if (empty($grades_taught)) {
-                        $grades_taught = 'جميع المراحل المكلّف بها';
-                    }
-
-                    $subject = get_user_meta($t->ID, 'sm_specialization', true) ?: (get_user_meta($t->ID, 'specialization', true) ?: 'عام');
-
-                    $non_submitters[] = array(
-                        'user'          => $t,
-                        'emp_number'    => $emp_number,
-                        'school_name'   => $sch_name,
-                        'grades_taught' => $grades_taught,
-                        'subject'       => $subject,
-                        'total_missing' => count($missing_weeks),
-                        'missing_weeks' => $missing_weeks
-                    );
+                    $non_submitters[] = $t_entry;
                     $total_missing_preps += count($missing_weeks);
+                } else {
+                    $compliant_teachers[] = $t_entry;
                 }
             }
 
@@ -9198,10 +9200,10 @@ class SM_Public {
                     @page { size: A4 portrait; margin: 12mm 15mm; }
                     body { font-family: 'Cairo', sans-serif; background: #fff; color: #0f172a; margin: 0; padding: 15px; direction: rtl; font-size: 11px; line-height: 1.6; }
                     .report-header { border-bottom: 2px solid #881337; padding-bottom: 12px; margin-bottom: 15px; }
-                    .top-brand-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+                    .top-brand-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; direction: rtl; }
                     .brand-box { display: flex; align-items: center; gap: 12px; }
-                    .brand-logo { width: 46px; height: 46px; object-fit: contain; }
-                    .main-report-title { font-size: 18px; font-weight: 900; color: #881337; text-align: center; margin: 10px 0 6px 0; }
+                    .brand-logo { width: 48px; height: 48px; object-fit: contain; flex-shrink: 0; }
+                    .main-report-title { font-size: 18px; font-weight: 900; color: #881337; text-align: center; margin: 12px 0 6px 0; }
                     .main-report-date-box { text-align: center; font-size: 11.5px; color: #334155; font-weight: 700; }
                     .main-report-date-title { font-weight: 900; color: #0f172a; margin-top: 2px; }
                     .main-report-range { font-weight: 900; color: #881337; font-size: 12.5px; margin-top: 1px; }
@@ -9286,7 +9288,7 @@ class SM_Public {
                                 <td>
                                     <div style="font-size: 12.5px; font-weight: 800; color: #0f172a; margin-bottom: 4px;"><?php echo esc_html($ns['user']->display_name); ?></div>
                                     <div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
-                                        <span class="pill-emp">#<?php echo esc_html($ns['emp_number']); ?></span>
+                                        <span class="pill-emp"><?php echo esc_html($ns['emp_number']); ?></span>
                                         <span class="pill-subj"><?php echo esc_html($ns['subject']); ?></span>
                                     </div>
                                 </td>
@@ -9307,6 +9309,66 @@ class SM_Public {
                         endif; ?>
                     </tbody>
                 </table>
+
+                <!-- SECOND SEPARATE TABLE: COMPLIANT TEACHERS -->
+                <h2 style="font-size: 15px; font-weight: 900; color: #15803d; margin: 35px 0 10px 0; border-bottom: 2px solid #16a34a; padding-bottom: 8px;">
+                    ✓ الكادر الملتزم بتسليم جميع التحضيرات والتكليفات
+                </h2>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 32px; text-align: center;">#</th>
+                            <th style="width: 35%;">اسم الموظف / المعلم</th>
+                            <th style="width: 30%;">المدرسة والصفوف المكلّف بها</th>
+                            <th style="width: 35%;">حالة الالتزام والتغطية</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (empty($compliant_teachers)): ?>
+                            <tr>
+                                <td colspan="4" style="text-align: center; color: #64748b; padding: 20px;">
+                                    لا يوجد كادر مستوفي لجميع الأسابيع حالياً.
+                                </td>
+                            </tr>
+                        <?php else:
+                            foreach ($compliant_teachers as $idx => $cs):
+                        ?>
+                            <tr>
+                                <td style="text-align: center; font-weight: bold;"><?php echo ($idx + 1); ?></td>
+                                <td>
+                                    <div style="font-size: 12.5px; font-weight: 800; color: #0f172a; margin-bottom: 4px;"><?php echo esc_html($cs['user']->display_name); ?></div>
+                                    <div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
+                                        <span class="pill-emp"><?php echo esc_html($cs['emp_number']); ?></span>
+                                        <span class="pill-subj"><?php echo esc_html($cs['subject']); ?></span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div style="font-weight: 800; color: #0f172a; font-size: 11.5px;"><?php echo esc_html($cs['school_name']); ?></div>
+                                    <div style="color: #475569; font-size: 10.5px; font-weight: 700; margin-top: 2px;">الصفوف: <?php echo esc_html($cs['grades_taught']); ?></div>
+                                </td>
+                                <td>
+                                    <span style="display: inline-block; padding: 4px 12px; border-radius: 9999px; background: #dcfce7; color: #15803d; border: 1px solid #86efac; font-weight: 900; font-size: 11px;">
+                                        ✓ مستوفي لكافة الأسابيع (الأسابيع 1 إلى <?php echo $current_acad_week; ?>)
+                                    </span>
+                                </td>
+                            </tr>
+                        <?php endforeach;
+                        endif; ?>
+                    </tbody>
+                </table>
+
+                <!-- BOTTOM SIGNATURE SECTION -->
+                <div class="signature-section" style="margin-top: 45px; page-break-inside: avoid; display: flex; justify-content: space-between; align-items: flex-start; padding: 20px 40px; font-family: 'Cairo', sans-serif;">
+                    <div style="text-align: center; width: 180px;">
+                        <div style="font-size: 13px; font-weight: 900; color: #0f172a; margin-bottom: 30px;">المشرف</div>
+                        <div style="border-bottom: 1.5px dashed #64748b; width: 100%; margin: 0 auto;"></div>
+                    </div>
+                    <div style="text-align: center; width: 180px;">
+                        <div style="font-size: 13px; font-weight: 900; color: #0f172a; margin-bottom: 30px;">مدير المدرسة</div>
+                        <div style="border-bottom: 1.5px dashed #64748b; width: 100%; margin: 0 auto;"></div>
+                    </div>
+                </div>
             </body>
             </html>
             <?php
