@@ -1236,24 +1236,18 @@ class SM_Public {
                 $m_login_sys_logo = !empty($m_school_info['school_logo']) ? $m_school_info['school_logo'] : (!empty($m_school_info['logo_url']) ? $m_school_info['logo_url'] : SM_PLUGIN_URL . 'assets/images/logo.png');
             ?>
             <!-- Single-Viewport Mobile Login Container (No Vertical or Horizontal Scrolling) -->
-            <div style="height: 100vh; height: 100dvh; max-height: 100vh; max-height: 100dvh; width: 100%; max-width: 100vw; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 10px 16px 8px 16px; box-sizing: border-box; overflow-x: hidden; overflow-y: hidden; font-family: 'Cairo', sans-serif;">
+            <div style="height: 100vh; height: 100dvh; max-height: 100vh; max-height: 100dvh; width: 100%; max-width: 100vw; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 16px; box-sizing: border-box; overflow-x: hidden; overflow-y: hidden; font-family: 'Cairo', sans-serif; gap: 12px;">
 
-                <!-- System Branding & Logo Area -->
-                <div style="text-align: center; margin-top: 4px; display: flex; flex-direction: column; align-items: center; gap: 3px; flex-shrink: 0;">
-                    <div style="width: 68px; height: 68px; border-radius: 16px; background: #ffffff; padding: 4px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; flex-shrink: 0;">
-                        <img src="<?php echo esc_url($m_login_sys_logo); ?>" style="width: 100%; height: 100%; object-fit: contain; border-radius: 12px;" alt="EESS Logo">
-                    </div>
-                    <h1 style="margin: 2px 0 0 0; font-size: 21px; font-weight: 900; color: #0f172a; line-height: 1.2;">نظام الإدارة المدرسية</h1>
-                    <p style="margin: 0; font-size: 11px; color: #64748b; font-weight: 600;">المنظومة التعليمية الرقمية الموحدة والمعتمدة</p>
-                </div>
+                <!-- Centered Authentication Box with Integrated Branding -->
+                <div id="m-step-verify" style="background: #ffffff; border-radius: 20px; padding: 18px 20px; border: 1px solid #e2e8f0; box-shadow: 0 12px 28px -5px rgba(15, 23, 42, 0.08); width: 100%; max-width: 380px; box-sizing: border-box; flex-shrink: 0;">
 
-                <!-- Centered Authentication Box -->
-                <div id="m-step-verify" style="background: #ffffff; border-radius: 18px; padding: 14px 18px; border: 1px solid #e2e8f0; box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08); width: 100%; max-width: 380px; box-sizing: border-box; margin: 2px 0; flex-shrink: 0;">
-
-                    <!-- Centered Welcome Header -->
-                    <div style="text-align: center; margin-bottom: 10px;">
-                        <div style="font-size: 16px; font-weight: 900; color: #0f172a; margin-bottom: 2px;">أهلاً.. بعودتك!</div>
-                        <div style="font-size: 11px; color: #64748b; font-weight: 600;">يرجى تسجيل دخولك لإدارة حسابك</div>
+                    <!-- System Branding & Logo Area inside Login Box replacing Welcome Header -->
+                    <div style="text-align: center; margin-bottom: 14px; display: flex; flex-direction: column; align-items: center; gap: 3px;">
+                        <div style="width: 68px; height: 68px; border-radius: 16px; background: #ffffff; padding: 4px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; margin-bottom: 2px;">
+                            <img src="<?php echo esc_url($m_login_sys_logo); ?>" style="width: 100%; height: 100%; object-fit: contain; border-radius: 12px;" alt="EESS Logo">
+                        </div>
+                        <h1 style="margin: 0; font-size: 21px; font-weight: 900; color: #0f172a; line-height: 1.2;">نظام الإدارة المدرسية</h1>
+                        <p style="margin: 0; font-size: 11px; color: #64748b; font-weight: 600;">المنظومة التعليمية الرقمية الموحدة والمعتمدة</p>
                     </div>
 
                     <div style="margin-bottom: 10px; position: relative;">
@@ -1292,17 +1286,17 @@ class SM_Public {
                     </div>
                 </div>
 
-                <!-- Computer Access Notice with Tight Margin -->
-                <div style="background: #fef2f2; border: 1px solid #fecdd3; border-radius: 10px; padding: 6px 10px; width: 100%; max-width: 380px; box-sizing: border-box; display: flex; align-items: flex-start; gap: 8px; margin-top: 2px; flex-shrink: 0;">
-                    <span class="dashicons dashicons-info" style="color: #991b1b; font-size: 15px; width: 15px; height: 15px; margin-top: 1px; flex-shrink: 0;"></span>
-                    <div style="font-size: 11px; color: #991b1b; line-height: 1.35; font-weight: 600;">
-                        لإدارة حسابك الكامل، واستعراض التحضيرات السابقة، ومتابعة التقارير، يُرجى تسجيل الدخول من جهاز الكمبيوتر أو المحمول.
+                <!-- Computer Access Notice directly beneath Login Box -->
+                <div style="background: #fef2f2; border: 1px solid #fecdd3; border-radius: 10px; padding: 8px 12px; width: 100%; max-width: 380px; box-sizing: border-box; display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                    <span class="dashicons dashicons-desktop" style="color: #991b1b; font-size: 16px; width: 16px; height: 16px; flex-shrink: 0;"></span>
+                    <div style="font-size: 11px; color: #991b1b; line-height: 1.4; font-weight: 700;">
+                        لإدارة حسابك الكامل واستعراض التحضيرات السابقة والتقارير، يُرجى استخدام جهاز الكمبيوتر.
                     </div>
                 </div>
 
-                <!-- Footer Branding with Small Safe Bottom Margin -->
-                <div style="font-size: 10px; color: #94a3b8; text-align: center; margin-bottom: 6px; font-weight: 600; letter-spacing: 0.3px; flex-shrink: 0;">
-                    Powered by Educational Systems Solutions (EESS)
+                <!-- Footer Branding with 2016 All Rights Reserved Attribution -->
+                <div style="font-size: 10.5px; color: #94a3b8; text-align: center; margin-bottom: 4px; font-weight: 700; letter-spacing: 0.3px; flex-shrink: 0; font-family: monospace;">
+                    © 2016 EESS Educational Systems Solutions. جميع الحقوق محفوظة.
                 </div>
 
             </div>
