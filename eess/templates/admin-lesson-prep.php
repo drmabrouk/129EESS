@@ -388,7 +388,7 @@ $unique_subjects = array_unique(array_map(function($s){ return $s->name; }, $all
 
         if (!empty($prep_teacher_ids)) {
             $prep_placeholders = implode(',', array_fill(0, count($prep_teacher_ids), '%d'));
-            $stats_submitted = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->prefix}sm_lesson_preps WHERE teacher_id IN ($prep_placeholders) AND status IN ('submitted', 'approved', 'revision_required', 'rejected', 'late')", ...$prep_teacher_ids));
+            $stats_submitted = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->prefix}sm_lesson_preps WHERE teacher_id IN ($prep_placeholders) AND status IN ('submitted', 'approved', 'resubmitted', 'late')", ...$prep_teacher_ids));
             $stats_approved  = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->prefix}sm_lesson_preps WHERE teacher_id IN ($prep_placeholders) AND status = 'approved'", ...$prep_teacher_ids));
             $stats_revision  = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->prefix}sm_lesson_preps WHERE teacher_id IN ($prep_placeholders) AND status = 'revision_required'", ...$prep_teacher_ids));
             $stats_rejected  = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->prefix}sm_lesson_preps WHERE teacher_id IN ($prep_placeholders) AND status = 'rejected'", ...$prep_teacher_ids));
@@ -2553,18 +2553,14 @@ $prep_report_total_late = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}sm
 
                     $sub_weeks = array();
                     foreach ($t_preps as $p) {
-                        if (!empty($p->lesson_date) && $p->lesson_date !== '0000-00-00') {
-                            $ld_ts = strtotime($p->lesson_date);
-                            if ($ld_ts >= $tab_acad_anchor) {
-                                $wn = intval(floor(($ld_ts - $tab_acad_anchor) / (7 * 86400))) + 1;
+                        $p_date = (!empty($p->lesson_date) && $p->lesson_date !== '0000-00-00') ? $p->lesson_date : ($p->created_at);
+                        if (!empty($p_date) && $p_date !== '0000-00-00 00:00:00') {
+                            $p_ts = strtotime($p_date);
+                            if ($p_ts >= $tab_acad_anchor) {
+                                $wn = intval(floor(($p_ts - $tab_acad_anchor) / (7 * 86400))) + 1;
                                 $sub_weeks[$wn] = true;
-                            }
-                        }
-                        if (!empty($p->created_at) && $p->created_at !== '0000-00-00 00:00:00') {
-                            $ca_ts = strtotime($p->created_at);
-                            if ($ca_ts >= $tab_acad_anchor) {
-                                $wn = intval(floor(($ca_ts - $tab_acad_anchor) / (7 * 86400))) + 1;
-                                $sub_weeks[$wn] = true;
+                            } else {
+                                $sub_weeks[1] = true;
                             }
                         }
                     }
