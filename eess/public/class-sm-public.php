@@ -5539,6 +5539,42 @@ class SM_Public {
         }
     }
 
+    public function ajax_republish_system_announcement() {
+        if (!current_user_can('إدارة_النظام')) wp_send_json_error('Unauthorized');
+        if (!wp_verify_nonce($_POST['nonce'] ?? '', 'sm_announcement_action')) wp_send_json_error('Security check failed');
+
+        global $wpdb;
+        $anc_id = intval($_POST['announcement_id']);
+
+        $updated = $wpdb->update(
+            "{$wpdb->prefix}sm_system_announcements",
+            array('status' => 'active'),
+            array('id' => $anc_id)
+        );
+
+        if ($updated !== false) {
+            SM_Logger::log('إعادة نشر إشعار نظام', "تم إرجاع وتفعيل الإشعار (ID: $anc_id) ونشره مجدداً");
+            wp_send_json_success('تم إعادة نشر وتفعيل الإشعار بنجاح.');
+        } else {
+            wp_send_json_error('فشل تفعيل الإشعار.');
+        }
+    }
+
+    public function ajax_bulk_delete_read_stats() {
+        if (!current_user_can('إدارة_النظام')) wp_send_json_error('Unauthorized');
+        if (!wp_verify_nonce($_POST['nonce'] ?? '', 'sm_announcement_action')) wp_send_json_error('Security check failed');
+
+        global $wpdb;
+        $deleted = $wpdb->query("TRUNCATE TABLE {$wpdb->prefix}sm_user_announcements");
+
+        if ($deleted !== false) {
+            SM_Logger::log('مسح إحصائيات القراءة بالجملة', 'تم مسح كافة سجلات تفاعل وقراءة الإشعارات للمستخدمين بالجملة');
+            wp_send_json_success('تم مسح إحصائيات القراءة بنجاح.');
+        } else {
+            wp_send_json_error('فشل مسح إحصائيات القراءة.');
+        }
+    }
+
     public function ajax_initialize_system() {
         if (!current_user_can('إدارة_النظام')) wp_send_json_error('Unauthorized');
         if (!wp_verify_nonce($_POST['nonce'], 'sm_admin_action')) wp_send_json_error('Security check failed');

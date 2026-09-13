@@ -125,10 +125,17 @@ $edu_inputs = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}sm_educational_in
 
     <!-- Active Announcements Table Card -->
     <div style="background: #ffffff; border-radius: 16px; padding: 25px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 30px;">
-        <h3 style="margin: 0 0 20px 0; font-size: 16px; font-weight: 800; color: #0f172a; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; display: flex; align-items: center; gap: 8px;">
-            <span class="dashicons dashicons-list-view" style="color: #2563eb;"></span>
-            سجل الإشعارات المنشورة وإحصائيات القراءة
-        </h3>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; flex-wrap: wrap; gap: 10px;">
+            <h3 style="margin: 0; font-size: 16px; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+                <span class="dashicons dashicons-list-view" style="color: #2563eb;"></span>
+                <span>سجل الإشعارات المنشورة وإحصائيات القراءة</span>
+            </h3>
+            <div style="display: flex; gap: 8px;">
+                <button type="button" onclick="eessBulkDeleteReadStats()" class="sm-btn" style="background: #fee2e2; color: #b91c1c !important; border: 1px solid #fca5a5; height: 32px; padding: 0 14px; font-size: 11px; border-radius: 9999px; font-weight: 800; cursor: pointer;" title="مسح تفاعلات وإحصائيات قراءة المستخدمين للإشعارات">
+                    🗑️ مسح إحصائيات القراءة بالجملة
+                </button>
+            </div>
+        </div>
 
         <div style="overflow-x: auto;">
             <table class="sm-table" style="width: 100%; border-collapse: collapse; font-size: 11.5px;">
@@ -170,9 +177,14 @@ $edu_inputs = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}sm_educational_in
                                 </td>
                                 <td style="padding: 12px; text-align: center; display: flex; gap: 6px; justify-content: center;">
                                     <?php if ($is_active): ?>
-                                        <button type="button" onclick="eessDisableAnnouncement(<?php echo $anc->id; ?>)" style="background: #ef4444; color: white; border: none; border-radius: 6px; padding: 5px 10px; font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+                                        <button type="button" onclick="eessDisableAnnouncement(<?php echo $anc->id; ?>)" style="background: #ef4444; color: white; border: none; border-radius: 6px; padding: 5px 10px; font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;" title="تعطيل ظهور الإشعار مؤقتاً">
                                             <span class="dashicons dashicons-no-alt" style="font-size: 14px; width: 14px; height: 14px;"></span>
                                             تعطيل
+                                        </button>
+                                    <?php else: ?>
+                                        <button type="button" onclick="eessRepublishAnnouncement(<?php echo $anc->id; ?>)" style="background: #16a34a; color: white; border: none; border-radius: 6px; padding: 5px 10px; font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;" title="إعادة تفعيل ونشر الإشعار للمستخدمين دون إعادة إنشائه">
+                                            <span class="dashicons dashicons-redo" style="font-size: 14px; width: 14px; height: 14px;"></span>
+                                            إعادة نشر
                                         </button>
                                     <?php endif; ?>
                                     <button type="button" onclick="eessDeleteAnnouncement(<?php echo $anc->id; ?>)" style="background: #991b1b; color: white; border: none; border-radius: 6px; padding: 5px 10px; font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
@@ -190,10 +202,17 @@ $edu_inputs = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}sm_educational_in
 
     <!-- Detailed User Audit Log & Show Again Action Card -->
     <div style="background: #ffffff; border-radius: 16px; padding: 25px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 30px;">
-        <h3 style="margin: 0 0 20px 0; font-size: 16px; font-weight: 800; color: #0f172a; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; display: flex; align-items: center; gap: 8px;">
-            <span class="dashicons dashicons-admin-users" style="color: #2563eb;"></span>
-            سجل تفاعل المستخدمين الفردي وإعادة إظهار الإشعار (Show Again)
-        </h3>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; flex-wrap: wrap; gap: 10px;">
+            <h3 style="margin: 0; font-size: 16px; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+                <span class="dashicons dashicons-admin-users" style="color: #2563eb;"></span>
+                <span>سجل تفاعل المستخدمين الفردي وإعادة إظهار الإشعار (Show Again)</span>
+            </h3>
+            <div style="display: flex; gap: 8px;">
+                <button type="button" onclick="eessBulkDeleteUserInteractions()" class="sm-btn" style="background: #fee2e2; color: #b91c1c !important; border: 1px solid #fca5a5; height: 32px; padding: 0 14px; font-size: 11px; border-radius: 9999px; font-weight: 800; cursor: pointer;" title="مسح كافة سجلات تفاعل ورؤية المستخدمين الفردية">
+                    🗑️ مسح تفاعلات المستخدمين بالجملة
+                </button>
+            </div>
+        </div>
 
         <div style="overflow-x: auto;">
             <table class="sm-table" style="width: 100%; border-collapse: collapse; font-size: 12px;">
@@ -509,70 +528,7 @@ function eessDeleteSupportRecord(id) {
 }
 </script>
 
-    <!-- Shared Educational Input Library Card for System Admins -->
-    <div style="background: #ffffff; border-radius: 16px; padding: 25px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-top: 30px;">
-        <h3 style="margin: 0 0 15px 0; font-size: 16px; font-weight: 800; color: #0f172a; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <span class="dashicons dashicons-book" style="color: #881337;"></span>
-                <span>مكتبة المدوّنات والمدخلات التعليمية المشتركة (تخطيط الدروس والفصول)</span>
-            </div>
-            <span style="font-size: 12px; color: #64748b; font-weight: 600;">(إدارة الاقتراحات والمصطلحات التلقائية للمدرسين)</span>
-        </h3>
-
-        <div style="overflow-x: auto;">
-            <table class="sm-table" style="width: 100%; border-collapse: collapse; text-align: right;">
-                <thead>
-                    <tr style="background: #212121; color: #ffffff;">
-                        <th style="padding: 10px 14px; font-size: 12px; font-weight: 800;">المادة الدراسية</th>
-                        <th style="padding: 10px 14px; font-size: 12px; font-weight: 800;">نوع المدخل</th>
-                        <th style="padding: 10px 14px; font-size: 12px; font-weight: 800;">محتوى النص المقترح</th>
-                        <th style="padding: 10px 14px; font-size: 12px; font-weight: 800; text-align: center;">مرات الاستخدام</th>
-                        <th style="padding: 10px 14px; font-size: 12px; font-weight: 800; text-align: center;">الإجراءات</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (empty($edu_inputs)): ?>
-                        <tr><td colspan="5" style="padding: 30px; text-align: center; color: #94a3b8; font-weight: 700;">لا توجد مدخلات تعليمية مسجلة في المكتبة حالياً.</td></tr>
-                    <?php else: ?>
-                        <?php foreach ($edu_inputs as $inp): ?>
-                            <tr style="border-bottom: 1px solid #f1f5f9;">
-                                <td style="padding: 10px 14px; font-weight: 800; font-size: 12.5px; color: #0f172a;"><?php echo esc_html($inp->subject); ?></td>
-                                <td style="padding: 10px 14px; font-size: 12px; color: #334155;">
-                                    <span style="padding: 2px 8px; border-radius: 6px; background: #f1f5f9; font-weight: 700; font-size: 11px;">
-                                        <?php echo esc_html($inp->input_type === 'title' ? 'عنوان درس' : ($inp->input_type === 'objective' ? 'هدف تعليمي' : 'نشاط/محتوى')); ?>
-                                    </span>
-                                </td>
-                                <td style="padding: 10px 14px; font-size: 12.5px; color: #1e293b; font-weight: 600;"><?php echo esc_html($inp->content); ?></td>
-                                <td style="padding: 10px 14px; text-align: center;">
-                                    <span style="padding: 2px 8px; border-radius: 9999px; background: #eff6ff; color: #2563eb; font-weight: 800; font-size: 11.5px;">
-                                        <?php echo intval($inp->usage_count); ?>
-                                    </span>
-                                </td>
-                                <td style="padding: 10px 14px; text-align: center;">
-                                    <button type="button" onclick="eessDeleteEducationalInput(<?php echo $inp->id; ?>)" title="حذف المدخل" style="width: 32px; height: 32px; border-radius: 50% !important; background: #fee2e2; color: #dc2626; border: 1px solid #fecdd3; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;">
-                                        <span class="dashicons dashicons-trash" style="font-size: 15px; width: 15px; height: 15px; margin: 0;"></span>
-                                    </button>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
 <script>
-function eessDeleteEducationalInput(id) {
-    if (!confirm('هل أنت متأكد من حذف هذا المدخل التعليمي من اقتراحات المكتبة؟')) return;
-    jQuery.post('<?php echo admin_url('admin-ajax.php'); ?>', {
-        action: 'sm_save_educational_input',
-        delete_id: id,
-        subject: 'حذف',
-        content: 'حذف'
-    }, function() {
-        location.reload();
-    });
-}
 
 function eessCreateAnnouncement(e) {
     e.preventDefault();
@@ -621,6 +577,23 @@ function eessResetUserAnnouncement(ancId, userId, logId) {
     });
 }
 
+function eessRepublishAnnouncement(ancId) {
+    if (!confirm('هل أنت متأكد من إعادة نشر وتفعيل هذا الإشعار ليظهر مجدداً لجميع المستهدفين؟')) return;
+
+    jQuery.post('<?php echo admin_url('admin-ajax.php'); ?>', {
+        action: 'eess_republish_system_announcement_ajax',
+        announcement_id: ancId,
+        nonce: '<?php echo wp_create_nonce('sm_announcement_action'); ?>'
+    }, function(res) {
+        if (res.success) {
+            alert(res.data || 'تم إعادة نشر وتفعيل الإشعار بنجاح.');
+            location.reload();
+        } else {
+            alert(res.data || 'حدث خطأ أثناء إعادة النشر.');
+        }
+    });
+}
+
 function eessDisableAnnouncement(ancId) {
     if (!confirm('هل أنت تأكد من تعطيل هذا الإشعار؟ سيتم إيقاف ظهوره فوراً لجميع المستخدمين المستهدفين.')) return;
 
@@ -634,6 +607,38 @@ function eessDisableAnnouncement(ancId) {
             location.reload();
         } else {
             alert(res.data || 'حدث خطأ أثناء تعطيل الإشعار.');
+        }
+    });
+}
+
+function eessBulkDeleteReadStats() {
+    if (!confirm('تنبيه هام: هل أنت متأكد من مسح جميع إحصائيات وتفاعلات قراءة الإشعارات بالجملة؟')) return;
+
+    jQuery.post('<?php echo admin_url('admin-ajax.php'); ?>', {
+        action: 'eess_bulk_delete_read_stats_ajax',
+        nonce: '<?php echo wp_create_nonce('sm_announcement_action'); ?>'
+    }, function(res) {
+        if (res.success) {
+            alert('تم مسح إحصائيات القراءة والتفاعل بنجاح.');
+            location.reload();
+        } else {
+            alert(res.data || 'حدث خطأ أثناء تنفيذ المسح.');
+        }
+    });
+}
+
+function eessBulkDeleteUserInteractions() {
+    if (!confirm('تنبيه هام: هل أنت متأكد من مسح كافة سجلات تفاعل المستخدمين الفردية بالجملة؟')) return;
+
+    jQuery.post('<?php echo admin_url('admin-ajax.php'); ?>', {
+        action: 'eess_bulk_delete_user_interactions_ajax',
+        nonce: '<?php echo wp_create_nonce('sm_announcement_action'); ?>'
+    }, function(res) {
+        if (res.success) {
+            alert('تم مسح كافة سجلات تفاعل المستخدمين بنجاح.');
+            location.reload();
+        } else {
+            alert(res.data || 'حدث خطأ أثناء المسح.');
         }
     });
 }
