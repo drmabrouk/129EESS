@@ -9048,35 +9048,113 @@ class SM_Public {
             }
 
             global $wpdb;
-            $current_time = current_time('mysql');
-            $current_date = current_time('Y-m-d');
+            $current_time_ts = current_time('timestamp');
+            $current_date_fmt = current_time('Y-m-d');
 
-            // Find current week Monday deadline (12:00 PM)
-            $day_of_week = date('N', strtotime($current_date)); // 1 (Mon) .. 7 (Sun)
-            $monday_date = date('Y-m-d', strtotime('-' . ($day_of_week - 1) . ' days', strtotime($current_date)));
-            $monday_deadline = $monday_date . ' 12:00:00';
+            // Academic Start Anchor: 30 August 2026
+            $acad_anchor_ts = strtotime('2026-08-30 00:00:00');
+            if ($current_time_ts >= $acad_anchor_ts) {
+                $diff_sec = $current_time_ts - $acad_anchor_ts;
+                $current_acad_week = intval(floor($diff_sec / (7 * 86400))) + 1;
+            } else {
+                $current_acad_week = 1;
+            }
+            $current_acad_week = max(1, min(16, $current_acad_week));
 
-            $teachers = get_users(array('role' => 'sm_teacher', 'orderby' => 'display_name', 'order' => 'ASC'));
+            // User organizational scope
+            $scope = class_exists('EESS_Org_Helper') ? EESS_Org_Helper::get_user_scope() : array('unrestricted' => true);
 
-            // Sort teachers consecutively by school
-            usort($teachers, function($a, $b) {
-                $schA = get_user_meta($a->ID, 'eess_school_name', true) ?: 'المدرسة الرئيسية';
-                $schB = get_user_meta($b->ID, 'eess_school_name', true) ?: 'المدرسة الرئيسية';
-                return strcmp($schA, $schB);
-            });
+            $all_teachers_raw = get_users(array(
+                'role__in' => array('sm_teacher', 'sm_coordinator', 'sm_hod'),
+                'orderby'  => 'display_name',
+                'order'    => 'ASC'
+            ));
 
-            $preps_raw = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}sm_lesson_preps ORDER BY created_at DESC");
+            $teachers = array();
+            foreach ($all_teachers_raw as $t) {
+                if (isset($scope['unrestricted']) && !$scope['unrestricted']) {
+                    $t_inst = get_user_meta($t->ID, 'eess_institution_id', true) ?: get_user_meta($t->ID, 'institution_id', true);
+                    if (!empty($scope['institutions']) && !in_array(intval($t_inst), array_map('intval', $scope['institutions']), true)) {
+                        continue;
+                    }
+                }
+                $teachers[] = $t;
+            }
 
-            $preps_by_teacher = array();
-            foreach ($preps_raw as $pr) {
-                if (!isset($preps_by_teacher[$pr->teacher_id])) {
-                    $preps_by_teacher[$pr->teacher_id] = $pr;
+            // Distinct EESS Pastel Palette for Week Capsules
+            $pastel_palette = array(
+                1  => array('bg' => '#fef2f2', 'color' => '#881337', 'border' => '#fecdd3'),
+                2  => array('bg' => '#fffbe3', 'color' => '#b45309', 'border' => '#fde68a'),
+                3  => array('bg' => '#f0fdf4', 'color' => '#166534', 'border' => '#bbf7d0'),
+                4  => array('bg' => '#e0f2fe', 'color' => '#0369a1', 'border' => '#bae6fd'),
+                5  => array('bg' => '#f3e8ff', 'color' => '#6b21a8', 'border' => '#e9d5ff'),
+                6  => array('bg' => '#fce7f3', 'color' => '#9d174d', 'border' => '#fbcfe8'),
+                7  => array('bg' => '#ffedd5', 'color' => '#c2410c', 'border' => '#fed7aa'),
+                8  => array('bg' => '#ecfdf5', 'color' => '#047857', 'border' => '#a7f3d0'),
+                9  => array('bg' => '#f1f5f9', 'color' => '#334155', 'border' => '#cbd5e1'),
+                10 => array('bg' => '#fee2e2', 'color' => '#991b1b', 'border' => '#fca5a5'),
+                11 => array('bg' => '#e0e7ff', 'color' => '#3730a3', 'border' => '#c7d2fe'),
+                12 => array('bg' => '#fae8ff', 'color' => '#86198f', 'border' => '#f5d0fe'),
+                13 => array('bg' => '#ccfbf1', 'color' => '#0f766e', 'border' => '#99f6e4'),
+                14 => array('bg' => '#fef9c3', 'color' => '#854d0e', 'border' => '#fef08a'),
+                15 => array('bg' => '#f1f5f9', 'color' => '#1e293b', 'border' => '#cbd5e1'),
+                16 => array('bg' => '#fee2e2', 'color' => '#b91c1c', 'border' => '#fca5a5')
+            );
+
+            $non_submitters = array();
+            $total_missing_preps = 0;
+
+            foreach ($teachers as $t) {
+                $preps = $wpdb->get_results($wpdb->prepare(
+                    "SELECT * FROM {$wpdb->prefix}sm_lesson_preps WHERE teacher_id = %d AND status IN ('submitted', 'approved', 'revision_required', 'rejected', 'late', 'resubmitted')",
+                    $t->ID
+                ));
+
+                $submitted_weeks = array();
+                foreach ($preps as $p) {
+                    $p_time = strtotime($p->created_at ?: $p->lesson_date);
+                    if ($p_time >= $acad_anchor_ts) {
+                        $w_num = intval(floor(($p_time - $acad_anchor_ts) / (7 * 86400))) + 1;
+                    } else {
+                        $w_num = 1;
+                    }
+                    $submitted_weeks[$w_num] = true;
+                }
+
+                $missing_weeks = array();
+                for ($w = 1; $w <= $current_acad_week; $w++) {
+                    if (!isset($submitted_weeks[$w])) {
+                        $missing_weeks[] = $w;
+                    }
+                }
+
+                if (!empty($missing_weeks)) {
+                    $emp_number = get_user_meta($t->ID, 'eess_employee_number', true) ?: ('EMP-' . $t->ID);
+                    $sch_name   = get_user_meta($t->ID, 'eess_school_name', true) ?: 'المؤسسة الرئيسية';
+                    $dept_name  = get_user_meta($t->ID, 'eess_department', true) ?: 'الأقسام الأكاديمية';
+                    $subject    = get_user_meta($t->ID, 'sm_specialization', true) ?: (get_user_meta($t->ID, 'specialization', true) ?: 'عام');
+
+                    $non_submitters[] = array(
+                        'user'          => $t,
+                        'emp_number'    => $emp_number,
+                        'school_name'   => $sch_name,
+                        'dept_name'     => $dept_name,
+                        'subject'       => $subject,
+                        'total_missing' => count($missing_weeks),
+                        'missing_weeks' => $missing_weeks
+                    );
+                    $total_missing_preps += count($missing_weeks);
                 }
             }
 
+            // Sort non-submitting teachers by total missing weeks descending
+            usort($non_submitters, function($a, $b) {
+                return $b['total_missing'] <=> $a['total_missing'];
+            });
+
             $school_info = SM_Settings::get_school_info();
             $school_logo = !empty($school_info['logo_url']) ? $school_info['logo_url'] : '';
-            $school_name = !empty($school_info['name']) ? $school_info['name'] : 'نظام EESS الموحد لإدارة المدارس';
+            $school_name = !empty($school_info['name']) ? $school_info['name'] : 'مؤسسة الشعلة للتعليم والتطوير';
 
             header('Content-Type: text/html; charset=utf-8');
             ?>
@@ -9084,33 +9162,31 @@ class SM_Public {
             <html lang="ar" dir="rtl">
             <head>
                 <meta charset="UTF-8">
-                <title>التقرير الموحد لمتابعة تسليم تحضير الدروس للأسبوع الحالي</title>
+                <title>تقرير الكادر غير الملتزم بتسليم تحضير الدروس</title>
                 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
                 <style>
                     @page { size: A4 portrait; margin: 12mm 15mm; }
-                    body { font-family: 'Cairo', sans-serif; background: #fff; color: #0f172a; margin: 0; padding: 15px; direction: rtl; font-size: 11px; }
-                    .report-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 15px; }
+                    body { font-family: 'Cairo', sans-serif; background: #fff; color: #0f172a; margin: 0; padding: 15px; direction: rtl; font-size: 11px; line-height: 1.5; }
+                    .report-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #881337; padding-bottom: 12px; margin-bottom: 15px; }
                     .brand-box { display: flex; align-items: center; gap: 12px; }
                     .brand-logo { width: 48px; height: 48px; object-fit: contain; }
-                    .report-title { font-size: 16px; font-weight: 800; color: #881337; margin: 0 0 2px 0; }
+                    .report-title { font-size: 16px; font-weight: 900; color: #881337; margin: 0 0 2px 0; }
                     .report-subtitle { font-size: 11px; color: #475569; font-weight: 700; margin: 0; }
                     table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; }
-                    th { background: #1e293b; color: #fff; padding: 7px 10px; font-weight: 800; text-align: right; border: 1px solid #1e293b; }
-                    td { padding: 6px 10px; border: 1px solid #cbd5e1; text-align: right; vertical-align: middle; }
+                    th { background: #1e293b; color: #fff; padding: 8px 10px; font-weight: 800; text-align: right; border: 1px solid #1e293b; }
+                    td { padding: 8px 10px; border: 1px solid #cbd5e1; text-align: right; vertical-align: middle; }
                     tr:nth-child(even) { background: #f8fafc; }
-                    .status-pill { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-weight: 800; font-size: 10px; text-align: center; }
-                    .pill-success { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
-                    .pill-warning { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
-                    .pill-danger { background: #fee2e2; color: #991b1b; border: 1px solid #fecdd3; }
-                    .summary-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 15px; }
-                    .summary-card { background: #f8fafc; border: 1px solid #cbd5e1; padding: 8px 10px; border-radius: 8px; text-align: center; }
+                    .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px; }
+                    .summary-card { background: #f8fafc; border: 1px solid #cbd5e1; padding: 10px; border-radius: 8px; text-align: center; }
+                    .week-capsule { display: inline-block; padding: 3px 9px; margin: 2px 3px; border-radius: 9999px; font-weight: 800; font-size: 10.5px; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
                     @media print { body { padding: 0; } .no-print { display: none; } }
                 </style>
             </head>
             <body>
                 <div class="no-print" style="margin-bottom: 15px; text-align: left;">
-                    <button onclick="window.print()" style="background: #881337; color: #fff; border: none; padding: 7px 18px; font-family: 'Cairo'; font-weight: 800; border-radius: 9999px; cursor: pointer; font-size: 12px;">🖨️ طباعة التقرير الرسمية A4</button>
+                    <button onclick="window.print()" style="background: #881337; color: #fff; border: none; padding: 8px 20px; font-family: 'Cairo'; font-weight: 800; border-radius: 9999px; cursor: pointer; font-size: 12px; box-shadow: 0 4px 12px rgba(136,19,55,0.2);">🖨️ طباعة وتصدير PDF الرسمية A4</button>
                 </div>
+
                 <div class="report-header">
                     <div class="brand-box">
                         <?php if ($school_logo): ?>
@@ -9118,106 +9194,84 @@ class SM_Public {
                         <?php endif; ?>
                         <div>
                             <div style="font-size: 14px; font-weight: 900; color: #0f172a;"><?php echo esc_html($school_name); ?></div>
-                            <div style="font-size: 11px; color: #64748b; font-weight: 700;">إدارة الشؤون التعليمية والتدريب</div>
+                            <div style="font-size: 11px; color: #64748b; font-weight: 700;">إدارة الشؤون التعليمية والرقابة الأكاديمية</div>
                         </div>
                     </div>
                     <div style="text-align: left;">
-                        <h1 class="report-title">كشف رصد ومتابعة تسليم تحضيرات الدروس أسبوعياً</h1>
-                        <p class="report-subtitle">موعد الاستحقاق المعتمد: يوم الإثنين 12:00 ظهراً (التاريخ: <?php echo esc_html($monday_deadline); ?>)</p>
+                        <h1 class="report-title">تقرير الكادر غير الملتزم بتسليم تحضير الدروس</h1>
+                        <p class="report-subtitle">الأسابيع الأكاديمية المستحقة المعتمدة: (الأسابيع من 1 إلى <?php echo $current_acad_week; ?>) · التحديث: <?php echo esc_html($current_date_fmt); ?></p>
                     </div>
                 </div>
 
-                <?php
-                $total_teachers = count($teachers);
-                $on_time_count = 0;
-                $late_count = 0;
-                $missing_count = 0;
-                $rows_html = '';
-
-                foreach ($teachers as $idx => $t) {
-                    $emp_id = get_user_meta($t->ID, 'eess_employee_number', true) ?: ('EMP-' . $t->ID);
-                    $t_school = get_user_meta($t->ID, 'eess_school_name', true) ?: 'المدرسة الرئيسية';
-                    $t_subj = get_user_meta($t->ID, 'sm_specialization', true) ?: (get_user_meta($t->ID, 'specialization', true) ?: (get_user_meta($t->ID, 'subject', true) ?: 'عام'));
-
-                    $pr = $preps_by_teacher[$t->ID] ?? null;
-                    $st_text = '⚠️ لم يتم التسليم';
-                    $st_class = 'pill-danger';
-                    $sub_time = '---';
-                    $delay_txt = '---';
-
-                    if ($pr) {
-                        $sub_created = $pr->created_at;
-                        $sub_time = date_i18n('Y-m-d H:i', strtotime($sub_created));
-
-                        if (strtotime($sub_created) <= strtotime($monday_deadline)) {
-                            $on_time_count++;
-                            $st_class = 'pill-success';
-                            $st_text = '✓ تم التسليم في الموعد';
-                            $delay_txt = 'في الموعد المحدد';
-                        } else {
-                            $late_count++;
-                            $st_class = 'pill-warning';
-                            $st_text = '⏱️ تم التسليم متأخراً';
-                            $diff_seconds = strtotime($sub_created) - strtotime($monday_deadline);
-                            $diff_hours = round($diff_seconds / 3600, 1);
-                            $delay_txt = 'تأخير ' . $diff_hours . ' ساعة';
-                        }
-                    } else {
-                        $missing_count++;
-                    }
-
-                    $rows_html .= '<tr>';
-                    $rows_html .= '<td>' . ($idx + 1) . '</td>';
-                    $rows_html .= '<td><strong>' . esc_html($t->display_name) . '</strong><br><small style="color:#64748b; font-family:monospace;">' . esc_html($emp_id) . '</small></td>';
-                    $rows_html .= '<td>' . esc_html($t_school) . '</td>';
-                    $rows_html .= '<td>' . esc_html($t_subj) . '</td>';
-                    $rows_html .= '<td><span class="status-pill ' . $st_class . '">' . $st_text . '</span></td>';
-                    $rows_html .= '<td>' . $sub_time . '</td>';
-                    $rows_html .= '<td>' . $delay_txt . '</td>';
-                    $rows_html .= '</tr>';
-                }
-
-                $submitted_total = $on_time_count + $late_count;
-                $compliance_rate = $total_teachers > 0 ? round(($on_time_count / $total_teachers) * 100) : 0;
-                ?>
+                <div style="background: #f8fafc; border-right: 4px solid #881337; padding: 12px 16px; border-radius: 8px; margin-bottom: 15px; font-size: 11.5px; color: #334155; line-height: 1.7; font-weight: 600;">
+                    يتضمن هذا التقرير كشف الموظفين والمعلمين الذين لم يقوموا برفع تحضير الدروس المطلوب لواحد أو أكثر من الأسابيع الأكاديمية المستحقة حتى تاريخه (الأسابيع من 1 إلى <?php echo $current_acad_week; ?>). تم تحديد الأسابيع غير المسلمة بناءً على السجلات الفعلية بالمنظومة والتقويم الأكاديمي المعتمد مع استثناء التقديمات المتأخرة المستوفاة.
+                </div>
 
                 <div class="summary-grid">
                     <div class="summary-card">
-                        <div style="font-size: 11px; color: #64748b; font-weight: 700;">إجمالي الكادر</div>
-                        <div style="font-size: 18px; font-weight: 900; color: #0f172a;"><?php echo $total_teachers; ?></div>
+                        <div style="font-size: 11px; color: #64748b; font-weight: 700;">إجمالي الكادر بالكشف</div>
+                        <div style="font-size: 18px; font-weight: 900; color: #0f172a;"><?php echo count($teachers); ?></div>
                     </div>
                     <div class="summary-card">
-                        <div style="font-size: 11px; color: #166534; font-weight: 700;">في الموعد المحدد</div>
-                        <div style="font-size: 18px; font-weight: 900; color: #15803d;"><?php echo $on_time_count; ?></div>
+                        <div style="font-size: 11px; color: #15803d; font-weight: 700;">الكادر المستوفي بالكامل</div>
+                        <div style="font-size: 18px; font-weight: 900; color: #16a34a;"><?php echo (count($teachers) - count($non_submitters)); ?></div>
                     </div>
                     <div class="summary-card">
-                        <div style="font-size: 11px; color: #b45309; font-weight: 700;">متأخر بعد الإثنين 12 ظهراً</div>
-                        <div style="font-size: 18px; font-weight: 900; color: #d97706;"><?php echo $late_count; ?></div>
+                        <div style="font-size: 11px; color: #b91c1c; font-weight: 700;">غير الملتزمين بالتحضير</div>
+                        <div style="font-size: 18px; font-weight: 900; color: #dc2626;"><?php echo count($non_submitters); ?></div>
                     </div>
                     <div class="summary-card">
-                        <div style="font-size: 11px; color: #991b1b; font-weight: 700;">غير المغطين (لم يرفع)</div>
-                        <div style="font-size: 18px; font-weight: 900; color: #dc2626;"><?php echo $missing_count; ?></div>
-                    </div>
-                    <div class="summary-card">
-                        <div style="font-size: 11px; color: #0369a1; font-weight: 700;">نسبة الالتزام الفعلي</div>
-                        <div style="font-size: 18px; font-weight: 900; color: #0284c7;"><?php echo $compliance_rate; ?>%</div>
+                        <div style="font-size: 11px; color: #0369a1; font-weight: 700;">إجمالي الأسابيع غير المسلمة</div>
+                        <div style="font-size: 18px; font-weight: 900; color: #0284c7;"><?php echo $total_missing_preps; ?></div>
                     </div>
                 </div>
 
                 <table>
                     <thead>
                         <tr>
-                            <th style="width: 40px;">#</th>
-                            <th>اسم المعلم والرقم الوظيفي</th>
+                            <th style="width: 32px; text-align: center;">#</th>
+                            <th>اسم الموظف / المعلم</th>
+                            <th style="width: 110px;">الرقم الوظيفي</th>
                             <th>المؤسسة / المدرسة</th>
-                            <th>التخصص</th>
-                            <th>حالة التسليم</th>
-                            <th>تاريخ ووقت التسليم</th>
-                            <th>مدة التأخير</th>
+                            <th>القسم</th>
+                            <th>المادة / التخصص</th>
+                            <th style="width: 90px; text-align: center;">إجمالي المفقود</th>
+                            <th>تفاصيل الأسابيع غير المسلمة</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php echo $rows_html; ?>
+                        <?php if (empty($non_submitters)): ?>
+                            <tr>
+                                <td colspan="8" style="text-align: center; color: #16a34a; padding: 25px; font-weight: 800; font-size: 13px;">
+                                    🎉 جميع المعلمين قاموا بتقديم كافة تحضيرات الدروس المطلوبة لكافة الأسابيع الأكاديمية المستحقة بنجاح!
+                                </td>
+                            </tr>
+                        <?php else:
+                            foreach ($non_submitters as $idx => $ns):
+                        ?>
+                            <tr>
+                                <td style="text-align: center; font-weight: bold;"><?php echo ($idx + 1); ?></td>
+                                <td><strong><?php echo esc_html($ns['user']->display_name); ?></strong></td>
+                                <td style="font-family: monospace; font-weight: bold; color: #881337;"><?php echo esc_html($ns['emp_number']); ?></td>
+                                <td><?php echo esc_html($ns['school_name']); ?></td>
+                                <td><?php echo esc_html($ns['dept_name']); ?></td>
+                                <td><?php echo esc_html($ns['subject']); ?></td>
+                                <td style="text-align: center;">
+                                    <span style="display: inline-block; padding: 3px 10px; border-radius: 9999px; background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; font-weight: 900;">
+                                        <?php echo $ns['total_missing']; ?> أسبوع
+                                    </span>
+                                </td>
+                                <td>
+                                    <?php
+                                    foreach ($ns['missing_weeks'] as $mw) {
+                                        $st = $pastel_palette[$mw] ?? $pastel_palette[1];
+                                        echo '<span class="week-capsule" style="background: ' . $st['bg'] . '; color: ' . $st['color'] . '; border: 1px solid ' . $st['border'] . ';">الأسبوع ' . $mw . '</span>';
+                                    }
+                                    ?>
+                                </td>
+                            </tr>
+                        <?php endforeach;
+                        endif; ?>
                     </tbody>
                 </table>
             </body>
