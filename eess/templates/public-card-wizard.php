@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) exit;
 
 $school_info = SM_Settings::get_school_info();
 $sys_logo = !empty($school_info['school_logo']) ? $school_info['school_logo'] : (!empty($school_info['logo_url']) ? $school_info['logo_url'] : SM_PLUGIN_URL . 'assets/images/logo.png');
-$school_name = $school_info['name'] ?? 'مؤسسة EESS التعليمية';
+$school_name = 'مؤسسة الشعلة للتعليم والتطوير';
 $ajax_url = admin_url('admin-ajax.php');
 ?>
 
@@ -87,6 +87,32 @@ $ajax_url = admin_url('admin-ajax.php');
 
         <!-- Verification Result & Existing Status Panel -->
         <div id="w-verified-status-panel" style="display: none; margin-bottom: 18px;"></div>
+
+        <!-- Mandatory Official Student Photo Upload Box (If Profile Photo Missing) -->
+        <div id="w-photo-upload-container" style="display: none; background: #fffbe3; border: 1.5px solid #fde047; border-radius: 14px; padding: 18px; margin-bottom: 18px;">
+            <div style="display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 13.5px; color: #854d0e; margin-bottom: 8px;">
+                <span class="dashicons dashicons-camera" style="font-size: 20px;"></span>
+                <span>تنبيه هائم: يتطلب النظام رفع صورة شخصية رسمية معتمدة للطالب</span>
+            </div>
+            <p style="margin: 0 0 12px 0; font-size: 12px; color: #713f12; line-height: 1.5;">
+                الملف الشخصي للطالب لا يحتوي على صورة رسمية معتمدة بالنظام. لإتمام طلب تصريح الخروج، يرجى رفع صورة شخصية رسمية مستوفية للشروط التالية:
+            </p>
+            <ul style="margin: 0 0 12px 0; padding-right: 20px; font-size: 11.5px; color: #854d0e; line-height: 1.6; font-weight: 700;">
+                <li>خلفية بيضاء ناصعة وموحدة بدون مؤثرات.</li>
+                <li>مظهر رسمي (صورة جواز السفر / الهوية الوطنية).</li>
+                <li>صورة حديثة لالتقاطها مدة لا تتجاوز سنة واحدة، بوضوح وجلاء ملامح الوجه.</li>
+                <li>صيغة الملف (JPG, PNG, WEBP) وبحجم لا يتجاوز 5 ميجابايت.</li>
+            </ul>
+
+            <div style="margin-bottom: 10px;">
+                <input type="file" id="w_student_photo_file" accept="image/jpeg,image/png,image/webp" onchange="wValidateStudentPhoto(this)" style="width: 100%; font-size: 12px; background: white; padding: 8px; border-radius: 8px; border: 1px solid #cbd5e1;">
+            </div>
+
+            <div id="w_photo_preview_box" style="display: none; margin-top: 10px; background: white; padding: 10px; border-radius: 10px; border: 1px solid #e2e8f0; text-align: center;">
+                <img id="w_photo_preview_img" src="" style="width: 90px; height: 110px; object-fit: cover; border-radius: 8px; border: 2px solid #0f172a; margin-bottom: 6px;" alt="Student Photo Preview">
+                <div style="font-size: 11px; color: #16a34a; font-weight: 800;" id="w_photo_status_msg">✓ تم التحقق من توافق الصورة المرفقة.</div>
+            </div>
+        </div>
 
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <button type="button" onclick="wGoToStep(1)" style="height: 42px; padding: 0 20px; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; border-radius: 10px; font-weight: 800; font-size: 12.5px; cursor: pointer;">➔ السابق</button>
@@ -296,12 +322,74 @@ function wSelectStudent(id, displayName, className, section) {
     btnNext.style.cursor = 'pointer';
 }
 
+let wPhotoValidated = false;
+
+function wValidateStudentPhoto(input) {
+    const previewBox = document.getElementById('w_photo_preview_box');
+    const previewImg = document.getElementById('w_photo_preview_img');
+    const statusMsg  = document.getElementById('w_photo_status_msg');
+    const btnNext    = document.getElementById('w_btn_next_2');
+
+    if (!input.files || !input.files[0]) {
+        previewBox.style.display = 'none';
+        wPhotoValidated = false;
+        if (wVerifiedData && !wVerifiedData.has_photo) {
+            btnNext.disabled = true;
+            btnNext.style.opacity = '0.5';
+        }
+        return;
+    }
+
+    const file = input.files[0];
+    const maxMB = 5;
+    const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+
+    if (!allowed.includes(file.type)) {
+        alert('صيغة الملف غير مسموح بها. يرجى اختيار صورة بصيغة JPG أو PNG أو WEBP.');
+        input.value = '';
+        previewBox.style.display = 'none';
+        wPhotoValidated = false;
+        btnNext.disabled = true;
+        btnNext.style.opacity = '0.5';
+        return;
+    }
+
+    if (file.size > maxMB * 1024 * 1024) {
+        alert('حجم الملف يتجاوز الحد الأقصى المسموح به (5 ميجابايت).');
+        input.value = '';
+        previewBox.style.display = 'none';
+        wPhotoValidated = false;
+        btnNext.disabled = true;
+        btnNext.style.opacity = '0.5';
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        previewImg.src = e.target.result;
+        previewBox.style.display = 'block';
+        statusMsg.innerText = '✓ تم اختيار ومعاينة الصورة بنجاح وتأكيد الشروط الرسمية.';
+        wPhotoValidated = true;
+
+        if (wVerifiedData && !wVerifiedData.active_request && !wVerifiedData.exceeded_limit) {
+            btnNext.disabled = false;
+            btnNext.style.opacity = '1';
+            btnNext.style.cursor = 'pointer';
+        }
+    };
+    reader.readAsDataURL(file);
+}
+
 function wVerifyStudentIdentity() {
     const codeVal = document.getElementById('w_verify_code_input').value.trim();
     const alertBox = document.getElementById('w-alert-box');
     const panel = document.getElementById('w-verified-status-panel');
+    const photoContainer = document.getElementById('w-photo-upload-container');
+
     alertBox.style.display = 'none';
     panel.style.display = 'none';
+    photoContainer.style.display = 'none';
+    wPhotoValidated = false;
 
     if (!codeVal) {
         alertBox.style.display = 'block';
@@ -351,9 +439,17 @@ function wVerifyStudentIdentity() {
                 btnNext.style.opacity = '0.5';
             } else {
                 html += '</div>';
-                btnNext.disabled = false;
-                btnNext.style.opacity = '1';
-                btnNext.style.cursor = 'pointer';
+
+                if (!res.data.has_photo) {
+                    photoContainer.style.display = 'block';
+                    btnNext.disabled = true;
+                    btnNext.style.opacity = '0.5';
+                    btnNext.style.cursor = 'not-allowed';
+                } else {
+                    btnNext.disabled = false;
+                    btnNext.style.opacity = '1';
+                    btnNext.style.cursor = 'pointer';
+                }
             }
             html += '</div>';
             panel.innerHTML = html;
@@ -430,25 +526,44 @@ function wSubmitExitCardFinal() {
     btn.disabled = true;
     btn.innerHTML = 'جاري إرسال وتوثيق الطلب... ⏳';
 
-    jQuery.post('<?php echo $ajax_url; ?>', {
-        action: 'sm_public_submit_exit_card',
-        student_id: wSelectedStudent.id,
-        verify_code: document.getElementById('w_verify_code_input').value.trim(),
-        parent_name: document.getElementById('w_parent_name').value.trim(),
-        parent_phone: document.getElementById('w_parent_phone').value.trim(),
-        declaration: document.getElementById('w_declaration_chk').checked ? 1 : 0,
-        signature_data: wCanvas ? wCanvas.toDataURL() : ''
-    }, function(res) {
-        wSubmitting = false;
-        if (res.success && res.data) {
-            document.getElementById('w-panel-step-4').style.display = 'none';
-            document.getElementById('w-progress-bar').style.display = 'none';
-            document.getElementById('w_success_ref_no').innerText = res.data.reference_no;
-            document.getElementById('w-panel-success').style.display = 'block';
-        } else {
+    const formData = new FormData();
+    formData.append('action', 'sm_public_submit_exit_card');
+    formData.append('student_id', wSelectedStudent.id);
+    formData.append('verify_code', document.getElementById('w_verify_code_input').value.trim());
+    formData.append('parent_name', document.getElementById('w_parent_name').value.trim());
+    formData.append('parent_phone', document.getElementById('w_parent_phone').value.trim());
+    formData.append('declaration', document.getElementById('w_declaration_chk').checked ? 1 : 0);
+    formData.append('signature_data', wCanvas ? wCanvas.toDataURL() : '');
+
+    const photoInput = document.getElementById('w_student_photo_file');
+    if (photoInput && photoInput.files && photoInput.files[0]) {
+        formData.append('student_photo', photoInput.files[0]);
+    }
+
+    jQuery.ajax({
+        url: '<?php echo $ajax_url; ?>',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(res) {
+            wSubmitting = false;
+            if (res.success && res.data) {
+                document.getElementById('w-panel-step-4').style.display = 'none';
+                document.getElementById('w-progress-bar').style.display = 'none';
+                document.getElementById('w_success_ref_no').innerText = res.data.reference_no;
+                document.getElementById('w-panel-success').style.display = 'block';
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = 'تأكيد وإرسال الطلب النهائي ✓';
+                alert('حدث خطأ أثناء إرسال الطلب: ' + (res.data || 'فشل الحفظ'));
+            }
+        },
+        error: function() {
+            wSubmitting = false;
             btn.disabled = false;
             btn.innerHTML = 'تأكيد وإرسال الطلب النهائي ✓';
-            alert('حدث خطأ أثناء إرسال الطلب: ' + (res.data || 'فشل الحفظ'));
+            alert('حدث خطأ في الاتصال بالسيرفر أثناء إرسال الطلب.');
         }
     });
 }

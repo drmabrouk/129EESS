@@ -9766,6 +9766,145 @@ class SM_Public {
             </html>
             <?php
             exit;
+        } elseif ($print_type === 'exit_permit_request') {
+            global $wpdb;
+            $req_id = intval($_GET['request_id'] ?? 0);
+            if (!$req_id) {
+                wp_die('معرف طلب التصريح غير مدخل.');
+            }
+
+            $req = $wpdb->get_row($wpdb->prepare(
+                "SELECT r.*, s.name as student_name, s.student_code, s.class_name, s.section, s.national_id, s.photo_url FROM {$wpdb->prefix}sm_exit_card_requests r JOIN {$wpdb->prefix}sm_students s ON r.student_id = s.id WHERE r.id = %d",
+                $req_id
+            ));
+
+            if (!$req) {
+                wp_die('سجل الطلب غير موجود بالنظام.');
+            }
+
+            $ref_disp   = $req->reference_no ?: ('EXT-' . date('Y') . '-' . $req->id);
+            $status_lbl = self::eess_get_exit_card_status_label($req->status);
+            $stu_photo  = !empty($req->photo_url) ? $req->photo_url : "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzk0YTMiIHN0eWxlPSJiYWNrZ3JvdW5kOiNmMWY1Zjk7IGJvcmRlci1yYWRpdXM6NTAlOyI+PHBhdGggZD0iTTEyIDEyYzIuMjEgMCA4LTEuNzkgNC00cy0xLjc5LTQtNC00LTQgMS43OS00IDQgMS43OSA0IDQgNHptMCAyYy0yLjY3IDAtOCAxLjM0LTggNHYyaDE2di0yYzAtMi42Ni01LjMzLTQtOC00eiIvPjwvc3ZnPg==";
+            $school_info = SM_Settings::get_school_info();
+            $sys_logo   = !empty($school_info['school_logo']) ? $school_info['school_logo'] : (!empty($school_info['logo_url']) ? $school_info['logo_url'] : SM_PLUGIN_URL . 'assets/images/logo.png');
+            ?>
+            <!DOCTYPE html>
+            <html lang="ar" dir="rtl">
+            <head>
+                <meta charset="UTF-8">
+                <title>وثيقة طلب تصريح استئذان رسمي - <?php echo esc_html($ref_disp); ?></title>
+                <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+                <style>
+                    @page { size: A4 portrait; margin: 12mm 15mm; }
+                    body { font-family: 'Cairo', sans-serif; direction: rtl; color: #0f172a; background: #f8fafc; margin: 0; padding: 20px; font-size: 13px; line-height: 1.6; }
+                    .a4-doc-container { width: 100%; max-width: 210mm; margin: 0 auto; background: #ffffff; padding: 30px; border-radius: 12px; border: 1px solid #cbd5e1; box-shadow: 0 10px 25px rgba(0,0,0,0.05); box-sizing: border-box; }
+                    .doc-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 16px; margin-bottom: 24px; }
+                    .doc-title-box h1 { margin: 0 0 4px 0; font-size: 18px; font-weight: 900; color: #0f172a; }
+                    .doc-title-box div { font-size: 12px; color: #881337; font-weight: 800; }
+                    .doc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+                    .info-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; }
+                    .info-card h4 { margin: 0 0 10px 0; font-size: 13px; font-weight: 900; color: #0f172a; border-bottom: 1px solid #cbd5e1; padding-bottom: 6px; }
+                    .info-row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 12px; }
+                    .info-label { color: #64748b; font-weight: 700; }
+                    .info-val { color: #0f172a; font-weight: 800; }
+                    .dec-box { background: #fffbe3; border: 1px solid #fde047; border-radius: 10px; padding: 14px; color: #854d0e; font-size: 12px; margin-bottom: 20px; line-height: 1.7; }
+                    .sig-section { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; border-top: 2px solid #e2e8f0; padding-top: 20px; margin-top: 20px; }
+                    .sig-box { background: #ffffff; border: 1px solid #cbd5e1; border-radius: 10px; padding: 12px; text-align: center; }
+                    @media print {
+                        body { background: white; padding: 0; }
+                        .no-print { display: none !important; }
+                        .a4-doc-container { border: none !important; box-shadow: none !important; padding: 0 !important; }
+                    }
+                </style>
+            </head>
+            <body>
+
+                <div class="no-print" style="text-align: center; margin-bottom: 20px;">
+                    <button onclick="window.print()" style="background: #0f172a; color: white; border: none; padding: 10px 28px; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 14px; font-family: 'Cairo';">🖨️ طباعة نموذج A4 الرسمي</button>
+                </div>
+
+                <div class="a4-doc-container">
+
+                    <!-- Document Official Header -->
+                    <div class="doc-header">
+                        <div style="display: flex; align-items: center; gap: 14px;">
+                            <img src="<?php echo esc_url($sys_logo); ?>" style="width: 60px; height: 60px; object-fit: contain; border-radius: 8px; border: 1px solid #e2e8f0;" alt="School Logo">
+                            <div class="doc-title-box">
+                                <h1>مؤسسة الشعلة للتعليم والتطوير</h1>
+                                <div>وثيقة ونموذج طلب تصريح استئذان خروج طالب رسمية</div>
+                            </div>
+                        </div>
+                        <div style="text-align: left; font-size: 11.5px; color: #64748b;">
+                            <div><strong>الرقم المرجعي:</strong> <span style="font-family: monospace; font-weight: 900; color: #881337; font-size: 13px;"><?php echo esc_html($ref_disp); ?></span></div>
+                            <div><strong>تاريخ الإصدار:</strong> <?php echo date_i18n('Y-m-d H:i'); ?></div>
+                            <div><strong>الحالة الرسمية:</strong> <span style="font-weight: 800; color: #16a34a;"><?php echo esc_html($status_lbl); ?></span></div>
+                        </div>
+                    </div>
+
+                    <!-- Student & Request Details Grid -->
+                    <div class="doc-grid">
+
+                        <!-- Student Information Box -->
+                        <div class="info-card">
+                            <h4>بيانات الطالب صاحب التصريح</h4>
+                            <div style="display: flex; gap: 14px; align-items: center; margin-bottom: 12px;">
+                                <img src="<?php echo esc_url($stu_photo); ?>" style="width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 2px solid #0f172a; flex-shrink: 0;" alt="Student">
+                                <div style="flex: 1;">
+                                    <div style="font-size: 15px; font-weight: 900; color: #0f172a; margin-bottom: 2px;"><?php echo esc_html($req->student_name); ?></div>
+                                    <div style="font-size: 11.5px; color: #64748b; font-weight: 700;">الصف: <?php echo esc_html($req->class_name); ?> (<?php echo esc_html($req->section); ?>)</div>
+                                </div>
+                            </div>
+                            <div class="info-row"><span class="info-label">كود الطالب الأكاديمي:</span> <span class="info-val" style="font-family: monospace;"><?php echo esc_html($req->student_code); ?></span></div>
+                            <div class="info-row"><span class="info-label">رقم الهوية الوطنية:</span> <span class="info-val" style="font-family: monospace;"><?php echo esc_html($req->national_id ?: 'غير مدخلة'); ?></span></div>
+                        </div>
+
+                        <!-- Request Details Box -->
+                        <div class="info-card">
+                            <h4>بيانات طلب الاستئذان والتواصل</h4>
+                            <div class="info-row"><span class="info-label">اسم ولي الأمر المقدم:</span> <span class="info-val"><?php echo esc_html($req->parent_name ?: 'غير مدخل'); ?></span></div>
+                            <div class="info-row"><span class="info-label">هاتف التواصل المعتمد:</span> <span class="info-val" style="font-family: monospace;"><?php echo esc_html($req->parent_phone ?: '---'); ?></span></div>
+                            <div class="info-row"><span class="info-label">سبب الخروج والاستئذان:</span> <span class="info-val"><?php echo esc_html($req->reason); ?></span></div>
+                            <div class="info-row"><span class="info-label">تاريخ التقديم الإلكتروني:</span> <span class="info-val" style="font-family: monospace;"><?php echo esc_html(date_i18n('Y-m-d H:i', strtotime($req->created_at))); ?></span></div>
+                            <div class="info-row"><span class="info-label">العام الدراسي:</span> <span class="info-val"><?php echo esc_html($req->academic_year); ?></span></div>
+                        </div>
+
+                    </div>
+
+                    <!-- Parent Declaration Box -->
+                    <div class="dec-box">
+                        <strong>تعهد وإقرار ولي الأمر الرسمي المعتمد بالنظام:</strong><br>
+                        أقر أنا ولي أمر الطالب المذكور أعلاه بطلبي الرسمي لإصدار وتفعيل تصريح الخروج والاستئذان المدرسي للطالب. وأتحمل المسؤولية الكاملة عن خروج الطالب واستئذانه بموجب هذا التصريح عقب اعتماده من قبل إدارة المدرسة. وأؤكد صحة البيانات والتوقيع المرفقين.
+                    </div>
+
+                    <!-- Signatures Area -->
+                    <div class="sig-section">
+                        <div class="sig-box">
+                            <div style="font-weight: 800; font-size: 12px; color: #0f172a; margin-bottom: 6px;">توقيع واعتماد ولي الأمر الإلكتروني:</div>
+                            <?php if (!empty($req->signature_data)): ?>
+                                <img src="<?php echo $req->signature_data; ?>" style="max-height: 70px; object-fit: contain;" alt="Parent Signature">
+                            <?php else: ?>
+                                <div style="color: #94a3b8; font-size: 11px; padding: 20px;">غير موثق</div>
+                            <?php endif; ?>
+                        </div>
+
+                        <div class="sig-box" style="display: flex; flex-direction: column; justify-content: space-between; min-height: 100px;">
+                            <div style="font-weight: 800; font-size: 12px; color: #0f172a;">اعتماد قسم شؤون الطلاب وختم المدرسة:</div>
+                            <div style="font-size: 11px; color: #64748b; margin-top: auto;">التوقيع والختم الرسمي: ...................................</div>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div style="border-top: 1px solid #cbd5e1; margin-top: 24px; padding-top: 10px; font-size: 10px; color: #94a3b8; display: flex; justify-content: space-between; align-items: center;">
+                        <span>تاريخ الطباعة: <?php echo date_i18n('Y-m-d H:i'); ?></span>
+                        <span>مؤسسة الشعلة للتعليم والتطوير - نظام الإدارة المدرسية الرقمي الموحد</span>
+                    </div>
+
+                </div>
+
+            </body>
+            </html>
+            <?php
+            exit;
         } else {
             wp_die('نوع الطباعة غير مدعوم.');
         }
@@ -12575,14 +12714,18 @@ class SM_Public {
         $max_reqs = intval($settings['max_requests'] ?? 3);
         $exceeded_limit = ($total_prev_requests >= $max_reqs);
 
+        $has_photo = !empty($student->photo_url);
+
         wp_send_json_success(array(
             'student' => array(
                 'id' => $student->id,
                 'name' => $student->name,
                 'student_code' => $student->student_code ?: ('STU-' . $student->id),
                 'class_name' => $student->class_name ?: 'الصف الدراسي',
-                'section' => $student->section ?: 'أ'
+                'section' => $student->section ?: 'أ',
+                'photo_url' => $student->photo_url ?: ''
             ),
+            'has_photo' => $has_photo,
             'active_request' => $active_req ? array(
                 'reference_no' => $active_req->reference_no ?: ('EXT-' . date('Y') . '-' . $active_req->id),
                 'status' => $active_req->status,
@@ -12639,6 +12782,42 @@ class SM_Public {
         }
 
         global $wpdb;
+
+        // Handle Mandatory Student Profile Photo Upload if missing or provided
+        if (!empty($_FILES['student_photo']['name'])) {
+            require_once(ABSPATH . 'wp-admin/includes/file.php');
+            require_once(ABSPATH . 'wp-admin/includes/image.php');
+            require_once(ABSPATH . 'wp-admin/includes/media.php');
+
+            $file_info = wp_check_filetype_and_ext($_FILES['student_photo']['tmp_name'], $_FILES['student_photo']['name']);
+            $allowed_mimes = array('jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png', 'webp' => 'image/webp');
+
+            if (!in_array($file_info['type'], $allowed_mimes) && !array_key_exists($file_info['ext'], $allowed_mimes)) {
+                wp_send_json_error('عذراً، نوع الصورة المرفقة غير مدعوم. يرجى رفع صورة رسمية بصيغة JPG أو PNG أو WEBP.');
+            }
+
+            if ($_FILES['student_photo']['size'] > 5 * 1024 * 1024) {
+                wp_send_json_error('حجم الصورة يتجاوز الحد الأقصى المسموح به (5 ميجابايت).');
+            }
+
+            $attachment_id = media_handle_upload('student_photo', 0);
+            if (!is_wp_error($attachment_id)) {
+                $new_photo_url = wp_get_attachment_url($attachment_id);
+                // Synchronize immediately with main student record
+                $wpdb->update("{$wpdb->prefix}sm_students", array('photo_url' => $new_photo_url), array('id' => $student_id));
+                $student->photo_url = $new_photo_url;
+
+                // Sync with WP user meta if linked
+                if (!empty($student->parent_user_id)) {
+                    update_user_meta($student->parent_user_id, 'eess_profile_photo', $new_photo_url);
+                }
+            } else {
+                wp_send_json_error('فشل رفع الصورة الرسمية للطالب: ' . $attachment_id->get_error_message());
+            }
+        } elseif (empty($student->photo_url)) {
+            wp_send_json_error('تنبيه أمني: يتطلب النظام رفع صورة شخصية رسمية معتمدة للطالب لإتمام طلب تصريح الخروج.');
+        }
+
         $acad_year = '2025/2026';
 
         // Check active duplicate request
