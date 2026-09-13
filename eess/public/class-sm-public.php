@@ -9128,7 +9128,7 @@ class SM_Public {
 
             foreach ($teachers as $t) {
                 $preps = $wpdb->get_results($wpdb->prepare(
-                    "SELECT * FROM {$wpdb->prefix}sm_lesson_preps WHERE teacher_id = %d AND status != 'deleted'",
+                    "SELECT * FROM {$wpdb->prefix}sm_lesson_preps WHERE teacher_id = %d AND status IN ('submitted', 'approved', 'resubmitted', 'late')",
                     $t->ID
                 ));
 
@@ -9725,7 +9725,7 @@ class SM_Public {
                     }
 
                     $teacher_preps = $wpdb->get_results($wpdb->prepare(
-                        "SELECT id, lesson_date, created_at, submission_time, status FROM {$wpdb->prefix}sm_lesson_preps WHERE teacher_id = %d AND status IN ('submitted', 'approved', 'returned', 'resubmitted', 'late')",
+                        "SELECT id, lesson_date, created_at, submission_time, status FROM {$wpdb->prefix}sm_lesson_preps WHERE teacher_id = %d AND status IN ('submitted', 'approved', 'resubmitted', 'late')",
                         $t->ID
                     ));
 

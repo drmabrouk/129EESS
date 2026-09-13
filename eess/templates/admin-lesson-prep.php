@@ -2547,7 +2547,7 @@ $prep_report_total_late = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}sm
 
                 foreach ($prep_report_teachers as $t) {
                     $t_preps = $wpdb->get_results($wpdb->prepare(
-                        "SELECT * FROM {$wpdb->prefix}sm_lesson_preps WHERE teacher_id = %d AND status != 'deleted'",
+                        "SELECT * FROM {$wpdb->prefix}sm_lesson_preps WHERE teacher_id = %d AND status IN ('submitted', 'approved', 'resubmitted', 'late')",
                         $t->ID
                     ));
 
