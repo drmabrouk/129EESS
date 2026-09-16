@@ -509,7 +509,7 @@ function impProcessChunk(filePath, offset, retryCount) {
                 document.getElementById('imp-area-progress').style.display = 'none';
                 impShowCompletedSummary(job);
             } else {
-                setTimeout(() => impProcessChunk(filePath, res.data.total_so_far, 0), 100);
+                setTimeout(() => impProcessChunk(filePath, res.data.total_so_far, 0), 10);
             }
         } else {
             if (retryCount < 3) {

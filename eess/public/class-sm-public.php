@@ -8213,17 +8213,18 @@ class SM_Public {
             if ($total_rows > 1) $total_rows--; // subtract header
 
             $results = array(
-                'status'    => 'running',
-                'file_path' => $file_path,
-                'offset'    => 0,
-                'total'     => $total_rows,
-                'processed' => 0,
-                'success'   => 0,
-                'duplicate' => 0,
-                'generated' => 0,
-                'error'     => 0,
-                'details'   => array(),
-                'updated_at'=> current_time('mysql')
+                'status'      => 'running',
+                'file_path'   => $file_path,
+                'offset'      => 0,
+                'byte_offset' => 0,
+                'total'       => $total_rows,
+                'processed'   => 0,
+                'success'     => 0,
+                'duplicate'   => 0,
+                'generated'   => 0,
+                'error'       => 0,
+                'details'     => array(),
+                'updated_at'  => current_time('mysql')
             );
             set_transient('sm_import_results_' . get_current_user_id(), $results, HOUR_IN_SECONDS * 4);
             set_transient($job_key, $results, HOUR_IN_SECONDS * 4);
@@ -8271,15 +8272,20 @@ class SM_Public {
             }
         }
 
-        // Skip header and seek to offset
-        fgetcsv($handle, 0, $delimiter);
-        for ($i = 0; $i < $offset; $i++) {
+        // O(1) Instant byte-level file seeking checkpoint
+        $byte_offset = intval($results['byte_offset'] ?? 0);
+        if ($offset === 0 || $byte_offset <= 0) {
             fgetcsv($handle, 0, $delimiter);
+            $byte_offset = ftell($handle);
+        } else {
+            fseek($handle, $byte_offset);
         }
 
         $processed = 0;
         $next_sort_order = SM_DB::get_next_sort_order();
         $academic = SM_Settings::get_academic_structure();
+
+        $wpdb->query("START TRANSACTION");
 
         while ($processed < $chunk_size && ($data = fgetcsv($handle, 0, $delimiter)) !== FALSE) {
             $processed++;
@@ -8378,7 +8384,10 @@ class SM_Public {
             }
         }
 
+        $results['byte_offset'] = ftell($handle);
         fclose($handle);
+
+        $wpdb->query("COMMIT");
 
         $is_finished = ($processed < $chunk_size);
         $results['offset'] = $offset + $processed;

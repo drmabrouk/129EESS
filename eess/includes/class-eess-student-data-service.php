@@ -282,36 +282,49 @@ class EESS_Student_Data_Service {
             }
         }
 
+        static $inst_cache = array();
+        static $cached_dept_id = null;
+
         $institution_id = null;
         $school_id      = null;
 
         if (!empty($raw_input_org)) {
-            if (is_numeric($raw_input_org)) {
-                $inst_num = intval($raw_input_org);
-                // Match code first, then ID
-                $inst_row = $wpdb->get_row($wpdb->prepare("SELECT id, code, name FROM {$wpdb->prefix}eess_institutions WHERE code = %d OR id = %d LIMIT 1", $inst_num, $inst_num));
+            $cache_key = (string)$raw_input_org;
+            if (isset($inst_cache[$cache_key])) {
+                $institution_id = $inst_cache[$cache_key];
+                $school_id      = $inst_cache[$cache_key];
             } else {
-                $inst_row = $wpdb->get_row($wpdb->prepare("SELECT id, code, name FROM {$wpdb->prefix}eess_institutions WHERE name = %s OR CAST(code AS CHAR) = %s LIMIT 1", $raw_input_org, $raw_input_org));
-            }
+                if (is_numeric($raw_input_org)) {
+                    $inst_num = intval($raw_input_org);
+                    $inst_row = $wpdb->get_row($wpdb->prepare("SELECT id, code, name FROM {$wpdb->prefix}eess_institutions WHERE code = %d OR id = %d LIMIT 1", $inst_num, $inst_num));
+                } else {
+                    $inst_row = $wpdb->get_row($wpdb->prepare("SELECT id, code, name FROM {$wpdb->prefix}eess_institutions WHERE name = %s OR CAST(code AS CHAR) = %s LIMIT 1", $raw_input_org, $raw_input_org));
+                }
 
-            if ($inst_row) {
-                $institution_id = intval($inst_row->id);
-                $school_id      = intval($inst_row->id);
+                if ($inst_row) {
+                    $institution_id = intval($inst_row->id);
+                    $school_id      = intval($inst_row->id);
+                    $inst_cache[$cache_key] = $institution_id;
+                }
             }
         }
 
         // Fallback to active institution ID 1 if not matched, rather than rejecting the student
         if (empty($institution_id)) {
-            $default_inst = $wpdb->get_row("SELECT id FROM {$wpdb->prefix}eess_institutions WHERE status = 'active' ORDER BY id ASC LIMIT 1");
-            $institution_id = $default_inst ? intval($default_inst->id) : 1;
+            if (!isset($inst_cache['default_active'])) {
+                $default_inst = $wpdb->get_row("SELECT id FROM {$wpdb->prefix}eess_institutions WHERE status = 'active' ORDER BY id ASC LIMIT 1");
+                $inst_cache['default_active'] = $default_inst ? intval($default_inst->id) : 1;
+            }
+            $institution_id = $inst_cache['default_active'];
             $school_id      = $institution_id;
         }
 
         // Resolve Department ID for Student Affairs (Department Code 3)
-        $student_affairs_dept_id = $wpdb->get_var("SELECT id FROM {$wpdb->prefix}eess_departments WHERE code = '3' OR name LIKE '%شؤون الطلبة%' OR name LIKE '%شؤون الطلاب%' ORDER BY id ASC LIMIT 1");
-        if (!$student_affairs_dept_id) {
-            $student_affairs_dept_id = 3;
+        if ($cached_dept_id === null) {
+            $dept_val = $wpdb->get_var("SELECT id FROM {$wpdb->prefix}eess_departments WHERE code = '3' OR name LIKE '%شؤون الطلبة%' OR name LIKE '%شؤون الطلاب%' ORDER BY id ASC LIMIT 1");
+            $cached_dept_id = $dept_val ? intval($dept_val) : 3;
         }
+        $student_affairs_dept_id = $cached_dept_id;
 
         $financials = self::normalize_financials($data['total_tuition_fees'] ?? 0, $data['amount_paid'] ?? 0);
 
