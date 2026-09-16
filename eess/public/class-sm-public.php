@@ -7881,11 +7881,26 @@ class SM_Public {
         }
     }
 
+    public function ajax_eess_get_import_job_status() {
+        if (!is_user_logged_in()) {
+            wp_send_json_error('Unauthorized');
+        }
+        $job_key = 'eess_import_job_' . get_current_user_id();
+        $job_state = get_transient($job_key);
+        if (!$job_state) {
+            wp_send_json_success(array('active' => false));
+        }
+        wp_send_json_success(array('active' => true, 'job' => $job_state));
+    }
+
     public function ajax_process_import_chunk() {
+        global $wpdb;
         if (!current_user_can('إدارة_الطلاب') && !current_user_can('manage_options') && !in_array('sm_system_admin', (array)wp_get_current_user()->roles)) {
             wp_send_json_error('عفواً، يتطلب استيراد البيانات صلاحية إدارة الطلاب أو مدير النظام.');
         }
         if (!wp_verify_nonce($_POST['nonce'], 'sm_admin_action')) wp_send_json_error('Security check failed');
+
+        $job_key = 'eess_import_job_' . get_current_user_id();
 
         // Initial File Upload Phase
         if (isset($_FILES['csv_file']['tmp_name'])) {
@@ -7907,30 +7922,47 @@ class SM_Public {
             if ($total_rows > 1) $total_rows--; // subtract header
 
             $results = array(
+                'status'    => 'running',
+                'file_path' => $file_path,
+                'offset'    => 0,
                 'total'     => $total_rows,
+                'processed' => 0,
                 'success'   => 0,
                 'duplicate' => 0,
                 'generated' => 0,
                 'error'     => 0,
-                'details'   => array()
+                'details'   => array(),
+                'updated_at'=> current_time('mysql')
             );
-            set_transient('sm_import_results_' . get_current_user_id(), $results, HOUR_IN_SECONDS);
+            set_transient('sm_import_results_' . get_current_user_id(), $results, HOUR_IN_SECONDS * 4);
+            set_transient($job_key, $results, HOUR_IN_SECONDS * 4);
 
             wp_send_json_success(array(
                 'file_path'  => $file_path,
-                'total_rows' => $total_rows
+                'total_rows' => $total_rows,
+                'job'        => $results
             ));
         }
 
         @set_time_limit(300);
-        $file_path = sanitize_text_field($_POST['file_path']);
-        $offset = intval($_POST['offset']);
+        $file_path = sanitize_text_field($_POST['file_path'] ?? '');
+        $offset = intval($_POST['offset'] ?? 0);
         $chunk_size = 25;
 
-        if (!file_exists($file_path)) wp_send_json_error('Temp file not found');
+        if (empty($file_path) || !file_exists($file_path)) {
+            $job_state = get_transient($job_key);
+            if ($job_state && !empty($job_state['file_path']) && file_exists($job_state['file_path'])) {
+                $file_path = $job_state['file_path'];
+            } else {
+                wp_send_json_error('الملف المطلوب غير موجود بالسيرفر.');
+            }
+        }
 
         $results = get_transient('sm_import_results_' . get_current_user_id());
-        if (!$results) wp_send_json_error('Session expired');
+        if (!$results) {
+            $results = get_transient($job_key);
+        }
+        if (!$results) wp_send_json_error('انتهت مهلة الجلسة الحالية للاستيراد.');
 
         $handle = fopen($file_path, "r");
 
@@ -8067,20 +8099,28 @@ class SM_Public {
         }
 
         fclose($handle);
-        set_transient('sm_import_results_' . get_current_user_id(), $results, HOUR_IN_SECONDS);
 
         $is_finished = ($processed < $chunk_size);
+        $results['offset'] = $offset + $processed;
+        $results['processed'] = $offset + $processed;
+        $results['status'] = $is_finished ? 'completed' : 'running';
+        $results['updated_at'] = current_time('mysql');
+
+        set_transient('sm_import_results_' . get_current_user_id(), $results, HOUR_IN_SECONDS * 4);
+        set_transient($job_key, $results, HOUR_IN_SECONDS * 4);
+
         if ($is_finished) {
-            unlink($file_path);
+            @unlink($file_path);
             SM_Logger::log('استيراد طلاب (AJAX)', "تم استيراد {$results['success']} طالب بنجاح.");
         }
 
         wp_send_json_success(array(
             'processed'    => $processed,
             'finished'     => $is_finished,
-            'total_so_far' => $offset + $processed,
+            'total_so_far' => $results['processed'],
             'total_rows'   => $results['total'] ?? 1,
-            'results'      => $results
+            'results'      => $results,
+            'job'          => $results
         ));
     }
 
