@@ -280,9 +280,9 @@ $to_num = min($offset + $limit, $total_students_count);
                         <tr><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; font-weight:700;">F</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">الجنسية (Nationality)</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; color: #64748b;">اختياري</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">اسم الدولة</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">الإمارات العربية المتحدة</td></tr>
                         <tr><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; font-weight:700;">G</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">الهوية الوطنية (National ID)</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; color: #881337; font-weight:700;">اختياري (فريد)</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">أرقام فقط</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">784199012345678</td></tr>
                         <tr><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; font-weight:700;">H</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">الصف الدراسي (Grade)</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; color: #dc2626; font-weight:700;">إجباري</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">الصف 1 إلى 12</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">الصف الخامس</td></tr>
-                        <tr><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; font-weight:700;">I</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">الشعبة / الفصل (Section)</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; color: #64748b;">اختياري</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">أ / ب / ج</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">أ</td></tr>
+                        <tr><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; font-weight:700;">I</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">الشعبة / الفصل (Section)</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; color: #dc2626; font-weight:700;">إجباري</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">أ / ب / ج</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">أ</td></tr>
                         <tr><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; font-weight:700;">J</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">العام الدراسي (Academic Year)</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; color: #64748b;">اختياري</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">2026-2027</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">2026-2027</td></tr>
-                        <tr><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; font-weight:700;">K</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">معرف المدرسة (School ID)</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; color: #64748b;">اختياري</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">كود المدرسة (Code 1 - 6)</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">1</td></tr>
+                        <tr><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; font-weight:700;">K</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">معرف المدرسة (School ID)</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; color: #dc2626; font-weight:700;">إجباري</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">كود المدرسة (Code 1 - 6)</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">1</td></tr>
                         <tr><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; font-weight:700;">L-O</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">بيانات ولي الأمر (اسم، صلة قرابة، بريد، هاتف)</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; color: #64748b;">اختياري</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">نص / هاتف دولي</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">أحمد / أب / +971 501234567</td></tr>
                         <tr><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; font-weight:700;">P-T</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">الحالات، تاريخ التسجيل، الإمارة والعنوان</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; color: #64748b;">اختياري</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">Active/Enrolled/YYYY-MM-DD</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">Active / أبوظبي</td></tr>
                         <tr><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; font-weight:700;">U-AD</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">السلوك، الرسوم المالية، الصحة والحساسية والصورة</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; color: #64748b;">اختياري</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">نص / أرقام مالية</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">15000.00 / سليم / صورة</td></tr>
@@ -1135,19 +1135,37 @@ $to_num = min($offset + $limit, $total_students_count);
             if (res.success) {
                 const finished = res.data.finished;
                 const processed = res.data.total_so_far;
+                const results = res.data.results || {};
 
                 if (finished) {
+                    let summaryMsg = `تم الانتهاء من استيراد ملف البيانات بنجاح!\n` +
+                                     `✓ السجلات المستوردة بنجاح: ${results.success || processed}\n` +
+                                     (results.duplicate ? `ℹ️ السجلات المحدثة/المكررة: ${results.duplicate}\n` : '') +
+                                     (results.error ? `⚠️ السجلات المرفوضة لعدم استيفاء الشروط: ${results.error}\n` : '');
+
+                    if (results.details && results.details.length > 0) {
+                        const errorDetails = results.details.filter(d => d.type === 'error').map(d => d.msg).join('\n');
+                        if (errorDetails) {
+                            summaryMsg += `\nتفاصيل الأخطاء:\n` + errorDetails;
+                        }
+                    }
+
                     updateImportProgress('تم الانتهاء من استيراد كافة البيانات بنجاح!', 100);
-                    setTimeout(() => location.reload(), 1500);
+                    alert(summaryMsg);
+                    setTimeout(() => location.reload(), 1200);
                 } else {
-                    const pct = Math.min(99, Math.round((offset / chunkedTotalParts) * 100));
-                    updateImportProgress(`جاري معالجة السجلات... تم معالجة ${processed} طالب`, pct);
+                    const totalRows = res.data.total_rows || 1;
+                    const pct = Math.min(99, Math.round((processed / totalRows) * 100));
+                    updateImportProgress(`جاري تحليل واستيراد السجلات... تم معالجة ${processed} طالب`, pct);
                     processImportChunk(filePath, offset + res.data.processed);
                 }
             } else {
-                alert('خطأ أثناء المعالجة: ' + res.data);
+                alert('خطأ أثناء المعالجة: ' + (res.data || 'حدث خطأ أثناء قراءة الملف'));
                 resetImportUI();
             }
+        }).catch(err => {
+            alert('حدث خطأ في الاتصال بالسيرفر أثناء الاستيراد.');
+            resetImportUI();
         });
     }
 

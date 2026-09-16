@@ -8037,9 +8037,11 @@ class SM_Public {
         }
 
         wp_send_json_success(array(
-            'processed' => $processed,
-            'finished'  => $is_finished,
-            'total_so_far' => $offset + $processed
+            'processed'    => $processed,
+            'finished'     => $is_finished,
+            'total_so_far' => $offset + $processed,
+            'total_rows'   => $results['total'] ?? 1,
+            'results'      => $results
         ));
     }
 
