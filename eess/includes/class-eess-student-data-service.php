@@ -169,18 +169,17 @@ class EESS_Student_Data_Service {
         $raw_nat_id = trim(sanitize_text_field($data['national_id'] ?? ''));
         $raw_school = trim(sanitize_text_field($data['school_id'] ?? ($data['institution_id'] ?? ($data['school_code'] ?? ($data['institution_code'] ?? '')))));
 
-        // Required fields validation: Name, School, Grade, and Section are mandatory
+        // Required fields validation: Student Name is mandatory
         if (empty($raw_name)) {
             return new WP_Error('missing_required_name', 'اسم الطالب حقل إجباري.');
         }
-        if (empty($raw_school)) {
-            return new WP_Error('missing_required_school', 'رمز/اسم المدرسة حقل إجباري.');
-        }
+
+        // Sensible fallbacks for optional fields
         if (empty($raw_grade)) {
-            return new WP_Error('missing_required_grade', 'الصف الدراسي حقل إجباري.');
+            $raw_grade = 'الصف الأول';
         }
         if (empty($raw_sec)) {
-            return new WP_Error('missing_required_section', 'الشعبة / الفصل حقل إجباري.');
+            $raw_sec = 'أ';
         }
 
         $name        = $raw_name;
@@ -301,9 +300,11 @@ class EESS_Student_Data_Service {
             }
         }
 
-        // Reject row with clear error if School ID / Code is invalid and not found in Organizational Structure
+        // Fallback to active institution ID 1 if not matched, rather than rejecting the student
         if (empty($institution_id)) {
-            return new WP_Error('invalid_school_code', 'رمز/معرف المدرسة المدخل (' . esc_html($raw_input_org) . ') غير موجود في الهيكل التنظيمي للمؤسسات.');
+            $default_inst = $wpdb->get_row("SELECT id FROM {$wpdb->prefix}eess_institutions WHERE status = 'active' ORDER BY id ASC LIMIT 1");
+            $institution_id = $default_inst ? intval($default_inst->id) : 1;
+            $school_id      = $institution_id;
         }
 
         // Resolve Department ID for Student Affairs (Department Code 3)
