@@ -89,6 +89,9 @@ class School_Management {
         $this->loader->add_action('wp_ajax_eess_sysadmin_delete_institution_students', $plugin_public, 'ajax_eess_sysadmin_delete_institution_students');
         $this->loader->add_action('wp_ajax_eess_sysadmin_reset_institution_sequence', $plugin_public, 'ajax_eess_sysadmin_reset_institution_sequence');
         $this->loader->add_action('wp_ajax_eess_sysadmin_save_academic_year_prefix', $plugin_public, 'ajax_eess_sysadmin_save_academic_year_prefix');
+        $this->loader->add_action('wp_ajax_eess_sysadmin_get_module_records_count', $plugin_public, 'ajax_eess_sysadmin_get_module_records_count');
+        $this->loader->add_action('wp_ajax_eess_sysadmin_delete_all_lesson_preps', $plugin_public, 'ajax_eess_sysadmin_delete_all_lesson_preps');
+        $this->loader->add_action('wp_ajax_eess_sysadmin_delete_all_term_plans', $plugin_public, 'ajax_eess_sysadmin_delete_all_term_plans');
         $this->loader->add_action('wp_ajax_sm_export_students_csv', $plugin_public, 'ajax_export_students_csv');
         $this->loader->add_action('wp_ajax_sm_download_student_import_template', $plugin_public, 'ajax_download_student_import_template');
         $this->loader->add_action('wp_ajax_sm_print_student_full_report', $plugin_public, 'ajax_print_student_full_report');
