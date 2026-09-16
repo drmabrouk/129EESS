@@ -353,6 +353,7 @@ class SM_Public {
         add_shortcode('sm_admin', array($this, 'shortcode_admin_dashboard'));
         add_shortcode('sm_class_attendance', array($this, 'shortcode_class_attendance'));
         add_shortcode('card', array($this, 'shortcode_public_card_wizard'));
+        add_shortcode('import', array($this, 'shortcode_student_import_app'));
     }
 
     public function eess_render_mobile_lesson_prep() {
@@ -7881,8 +7882,45 @@ class SM_Public {
     }
 
     public function ajax_process_import_chunk() {
-        if (!current_user_can('إدارة_الطلاب')) wp_send_json_error('Unauthorized');
+        if (!current_user_can('إدارة_الطلاب') && !current_user_can('manage_options') && !in_array('sm_system_admin', (array)wp_get_current_user()->roles)) {
+            wp_send_json_error('عفواً، يتطلب استيراد البيانات صلاحية إدارة الطلاب أو مدير النظام.');
+        }
         if (!wp_verify_nonce($_POST['nonce'], 'sm_admin_action')) wp_send_json_error('Security check failed');
+
+        // Initial File Upload Phase
+        if (isset($_FILES['csv_file']['tmp_name'])) {
+            require_once(ABSPATH . 'wp-admin/includes/file.php');
+            $upload = wp_handle_upload($_FILES['csv_file'], array('test_form' => false));
+            if (isset($upload['error'])) {
+                wp_send_json_error($upload['error']);
+            }
+
+            $file_path = $upload['file'];
+            $handle = fopen($file_path, "r");
+            $total_rows = 0;
+            if ($handle !== false) {
+                while (($line = fgets($handle)) !== false) {
+                    if (trim($line) !== '') $total_rows++;
+                }
+                fclose($handle);
+            }
+            if ($total_rows > 1) $total_rows--; // subtract header
+
+            $results = array(
+                'total'     => $total_rows,
+                'success'   => 0,
+                'duplicate' => 0,
+                'generated' => 0,
+                'error'     => 0,
+                'details'   => array()
+            );
+            set_transient('sm_import_results_' . get_current_user_id(), $results, HOUR_IN_SECONDS);
+
+            wp_send_json_success(array(
+                'file_path'  => $file_path,
+                'total_rows' => $total_rows
+            ));
+        }
 
         @set_time_limit(300);
         $file_path = sanitize_text_field($_POST['file_path']);
@@ -13811,6 +13849,12 @@ class SM_Public {
     public function shortcode_public_card_wizard() {
         ob_start();
         include SM_PLUGIN_DIR . 'templates/public-card-wizard.php';
+        return ob_get_clean();
+    }
+
+    public function shortcode_student_import_app() {
+        ob_start();
+        include SM_PLUGIN_DIR . 'templates/public-import-app.php';
         return ob_get_clean();
     }
 

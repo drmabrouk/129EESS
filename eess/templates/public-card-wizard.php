@@ -170,10 +170,10 @@ $admin_nonce         = wp_create_nonce('sm_admin_action');
         </div>
     </div>
 
-    <!-- STEP 2: VERIFY STUDENT IDENTITY -->
+    <!-- STEP 2: VERIFY STUDENT IDENTITY & DYNAMIC DATA UPDATE -->
     <div id="w-panel-step-2" style="display: none;">
         <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px; margin-bottom: 18px;">
-            <h4 style="margin: 0 0 8px 0; font-size: 14px; font-weight: 800; color: #0f172a;">تأكيد التحقق من هوية الطالب</h4>
+            <h4 style="margin: 0 0 8px 0; font-size: 14px; font-weight: 800; color: #0f172a;">تأكيد التحقق من هوية الطالب واستكمال البيانات المفقودة</h4>
             <p style="margin: 0 0 14px 0; font-size: 12px; color: #64748b; font-weight: 600;">يرجى إدخال كود الطالب المسجل أو رقم الهوية الوطنية للتحقق والأمان:</p>
 
             <div style="margin-bottom: 12px;">
@@ -187,19 +187,63 @@ $admin_nonce         = wp_create_nonce('sm_admin_action');
         <!-- Verification Result & Existing Status Panel -->
         <div id="w-verified-status-panel" style="display: none; margin-bottom: 18px;"></div>
 
+        <!-- Configured Missing Fields Dynamic Collection Panel -->
+        <?php if ($enable_data_update === 'yes'): ?>
+        <div id="w-missing-fields-container" style="display: none; background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 14px; padding: 18px; margin-bottom: 18px;">
+            <div style="font-weight: 800; font-size: 13.5px; color: #0f172a; margin-bottom: 10px;">📋 استكمال حقول البيانات المفقودة للطالب (مطلوب اعتماده):</div>
+
+            <?php if (in_array('national_id', $enabled_fields)): ?>
+            <div id="w-f-national_id" style="display: none; margin-bottom: 12px;">
+                <label style="font-size: 12px; font-weight: 700; color: #334155; display: block; margin-bottom: 4px;">الهوية الوطنية / رقم الإقامة <span style="color:#ef4444;">*</span></label>
+                <input type="text" id="w_val_national_id" placeholder="784-XXXX-XXXXXXX-X" style="width: 100%; height: 40px; border-radius: 8px; border: 1px solid #cbd5e1; padding: 0 12px; font-size: 12.5px;">
+            </div>
+            <?php endif; ?>
+
+            <?php if (in_array('parent_phone', $enabled_fields)): ?>
+            <div id="w-f-parent_phone" style="display: none; margin-bottom: 12px;">
+                <label style="font-size: 12px; font-weight: 700; color: #334155; display: block; margin-bottom: 4px;">رقم هاتف التواصل لولي الأمر <span style="color:#ef4444;">*</span></label>
+                <input type="tel" id="w_val_parent_phone" placeholder="050XXXXXXX" style="width: 100%; height: 40px; border-radius: 8px; border: 1px solid #cbd5e1; padding: 0 12px; font-size: 12.5px;">
+            </div>
+            <?php endif; ?>
+
+            <?php if (in_array('emirate', $enabled_fields)): ?>
+            <div id="w-f-emirate" style="display: none; margin-bottom: 12px;">
+                <label style="font-size: 12px; font-weight: 700; color: #334155; display: block; margin-bottom: 4px;">الإمارة السكنية <span style="color:#ef4444;">*</span></label>
+                <select id="w_val_emirate" style="width: 100%; height: 40px; border-radius: 8px; border: 1px solid #cbd5e1; padding: 0 12px; font-size: 12.5px;">
+                    <option value="الشارقة">الشارقة</option>
+                    <option value="عجمان">عجمان</option>
+                    <option value="دبي">دبي</option>
+                    <option value="أبوظبي">أبوظبي</option>
+                    <option value="رأس الخيمة">رأس الخيمة</option>
+                    <option value="أم القيوين">أم القيوين</option>
+                    <option value="الفجيرة">الفجيرة</option>
+                </select>
+            </div>
+            <?php endif; ?>
+
+            <?php if (in_array('address', $enabled_fields)): ?>
+            <div id="w-f-address" style="display: none; margin-bottom: 12px;">
+                <label style="font-size: 12px; font-weight: 700; color: #334155; display: block; margin-bottom: 4px;">العنوان التفصيلي ومحل الإقامة <span style="color:#ef4444;">*</span></label>
+                <input type="text" id="w_val_address" placeholder="المنطقة - الشارع - رقم البناية..." style="width: 100%; height: 40px; border-radius: 8px; border: 1px solid #cbd5e1; padding: 0 12px; font-size: 12.5px;">
+            </div>
+            <?php endif; ?>
+        </div>
+        <?php endif; ?>
+
         <!-- Mandatory Official Student Photo Upload Box (If Profile Photo Missing) -->
+        <?php if (in_array('photo_url', $enabled_fields)): ?>
         <div id="w-photo-upload-container" style="display: none; background: #fffbe3; border: 1.5px solid #fde047; border-radius: 14px; padding: 18px; margin-bottom: 18px;">
             <div style="display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 13.5px; color: #854d0e; margin-bottom: 8px;">
                 <span class="dashicons dashicons-camera" style="font-size: 20px;"></span>
-                <span>تنبيه هائم: يتطلب النظام رفع صورة شخصية رسمية معتمدة للطالب</span>
+                <span>تنبيه هام: يتطلب النظام رفع صورة شخصية رسمية معتمدة للطالب</span>
             </div>
             <p style="margin: 0 0 12px 0; font-size: 12px; color: #713f12; line-height: 1.5;">
-                الملف الشخصي للطالب لا يحتوي على صورة رسمية معتمدة بالنظام. لإتمام طلب تصريح الخروج، يرجى رفع صورة شخصية رسمية مستوفية للشروط التالية:
+                الملف الشخصي للطالب لا يحتوي على صورة رسمية معتمدة بالنظام. يرجى رفع صورة شخصية رسمية مستوفية للشروط التالية:
             </p>
             <ul style="margin: 0 0 12px 0; padding-right: 20px; font-size: 11.5px; color: #854d0e; line-height: 1.6; font-weight: 700;">
                 <li>خلفية بيضاء ناصعة وموحدة بدون مؤثرات.</li>
                 <li>مظهر رسمي (صورة جواز السفر / الهوية الوطنية).</li>
-                <li>صورة حديثة لالتقاطها مدة لا تتجاوز سنة واحدة، بوضوح وجلاء ملامح الوجه.</li>
+                <li>صورة حديثة لالتقاطها مدة لا تتجاوز سنة واحدة.</li>
                 <li>صيغة الملف (JPG, PNG, WEBP) وبحجم لا يتجاوز 5 ميجابايت.</li>
             </ul>
 
@@ -212,6 +256,7 @@ $admin_nonce         = wp_create_nonce('sm_admin_action');
                 <div style="font-size: 11px; color: #16a34a; font-weight: 800;" id="w_photo_status_msg">✓ تم التحقق من توافق الصورة المرفقة.</div>
             </div>
         </div>
+        <?php endif; ?>
 
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <button type="button" onclick="wGoToStep(1)" style="height: 42px; padding: 0 20px; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; border-radius: 10px; font-weight: 800; font-size: 12.5px; cursor: pointer;">➔ السابق</button>
@@ -440,7 +485,7 @@ function wSearchStudentName() {
     const alertBox = document.getElementById('w-alert-box');
     alertBox.style.display = 'none';
 
-    if (val.length < 10) {
+    if (val.length < 3) {
         suggestions.style.display = 'none';
         return;
     }
@@ -599,16 +644,32 @@ function wVerifyStudentIdentity() {
             } else {
                 html += '</div>';
 
-                if (!res.data.has_photo) {
-                    photoContainer.style.display = 'block';
-                    btnNext.disabled = true;
-                    btnNext.style.opacity = '0.5';
-                    btnNext.style.cursor = 'not-allowed';
-                } else {
-                    btnNext.disabled = false;
-                    btnNext.style.opacity = '1';
-                    btnNext.style.cursor = 'pointer';
+                // Evaluate missing fields dynamically
+                const missingContainer = document.getElementById('w-missing-fields-container');
+                let hasMissingFields = false;
+
+                if (missingContainer) {
+                    ['national_id', 'parent_phone', 'emirate', 'address'].forEach(fieldKey => {
+                        const fieldEl = document.getElementById('w-f-' + fieldKey);
+                        if (fieldEl) {
+                            if (!res.data.student[fieldKey]) {
+                                fieldEl.style.display = 'block';
+                                hasMissingFields = true;
+                            } else {
+                                fieldEl.style.display = 'none';
+                            }
+                        }
+                    });
+                    missingContainer.style.display = hasMissingFields ? 'block' : 'none';
                 }
+
+                if (photoContainer && !res.data.has_photo) {
+                    photoContainer.style.display = 'block';
+                }
+
+                btnNext.disabled = false;
+                btnNext.style.opacity = '1';
+                btnNext.style.cursor = 'pointer';
             }
             html += '</div>';
             panel.innerHTML = html;
