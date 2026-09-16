@@ -620,6 +620,11 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
                     'desc' => 'المركز الرئيسي لإدارة بيانات الطلاب، الملفات الأكاديمية والشخصية، السجلات المدرسية، واستيراد وتصدير ملفات البيانات المعتمدة.',
                     'button' => ''
                 ),
+                'student-cards' => array(
+                    'title' => 'إدارة بطاقات تصاريع الخروج للطلاب (Student Cards)',
+                    'desc' => 'وحدة مستقلة مخصصة لإدارة ومتابعة طلبات بطاقات الخروج الرقمية، المراجعة، الاعتماد، والتجهيز والطباعة الرسمية.',
+                    'button' => ''
+                ),
                 'teachers' => array(
                     'title' => 'إدارة مستخدمي النظام',
                     'desc' => 'إدارة الحسابات، الأذونات والصلاحيات للمشرفين والمعلمين وكافة مستخدمي المنصة الإلكترونية.',
@@ -873,6 +878,12 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
                 case 'students':
                     if ($is_admin || current_user_can('إدارة_الطلاب')) {
                         include SM_PLUGIN_DIR . 'templates/admin-students.php';
+                    }
+                    break;
+
+                case 'student-cards':
+                    if ($is_admin || current_user_can('إدارة_الطلاب')) {
+                        include SM_PLUGIN_DIR . 'templates/admin-student-cards.php';
                     }
                     break;
 

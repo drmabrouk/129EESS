@@ -430,6 +430,26 @@ class SM_Settings {
                     'sm_hr' => false,
                 )
             ),
+            'student-cards' => array(
+                'label' => 'بطاقات الطلاب',
+                'dashicon' => 'dashicons-id',
+                'tab' => 'student-cards',
+                'default' => array(
+                    'sm_system_admin' => true,
+                    'sm_principal' => true,
+                    'sm_supervisor' => true,
+                    'sm_coordinator' => false,
+                    'sm_hod' => true,
+                    'sm_teacher' => true,
+                    'sm_student' => false,
+                    'sm_parent' => false,
+                    'sm_discipline_supervisor' => true,
+                    'sm_activities_supervisor' => false,
+                    'sm_transportation_supervisor' => false,
+                    'sm_bus_supervisor' => false,
+                    'sm_hr' => false,
+                )
+            ),
             'term-plans' => array(
                 'label' => 'الخطط الفصلية والسنوية',
                 'dashicon' => 'dashicons-calendar-alt',
