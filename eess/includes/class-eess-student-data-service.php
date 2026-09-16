@@ -122,10 +122,14 @@ class EESS_Student_Data_Service {
         $raw_grade  = trim(sanitize_text_field($data['class_name'] ?? ($data['class'] ?? ($data['grade'] ?? ''))));
         $raw_sec    = trim(sanitize_text_field($data['section'] ?? ''));
         $raw_nat_id = trim(sanitize_text_field($data['national_id'] ?? ''));
+        $raw_school = trim(sanitize_text_field($data['school_id'] ?? ($data['institution_id'] ?? ($data['school_code'] ?? ($data['institution_code'] ?? '')))));
 
-        // Required fields validation: Name, Grade, and Section are mandatory
+        // Required fields validation: Name, School, Grade, and Section are mandatory
         if (empty($raw_name)) {
             return new WP_Error('missing_required_name', 'اسم الطالب حقل إجباري.');
+        }
+        if (empty($raw_school)) {
+            return new WP_Error('missing_required_school', 'رمز/اسم المدرسة حقل إجباري.');
         }
         if (empty($raw_grade)) {
             return new WP_Error('missing_required_grade', 'الصف الدراسي حقل إجباري.');
@@ -215,7 +219,7 @@ class EESS_Student_Data_Service {
 
 
         // Automatic Institution & School Scope Resolution from Organizational Structure
-        $raw_input_org = trim($data['school_id'] ?? ($data['institution_id'] ?? ($data['school_code'] ?? ($data['institution_code'] ?? ''))));
+        $raw_input_org = $raw_school;
 
         // Enforce Institution Modification Restriction: Only System Administrators can change institution
         $user_roles = (array) wp_get_current_user()->roles;
@@ -258,6 +262,12 @@ class EESS_Student_Data_Service {
             }
         }
 
+        // Resolve Department ID for Student Affairs (Department Code 3)
+        $student_affairs_dept_id = $wpdb->get_var("SELECT id FROM {$wpdb->prefix}eess_departments WHERE code = '3' OR name LIKE '%شؤون الطلبة%' OR name LIKE '%شؤون الطلاب%' ORDER BY id ASC LIMIT 1");
+        if (!$student_affairs_dept_id) {
+            $student_affairs_dept_id = 3;
+        }
+
         $financials = self::normalize_financials($data['total_tuition_fees'] ?? 0, $data['amount_paid'] ?? 0);
 
         // Standardize Guardian Phone Number with Country Code
@@ -275,6 +285,7 @@ class EESS_Student_Data_Service {
             'national_id'           => $national_id,
             'institution_id'        => $institution_id ?: null,
             'school_id'             => $school_id ?: null,
+            'department_id'         => intval($student_affairs_dept_id),
             'guardian_name'         => sanitize_text_field($data['guardian_name'] ?? ($data['parent_name'] ?? '')),
             'guardian_relationship' => sanitize_text_field($data['guardian_relationship'] ?? 'أب'),
             'parent_email'          => sanitize_email($data['parent_email'] ?? ($data['guardian_email'] ?? '')),
