@@ -7884,9 +7884,10 @@ class SM_Public {
         if (!current_user_can('إدارة_الطلاب')) wp_send_json_error('Unauthorized');
         if (!wp_verify_nonce($_POST['nonce'], 'sm_admin_action')) wp_send_json_error('Security check failed');
 
+        @set_time_limit(300);
         $file_path = sanitize_text_field($_POST['file_path']);
         $offset = intval($_POST['offset']);
-        $chunk_size = 20;
+        $chunk_size = 25;
 
         if (!file_exists($file_path)) wp_send_json_error('Temp file not found');
 
