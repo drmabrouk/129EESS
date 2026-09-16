@@ -706,6 +706,10 @@ class SM_Activator {
                 'title'   => 'بوابة بطاقات الطلاب',
                 'content' => '[card]',
             ),
+            'import' => array(
+                'title'   => 'بوابة استيراد بيانات الطلاب الشاملة',
+                'content' => '[import]',
+            ),
         );
 
         foreach ($pages as $slug => $page_data) {
