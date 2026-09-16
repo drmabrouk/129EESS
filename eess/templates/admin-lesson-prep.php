@@ -1429,6 +1429,7 @@ $unique_subjects = array_unique(array_map(function($s){ return $s->name; }, $all
             <!-- Rendered dynamically -->
         </div>
     </div>
+</div>
 
     <!-- SYSADMIN DELETE ALL LESSON PREPS CONFIRMATION MODAL -->
     <div id="eess-sysadmin-reset-prep-modal" class="sm-modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); z-index: 999999; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; font-family: 'Cairo', sans-serif;" dir="rtl">
@@ -1508,7 +1509,6 @@ $unique_subjects = array_unique(array_map(function($s){ return $s->name; }, $all
         });
     }
     </script>
-</div>
 
 <!-- Modal for Editing Lesson Prep Submission Status & Date/Time (Authorized Reviewers Only) -->
 <div id="eess-edit-prep-status-modal" class="sm-modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(5px); z-index: 999999; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; font-family: 'Cairo', sans-serif;" dir="rtl">
