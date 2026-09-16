@@ -8104,6 +8104,86 @@ class SM_Public {
         ));
     }
 
+    public function ajax_eess_sysadmin_get_module_records_count() {
+        if (!current_user_can('manage_options') && !in_array('administrator', (array)wp_get_current_user()->roles) && !in_array('sm_system_admin', (array)wp_get_current_user()->roles)) {
+            wp_send_json_error('عفواً، تقتصر هذه الإجراءات المتقدمة حصرياً على مدير النظام.');
+        }
+
+        global $wpdb;
+        $module = sanitize_text_field($_POST['module'] ?? '');
+
+        if ($module === 'lesson_prep') {
+            $count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}sm_lesson_preps") ?: 0;
+            $comments = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}sm_lesson_comments") ?: 0;
+            wp_send_json_success(array(
+                'module'         => 'lesson_prep',
+                'label'          => 'تحضير الدروس',
+                'count'          => intval($count),
+                'comments_count' => intval($comments)
+            ));
+        } elseif ($module === 'term_plans') {
+            $count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}sm_term_plans") ?: 0;
+            wp_send_json_success(array(
+                'module' => 'term_plans',
+                'label'  => 'الخطط الفصلية والسنوية',
+                'count'  => intval($count)
+            ));
+        } else {
+            wp_send_json_error('الوحدة المطلوبة غير معروفة.');
+        }
+    }
+
+    public function ajax_eess_sysadmin_delete_all_lesson_preps() {
+        if (!current_user_can('manage_options') && !in_array('administrator', (array)wp_get_current_user()->roles) && !in_array('sm_system_admin', (array)wp_get_current_user()->roles)) {
+            wp_send_json_error('عفواً، تقتصر هذه الإجراءات المتقدمة حصرياً على مدير النظام.');
+        }
+        if (!wp_verify_nonce($_POST['nonce'] ?? '', 'sm_admin_action') && !wp_verify_nonce($_POST['nonce'] ?? '', 'eess_lesson_prep_action')) {
+            wp_send_json_error('Security check failed');
+        }
+
+        global $wpdb;
+        $prep_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}sm_lesson_preps") ?: 0;
+        $comment_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}sm_lesson_comments") ?: 0;
+
+        $wpdb->query("DELETE FROM {$wpdb->prefix}sm_lesson_comments");
+        $wpdb->query("DELETE FROM {$wpdb->prefix}sm_lesson_preps");
+
+        // Clear transient caches related to lesson preps
+        $wpdb->query("DELETE FROM {$wpdb->prefix}options WHERE option_name LIKE '_transient_sm_prep_%' OR option_name LIKE '_transient_timeout_sm_prep_%'");
+
+        SM_Logger::log('حذف وإعادة ضبط التحضيرات (SysAdmin)', "تم مسح جميع سجلات تحضير الدروس ($prep_count تحضير) والتعليقات المرفقة ($comment_count تعليق) نهائياً.");
+
+        wp_send_json_success(array(
+            'deleted_count'    => intval($prep_count),
+            'deleted_comments' => intval($comment_count),
+            'message'          => "تم حذف جميع سجلات تحضير الدروس ($prep_count تحضير) والتعليقات المرفقة ($comment_count تعليق) نهائياً من قاعدة البيانات."
+        ));
+    }
+
+    public function ajax_eess_sysadmin_delete_all_term_plans() {
+        if (!current_user_can('manage_options') && !in_array('administrator', (array)wp_get_current_user()->roles) && !in_array('sm_system_admin', (array)wp_get_current_user()->roles)) {
+            wp_send_json_error('عفواً، تقتصر هذه الإجراءات المتقدمة حصرياً على مدير النظام.');
+        }
+        if (!wp_verify_nonce($_POST['nonce'] ?? '', 'sm_admin_action') && !wp_verify_nonce($_POST['nonce'] ?? '', 'eess_term_plan_action')) {
+            wp_send_json_error('Security check failed');
+        }
+
+        global $wpdb;
+        $plan_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}sm_term_plans") ?: 0;
+
+        $wpdb->query("DELETE FROM {$wpdb->prefix}sm_term_plans");
+
+        // Clear transient caches related to term plans
+        $wpdb->query("DELETE FROM {$wpdb->prefix}options WHERE option_name LIKE '_transient_sm_plan_%' OR option_name LIKE '_transient_timeout_sm_plan_%'");
+
+        SM_Logger::log('حذف وإعادة ضبط الخطط الفصلية (SysAdmin)', "تم مسح جميع الخطط الفصلية والسنوية ($plan_count خطة) نهائياً.");
+
+        wp_send_json_success(array(
+            'deleted_count' => intval($plan_count),
+            'message'       => "تم حذف جميع الخطط الفصلية والسنوية ($plan_count خطة) نهائياً من قاعدة البيانات."
+        ));
+    }
+
     public function ajax_process_import_chunk() {
         global $wpdb;
         if (!current_user_can('إدارة_الطلاب') && !current_user_can('manage_options') && !in_array('sm_system_admin', (array)wp_get_current_user()->roles)) {

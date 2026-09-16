@@ -371,6 +371,13 @@ $unique_subjects = array_unique(array_map(function($s){ return $s->name; }, $all
             <button type="button" onclick="document.getElementById('prep-settings-modal').style.display='flex'" title="إعدادات التحضير" class="sm-btn sm-btn-outline" style="width: 38px; height: 38px; border-radius: 50% !important; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; background: #ffffff; color: #334155; border: 1px solid #cbd5e1; padding: 0;">
                 <span class="dashicons dashicons-admin-generic" style="font-size: 18px; width: 18px; height: 18px; margin: 0; color: #475569;"></span>
             </button>
+
+            <?php if ($is_admin || $is_sys_admin): ?>
+            <!-- Reset / Delete All Lesson Preps Button (SysAdmin Only) -->
+            <button type="button" onclick="eessOpenSysadminResetPrepModal()" title="إعادة ضبط وحذف جميع سجلات تحضير الدروس" class="sm-btn" style="width: 38px; height: 38px; border-radius: 50% !important; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; background: #fef2f2; color: #dc2626; border: 1px solid #fecdd3; padding: 0;">
+                <span class="dashicons dashicons-trash" style="font-size: 18px; width: 18px; height: 18px; margin: 0; color: #dc2626;"></span>
+            </button>
+            <?php endif; ?>
             <?php endif; ?>
         </div>
     </div>
@@ -1422,6 +1429,85 @@ $unique_subjects = array_unique(array_map(function($s){ return $s->name; }, $all
             <!-- Rendered dynamically -->
         </div>
     </div>
+
+    <!-- SYSADMIN DELETE ALL LESSON PREPS CONFIRMATION MODAL -->
+    <div id="eess-sysadmin-reset-prep-modal" class="sm-modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); z-index: 999999; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; font-family: 'Cairo', sans-serif;" dir="rtl">
+        <div style="background: #ffffff; border-radius: 20px; max-width: 520px; width: 100%; border: 1px solid #cbd5e1; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); overflow: hidden;">
+            <div style="background: #0f172a; color: #ffffff; padding: 18px 24px; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0; font-size: 16px; font-weight: 800; color: #ffffff; display: flex; align-items: center; gap: 10px;">
+                    <span class="dashicons dashicons-trash" style="color: #f43f5e; font-size: 20px; width: 20px; height: 20px;"></span>
+                    <span>حذف وإعادة ضبط كافة سجلات تحضير الدروس</span>
+                </h3>
+                <button type="button" onclick="document.getElementById('eess-sysadmin-reset-prep-modal').style.display='none'" style="background: none; border: none; color: #ffffff; font-size: 24px; cursor: pointer; line-height: 1;">&times;</button>
+            </div>
+
+            <div style="padding: 24px; text-align: center;">
+                <div style="width: 56px; height: 56px; border-radius: 50%; background: #fef2f2; color: #dc2626; border: 1px solid #fecdd3; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 14px;">
+                    <span class="dashicons dashicons-warning" style="font-size: 28px; width: 28px; height: 28px;"></span>
+                </div>
+
+                <h4 style="margin: 0 0 8px 0; font-size: 17px; font-weight: 800; color: #0f172a;">تأكيد مسح قاعدة بيانات تحضير الدروس</h4>
+                <p style="margin: 0 0 16px 0; font-size: 13px; color: #dc2626; font-weight: 700; line-height: 1.6;">
+                    ⚠️ تحذير صارم: هذا الإجراء دائم وغير قابل للتراجع. سيتم مسح كافة سجلات التحضير والتعليقات المرفقة نهائياً من النظام.
+                </p>
+
+                <div id="sysadmin-prep-count-box" style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; padding: 14px; margin-bottom: 20px; font-size: 13px; color: #334155; font-weight: 700;">
+                    جاري حساب عدد السجلات الحالية...
+                </div>
+
+                <div style="display: flex; gap: 12px; justify-content: center;">
+                    <button type="button" id="sysadmin-confirm-delete-prep-btn" onclick="eessConfirmDeleteAllLessonPreps()" class="sm-btn" style="height: 40px; padding: 0 24px; background: #dc2626; color: #ffffff !important; border-radius: 10px; font-weight: 800; font-size: 13px; border: none; cursor: pointer;">نعم، حذف كافة السجلات نهائياً ➔</button>
+                    <button type="button" onclick="document.getElementById('eess-sysadmin-reset-prep-modal').style.display='none'" class="sm-btn" style="height: 40px; padding: 0 20px; background: #f1f5f9; color: #475569; border-radius: 10px; font-weight: 700; font-size: 13px; border: 1px solid #cbd5e1; cursor: pointer;">إلغاء</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    function eessOpenSysadminResetPrepModal() {
+        const modal = document.getElementById('eess-sysadmin-reset-prep-modal');
+        const box = document.getElementById('sysadmin-prep-count-box');
+        const btn = document.getElementById('sysadmin-confirm-delete-prep-btn');
+
+        box.innerHTML = 'جاري جلب إحصائيات السجلات المسجلة بالنظام...';
+        btn.disabled = true;
+        btn.style.opacity = '0.5';
+        modal.style.display = 'flex';
+
+        jQuery.post('<?php echo admin_url("admin-ajax.php"); ?>', {
+            action: 'eess_sysadmin_get_module_records_count',
+            module: 'lesson_prep',
+            nonce: '<?php echo wp_create_nonce("sm_admin_action"); ?>'
+        }, function(res) {
+            if (res.success && res.data) {
+                box.innerHTML = `• السجلات المتأثرة: <strong>سجلات تحضير الدروس والتعليقات المرفقة</strong><br>` +
+                                `• العدد الإجمالي للتحضيرات المسجلة: <strong style="color: #dc2626; font-size: 15px;">${res.data.count} تحضير</strong><br>` +
+                                `• عدد التعليقات والتقييمات المرفقة: <strong style="color: #0284c7;">${res.data.comments_count} تعليق</strong>`;
+                btn.disabled = false;
+                btn.style.opacity = '1';
+            } else {
+                box.innerHTML = 'خطأ أثناء جلب السجلات.';
+            }
+        });
+    }
+
+    function eessConfirmDeleteAllLessonPreps() {
+        if (!confirm('هل أنت متأكد تماماً من حذف كافة سجلات تحضير الدروس والتعليقات المرفقة نهائياً؟')) return;
+
+        jQuery.post('<?php echo admin_url("admin-ajax.php"); ?>', {
+            action: 'eess_sysadmin_delete_all_lesson_preps',
+            nonce: '<?php echo wp_create_nonce("sm_admin_action"); ?>'
+        }, function(res) {
+            document.getElementById('eess-sysadmin-reset-prep-modal').style.display = 'none';
+            if (res.success) {
+                alert(res.data.message || 'تم حذف كافة سجلات التحضير بنجاح.');
+                location.reload();
+            } else {
+                alert('خطأ أثناء الحذف: ' + (res.data || 'فشل المسح.'));
+            }
+        });
+    }
+    </script>
 </div>
 
 <!-- Modal for Editing Lesson Prep Submission Status & Date/Time (Authorized Reviewers Only) -->

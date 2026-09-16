@@ -90,6 +90,13 @@ $arabic_term_names = array(
             <button type="button" onclick="document.getElementById('eess-acad-config-modal').style.display='flex'" title="إعدادات العام الدراسي والفصول والمهل" class="sm-btn sm-btn-outline" style="height: 38px; width: 38px; padding: 0; border-radius: 50% !important; border: 1px solid #cbd5e1; background: #ffffff; color: #334155; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;">
                 <span class="dashicons dashicons-admin-generic" style="font-size: 18px; width: 18px; height: 18px; margin: 0; color: #475569;"></span>
             </button>
+
+            <?php if ($is_admin): ?>
+            <!-- Reset / Delete All Term Plans Button (SysAdmin Only) -->
+            <button type="button" onclick="eessOpenSysadminResetPlansModal()" title="إعادة ضبط وحذف جميع سجلات الخطط الفصلية والسنوية" class="sm-btn" style="width: 38px; height: 38px; border-radius: 50% !important; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; background: #fef2f2; color: #dc2626; border: 1px solid #fecdd3; padding: 0;">
+                <span class="dashicons dashicons-trash" style="font-size: 18px; width: 18px; height: 18px; margin: 0; color: #dc2626;"></span>
+            </button>
+            <?php endif; ?>
             <?php endif; ?>
 
 
@@ -861,6 +868,84 @@ function eessTogglePlansTableSort() {
         </form>
     </div>
 </div>
+
+<!-- SYSADMIN DELETE ALL TERM PLANS CONFIRMATION MODAL -->
+<div id="eess-sysadmin-reset-plans-modal" class="sm-modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); z-index: 999999; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; font-family: 'Cairo', sans-serif;" dir="rtl">
+    <div style="background: #ffffff; border-radius: 20px; max-width: 520px; width: 100%; border: 1px solid #cbd5e1; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); overflow: hidden;">
+        <div style="background: #0f172a; color: #ffffff; padding: 18px 24px; display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0; font-size: 16px; font-weight: 800; color: #ffffff; display: flex; align-items: center; gap: 10px;">
+                <span class="dashicons dashicons-trash" style="color: #f43f5e; font-size: 20px; width: 20px; height: 20px;"></span>
+                <span>حذف وإعادة ضبط كافة الخطط الفصلية والسنوية</span>
+            </h3>
+            <button type="button" onclick="document.getElementById('eess-sysadmin-reset-plans-modal').style.display='none'" style="background: none; border: none; color: #ffffff; font-size: 24px; cursor: pointer; line-height: 1;">&times;</button>
+        </div>
+
+        <div style="padding: 24px; text-align: center;">
+            <div style="width: 56px; height: 56px; border-radius: 50%; background: #fef2f2; color: #dc2626; border: 1px solid #fecdd3; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 14px;">
+                <span class="dashicons dashicons-warning" style="font-size: 28px; width: 28px; height: 28px;"></span>
+            </div>
+
+            <h4 style="margin: 0 0 8px 0; font-size: 17px; font-weight: 800; color: #0f172a;">تأكيد مسح قاعدة بيانات الخطط الفصلية والسنوية</h4>
+            <p style="margin: 0 0 16px 0; font-size: 13px; color: #dc2626; font-weight: 700; line-height: 1.6;">
+                ⚠️ تحذير صارم: هذا الإجراء دائم وغير قابل للتراجع. سيتم مسح كافة الخطط التعليمية والتوزيعات الأسبوعية نهائياً من النظام.
+            </p>
+
+            <div id="sysadmin-plans-count-box" style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; padding: 14px; margin-bottom: 20px; font-size: 13px; color: #334155; font-weight: 700;">
+                جاري حساب عدد السجلات الحالية...
+            </div>
+
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <button type="button" id="sysadmin-confirm-delete-plans-btn" onclick="eessConfirmDeleteAllTermPlans()" class="sm-btn" style="height: 40px; padding: 0 24px; background: #dc2626; color: #ffffff !important; border-radius: 10px; font-weight: 800; font-size: 13px; border: none; cursor: pointer;">نعم، حذف كافة الخطط نهائياً ➔</button>
+                <button type="button" onclick="document.getElementById('eess-sysadmin-reset-plans-modal').style.display='none'" class="sm-btn" style="height: 40px; padding: 0 20px; background: #f1f5f9; color: #475569; border-radius: 10px; font-weight: 700; font-size: 13px; border: 1px solid #cbd5e1; cursor: pointer;">إلغاء</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function eessOpenSysadminResetPlansModal() {
+    const modal = document.getElementById('eess-sysadmin-reset-plans-modal');
+    const box = document.getElementById('sysadmin-plans-count-box');
+    const btn = document.getElementById('sysadmin-confirm-delete-plans-btn');
+
+    box.innerHTML = 'جاري جلب إحصائيات السجلات المسجلة بالنظام...';
+    btn.disabled = true;
+    btn.style.opacity = '0.5';
+    modal.style.display = 'flex';
+
+    jQuery.post('<?php echo admin_url("admin-ajax.php"); ?>', {
+        action: 'eess_sysadmin_get_module_records_count',
+        module: 'term_plans',
+        nonce: '<?php echo wp_create_nonce("sm_admin_action"); ?>'
+    }, function(res) {
+        if (res.success && res.data) {
+            box.innerHTML = `• السجلات المتأثرة: <strong>سجلات الخطط الفصلية والسنوية والتوزيع الأسبوعي</strong><br>` +
+                            `• العدد الإجمالي للخطط المسجلة: <strong style="color: #dc2626; font-size: 15px;">${res.data.count} خطة تعليمية</strong>`;
+            btn.disabled = false;
+            btn.style.opacity = '1';
+        } else {
+            box.innerHTML = 'خطأ أثناء جلب السجلات.';
+        }
+    });
+}
+
+function eessConfirmDeleteAllTermPlans() {
+    if (!confirm('هل أنت متأكد تماماً من حذف كافة الخطط الفصلية والسنوية نهائياً؟')) return;
+
+    jQuery.post('<?php echo admin_url("admin-ajax.php"); ?>', {
+        action: 'eess_sysadmin_delete_all_term_plans',
+        nonce: '<?php echo wp_create_nonce("sm_admin_action"); ?>'
+    }, function(res) {
+        document.getElementById('eess-sysadmin-reset-plans-modal').style.display = 'none';
+        if (res.success) {
+            alert(res.data.message || 'تم حذف كافة الخطط بنجاح.');
+            location.reload();
+        } else {
+            alert('خطأ أثناء الحذف: ' + (res.data || 'فشل المسح.'));
+        }
+    });
+}
+</script>
 
 <!-- Quarterly & Annual Plans Bulk Download Modal -->
 <div id="eess-plan-bulk-download-modal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(5px); z-index: 999999; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; direction: rtl; font-family: 'Cairo', sans-serif;">
