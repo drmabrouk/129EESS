@@ -13838,25 +13838,18 @@ class SM_Public {
         }
 
         global $wpdb;
-        $all_students = $wpdb->get_results("SELECT id, name, class_name, section, student_code, national_id, parent_phone, emirate, address, photo_url, school_id FROM {$wpdb->prefix}sm_students");
-
-        $matched_students = array();
-        foreach ($all_students as $s) {
-            $norm_student_name = $this->normalize_arabic_name($s->name);
-            if ($norm_student_name === $normalized_input) {
-                $matched_students[] = $s;
-            }
-        }
+        $escaped_like = '%' . $wpdb->esc_like(implode('%', $input_words)) . '%';
+        $matched_students = $wpdb->get_results($wpdb->prepare(
+            "SELECT id, name, class_name, section, student_code, national_id, parent_phone, emirate, address, photo_url, school_id FROM {$wpdb->prefix}sm_students WHERE name LIKE %s OR REPLACE(REPLACE(REPLACE(name, 'أ', 'ا'), 'إ', 'ا'), 'آ', 'ا') LIKE %s LIMIT 10",
+            $escaped_like, $escaped_like
+        ));
 
         if (empty($matched_students)) {
-            // Fallback: check exact match on original name column directly
-            $exact_db = $wpdb->get_results($wpdb->prepare(
-                "SELECT id, name, class_name, section, student_code, national_id, parent_phone, emirate, address, photo_url, school_id FROM {$wpdb->prefix}sm_students WHERE name = %s",
+            // Fallback: exact match
+            $matched_students = $wpdb->get_results($wpdb->prepare(
+                "SELECT id, name, class_name, section, student_code, national_id, parent_phone, emirate, address, photo_url, school_id FROM {$wpdb->prefix}sm_students WHERE name = %s LIMIT 10",
                 $clean_query
             ));
-            if (!empty($exact_db)) {
-                $matched_students = $exact_db;
-            }
         }
 
         if (empty($matched_students)) {

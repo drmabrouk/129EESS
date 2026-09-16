@@ -1122,7 +1122,7 @@ $to_num = min($offset + $limit, $total_students_count);
         });
     }
 
-    function processImportChunk(filePath, offset) {
+    function processImportChunk(filePath, offset, retryCount = 0) {
         const formData = new FormData();
         formData.append('action', 'sm_process_import_chunk');
         formData.append('file_path', filePath);
@@ -1156,16 +1156,26 @@ $to_num = min($offset + $limit, $total_students_count);
                 } else {
                     const totalRows = res.data.total_rows || 1;
                     const pct = Math.min(99, Math.round((processed / totalRows) * 100));
-                    updateImportProgress(`جاري تحليل واستيراد السجلات... تم معالجة ${processed} طالب`, pct);
-                    processImportChunk(filePath, offset + res.data.processed);
+                    updateImportProgress(`جاري تحليل واستيراد السجلات... تم معالجة ${processed} من ${totalRows} طالب (${pct}%)`, pct);
+                    processImportChunk(filePath, offset + res.data.processed, 0);
                 }
             } else {
-                alert('خطأ أثناء المعالجة: ' + (res.data || 'حدث خطأ أثناء قراءة الملف'));
-                resetImportUI();
+                if (retryCount < 3) {
+                    updateImportProgress(`إعادة محاولة الدفعة (المحاولة ${retryCount + 1}/3)...`, Math.min(99, Math.round((offset / 2000) * 100)));
+                    setTimeout(() => processImportChunk(filePath, offset, retryCount + 1), 2000);
+                } else {
+                    alert('خطأ أثناء المعالجة: ' + (res.data || 'حدث خطأ أثناء قراءة الملف'));
+                    resetImportUI();
+                }
             }
         }).catch(err => {
-            alert('حدث خطأ في الاتصال بالسيرفر أثناء الاستيراد.');
-            resetImportUI();
+            if (retryCount < 3) {
+                updateImportProgress(`خطأ مؤقت في الاتصال بالسيرفر. إعادة المحاولة (${retryCount + 1}/3)...`, Math.min(99, Math.round((offset / 2000) * 100)));
+                setTimeout(() => processImportChunk(filePath, offset, retryCount + 1), 2500);
+            } else {
+                alert('تعذر الاتصال بالسيرفر بعد 3 محاولات. يرجى التثبت من استقرار الاتصال بالإنترنت.');
+                resetImportUI();
+            }
         });
     }
 
