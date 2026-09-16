@@ -7540,83 +7540,61 @@ class SM_Public {
     }
 
     public function ajax_download_student_import_template() {
-        if (!current_user_can('إدارة_الطلاب')) {
+        if (!current_user_can('إدارة_الطلاب') && !current_user_can('manage_options') && !in_array('sm_system_admin', (array)wp_get_current_user()->roles)) {
             wp_die('Unauthorized');
         }
 
         header('Content-Type: text/csv; charset=utf-8');
-        header('Content-Disposition: attachment; filename=student_import_template.csv');
+        header('Content-Disposition: attachment; filename=eess_student_import_template_12col.csv');
         $output = fopen('php://output', 'w');
-        fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF)); // BOM for Excel
+        fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF)); // BOM for UTF-8 Excel
 
-        // Complete 30 Comprehensive Columns (A to AE) matching Export & Data Model
+        // Exact 12 Standardized Columns (1 to 12)
         fputcsv($output, array(
+            'معرف المدرسة (School ID)',
             'كود الطالب (Student Code)',
-            'الرقم التسلسلي (Serial Number)',
             'الاسم الكامل (Full Name)',
+            'رقم الهوية الوطنية (National ID)',
             'الجنس (Gender)',
             'تاريخ الميلاد (Date of Birth)',
             'الجنسية (Nationality)',
-            'رقم الهوية الوطنية (National ID)',
+            'الإمارة (Emirate)',
             'الصف الدراسي (Grade)',
             'الشعبة / الفصل (Section)',
-            'العام الدراسي (Academic Year)',
-            'معرف المدرسة (School ID)',
             'اسم ولي الأمر (Guardian Name)',
-            'صلة القرابة (Guardian Relationship)',
-            'البريد الإلكتروني لولي الأمر (Guardian Email)',
-            'رقم هاتف ولي الأمر (Guardian Phone)',
-            'حالة الطالب (Student Status)',
-            'حالة التسجيل (Enrollment Status)',
-            'تاريخ التسجيل (Enrollment Date)',
-            'الإمارة (Emirate)',
-            'العنوان (Address)',
-            'ملاحظة سلوكية (Student Behavior)',
-            'المستوى الأكاديمي (Academic Level)',
-            'أصحاب الهمم / احتياجات خاصة (Special Needs)',
-            'الحالة الصحية (Health Status)',
-            'الحساسية والتنبيهات الطبية (Allergies)',
-            'رابط الصورة الشخصية (Photo URL)',
-            'حالة الرسوم (Fee Status)',
-            'إجمالي الرسوم (Total Tuition Fees)',
-            'المبلغ المدفوع (Amount Paid)',
-            'المبلغ المتبقي (Outstanding Balance)',
-            'حالة الشيك / الدفع (Payment Status)'
+            'رقم هاتف ولي الأمر (Guardian Phone)'
         ));
 
-        // Sample Row matching 30 Fields
+        // Sample Row 1
         fputcsv($output, array(
-            'STU-1001',
-            '',
-            'علي أحمد عبدالله',
-            'ذكر',
-            '2015-05-12',
-            'الإمارات العربية المتحدة',
-            '784199012345678',
-            'الصف الخامس',
-            'أ',
-            '2026-2027',
             '1',
-            'أحمد عبدالله علي',
-            'أب',
-            'parent@example.com',
-            '+971 501234567',
-            'Active',
-            'Enrolled',
-            date('Y-m-d'),
-            'أبوظبي',
-            'الرياض، الشارع الخامس',
-            'طالب متفوق ومواظب',
-            'ممتاز',
-            'لا',
-            'سليم',
-            'لا توجد حساسية',
             '',
-            'Paid',
-            '15000.00',
-            '15000.00',
-            '0.00',
-            'Paid'
+            'عبد الله محمد الشامسي',
+            '784-1995-1234567-1',
+            'ذكر',
+            '2014-05-15',
+            'الإمارات العربية المتحدة',
+            'الشارقة',
+            'الصف 6',
+            'أ',
+            'محمد الشامسي',
+            '0501234567'
+        ));
+
+        // Sample Row 2
+        fputcsv($output, array(
+            '2',
+            '',
+            'فاطمة علي المزروعي',
+            '',
+            'أنثى',
+            '',
+            'الإمارات العربية المتحدة',
+            'عجمان',
+            'الصف 7',
+            'ب',
+            'علي المزروعي',
+            '0509876543'
         ));
 
         fclose($output);
@@ -8005,70 +7983,39 @@ class SM_Public {
                 }
             }
 
-            // Support 30-Column Comprehensive Format, 16-Column Export format, and 11-Column Template format
-            if (count($data) >= 28) {
-                // 30-Column Comprehensive Format
+            // Standardized 12-Column Header / Direct Index Mapping
+            // 1: School ID | 2: Student Code | 3: Full Name | 4: National ID | 5: Gender | 6: DOB | 7: Nationality | 8: Emirate | 9: Grade | 10: Section | 11: Guardian Name | 12: Guardian Phone
+            if (count($data) >= 12 && !is_numeric($data[0]) && is_numeric($data[10] ?? '')) {
+                // Fallback for legacy 11/30 formats if School ID is at position 10
                 $row_data = array(
-                    'student_code'          => isset($data[0]) ? trim($data[0]) : '',
-                    'id'                    => is_numeric($data[1]) ? intval($data[1]) : 0,
-                    'name'                  => isset($data[2]) ? trim($data[2]) : '',
-                    'gender'                => isset($data[3]) ? trim($data[3]) : 'ذكر',
-                    'dob'                   => isset($data[4]) ? trim($data[4]) : '',
-                    'nationality'           => isset($data[5]) ? trim($data[5]) : 'الإمارات العربية المتحدة',
-                    'national_id'           => isset($data[6]) ? trim($data[6]) : '',
-                    'class_name'            => isset($data[7]) ? trim($data[7]) : '',
-                    'section'               => isset($data[8]) ? trim($data[8]) : '',
-                    'school_id'             => isset($data[10]) ? trim($data[10]) : '',
-                    'guardian_name'         => isset($data[11]) ? trim($data[11]) : '',
-                    'guardian_relationship' => isset($data[12]) ? trim($data[12]) : 'أب',
-                    'parent_email'          => isset($data[13]) ? trim($data[13]) : '',
-                    'guardian_phone'        => isset($data[14]) ? trim($data[14]) : '',
-                    'student_status'        => isset($data[15]) ? trim($data[15]) : 'Active',
-                    'enrollment_status'     => isset($data[16]) ? trim($data[16]) : 'Enrolled',
-                    'enrollment_date'       => isset($data[17]) ? trim($data[17]) : date('Y-m-d'),
-                    'emirate'               => isset($data[18]) ? trim($data[18]) : 'الشارقة',
-                    'address'               => isset($data[19]) ? trim($data[19]) : '',
-                    'student_behavior'      => isset($data[20]) ? trim($data[20]) : '',
-                    'academic_level'        => isset($data[21]) ? trim($data[21]) : 'ممتاز',
-                    'special_needs'         => isset($data[22]) ? trim($data[22]) : 'No',
-                    'health_status'         => isset($data[23]) ? trim($data[23]) : 'سليم',
-                    'allergies'             => isset($data[24]) ? trim($data[24]) : 'لا توجد حساسية',
-                    'photo_url'             => isset($data[25]) ? trim($data[25]) : '',
-                    'fee_status'            => isset($data[26]) ? trim($data[26]) : 'Unpaid',
-                    'total_tuition_fees'    => is_numeric($data[27] ?? '') ? floatval($data[27]) : 0,
-                    'amount_paid'           => is_numeric($data[28] ?? '') ? floatval($data[28]) : 0,
-                    'payment_status'        => isset($data[30]) ? trim($data[30]) : 'Pending'
-                );
-            } elseif (count($data) >= 15 && is_numeric($data[1]) && !empty($data[2])) {
-                // 16-Column Export Format
-                $row_data = array(
+                    'school_id'      => isset($data[10]) ? trim($data[10]) : '1',
                     'student_code'   => isset($data[0]) ? trim($data[0]) : '',
-                    'id'             => intval($data[1]),
-                    'name'           => isset($data[2]) ? trim($data[2]) : '',
-                    'national_id'    => !empty($data[3]) ? trim($data[3]) : '',
-                    'class_name'     => isset($data[4]) ? trim($data[4]) : '',
-                    'section'        => isset($data[5]) ? trim($data[5]) : '',
-                    'nationality'    => isset($data[6]) ? trim($data[6]) : '',
-                    'dob'            => isset($data[7]) ? trim($data[7]) : '',
-                    'gender'         => isset($data[8]) ? trim($data[8]) : '',
-                    'parent_email'   => isset($data[10]) ? trim($data[10]) : '',
-                    'guardian_phone' => isset($data[11]) ? trim($data[11]) : '',
-                    'photo_url'      => isset($data[13]) ? trim($data[13]) : '',
-                    'school_id'      => isset($data[14]) ? trim($data[14]) : ''
+                    'name'           => isset($data[1]) ? trim($data[1]) : (isset($data[2]) ? trim($data[2]) : ''),
+                    'national_id'    => isset($data[2]) ? trim($data[2]) : (isset($data[6]) ? trim($data[6]) : ''),
+                    'gender'         => !empty($data[3]) ? trim($data[3]) : 'ذكر',
+                    'dob'            => isset($data[4]) ? trim($data[4]) : '',
+                    'nationality'    => !empty($data[5]) ? trim($data[5]) : 'الإمارات العربية المتحدة',
+                    'emirate'        => !empty($data[18]) ? trim($data[18]) : 'الشارقة',
+                    'class_name'     => isset($data[7]) ? trim($data[7]) : (isset($data[3]) ? trim($data[3]) : ''),
+                    'section'        => isset($data[8]) ? trim($data[8]) : (isset($data[4]) ? trim($data[4]) : ''),
+                    'guardian_name'  => isset($data[11]) ? trim($data[11]) : '',
+                    'guardian_phone' => isset($data[14]) ? trim($data[14]) : (isset($data[8]) ? trim($data[8]) : '')
                 );
             } else {
-                // 11 Official Columns
+                // Official 12-Column Standard Format
                 $row_data = array(
-                    'student_code'   => isset($data[0]) ? trim($data[0]) : '',
-                    'name'           => isset($data[1]) ? trim($data[1]) : '',
-                    'national_id'    => isset($data[2]) ? trim($data[2]) : '',
-                    'class_name'     => isset($data[3]) ? trim($data[3]) : '',
-                    'section'        => isset($data[4]) ? trim($data[4]) : '',
-                    'nationality'    => isset($data[5]) ? trim($data[5]) : '',
-                    'parent_email'   => isset($data[7]) ? trim($data[7]) : '',
-                    'guardian_phone' => isset($data[8]) ? trim($data[8]) : '',
-                    'photo_url'      => isset($data[9]) ? trim($data[9]) : '',
-                    'school_id'      => isset($data[10]) ? trim($data[10]) : ''
+                    'school_id'      => isset($data[0]) ? trim($data[0]) : '1',
+                    'student_code'   => isset($data[1]) ? trim($data[1]) : '',
+                    'name'           => isset($data[2]) ? trim($data[2]) : '',
+                    'national_id'    => isset($data[3]) ? trim($data[3]) : '',
+                    'gender'         => !empty($data[4]) ? trim($data[4]) : 'ذكر',
+                    'dob'            => isset($data[5]) ? trim($data[5]) : '',
+                    'nationality'    => !empty($data[6]) ? trim($data[6]) : 'الإمارات العربية المتحدة',
+                    'emirate'        => !empty($data[7]) ? trim($data[7]) : 'الشارقة',
+                    'class_name'     => isset($data[8]) ? trim($data[8]) : '',
+                    'section'        => isset($data[9]) ? trim($data[9]) : '',
+                    'guardian_name'  => isset($data[10]) ? trim($data[10]) : '',
+                    'guardian_phone' => isset($data[11]) ? trim($data[11]) : ''
                 );
             }
 
