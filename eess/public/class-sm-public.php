@@ -8158,7 +8158,7 @@ class SM_Public {
         @set_time_limit(300);
         $file_path = sanitize_text_field($_POST['file_path'] ?? '');
         $offset = intval($_POST['offset'] ?? 0);
-        $chunk_size = 25;
+        $chunk_size = 50;
 
         if (empty($file_path) || !file_exists($file_path)) {
             $job_state = get_transient($job_key);
@@ -8208,12 +8208,14 @@ class SM_Public {
             $errors = array();
             $warnings = array();
 
-            // Encoding
+            // Encoding and UTF-8 BOM Stripping
             foreach ($data as $k => $v) {
+                $v = preg_replace('/\x{EF}\xBB\xBF/u', '', $v);
                 $encoding = mb_detect_encoding($v, array('UTF-8', 'ISO-8859-6', 'ISO-8859-1'), true);
                 if ($encoding && $encoding != 'UTF-8') {
-                    $data[$k] = mb_convert_encoding($v, 'UTF-8', $encoding);
+                    $v = mb_convert_encoding($v, 'UTF-8', $encoding);
                 }
+                $data[$k] = trim($v);
             }
 
             // Standardized 12-Column Header / Direct Index Mapping

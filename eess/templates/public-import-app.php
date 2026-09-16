@@ -331,6 +331,20 @@ function impCheckActiveJobState() {
                 document.getElementById('imp-area-selection').style.display = 'none';
                 impShowCompletedSummary(job);
             }
+        } else {
+            eessAutoCheck2627Sync();
+        }
+    });
+}
+
+function eessAutoCheck2627Sync() {
+    jQuery.post('<?php echo $ajax_url; ?>', {
+        action: 'eess_check_2627_csv_file',
+        nonce: '<?php echo $admin_nonce; ?>'
+    }, function(res) {
+        if (res.success && res.data && res.data.exists && res.data.is_changed) {
+            console.log('eess/2627.csv modified or new version detected. Auto-starting sync...');
+            eessConfirmStart2627Sync();
         }
     });
 }
