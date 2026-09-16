@@ -85,6 +85,27 @@ $can_import = current_user_can('manage_options') || current_user_can('إدارة
         </div>
     </div>
 
+    <!-- DEDICATED 2627.CSV PERIODIC SYNC BANNER -->
+    <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 16px; padding: 22px 24px; margin-bottom: 24px; color: #ffffff; display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.15);">
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="width: 52px; height: 52px; border-radius: 14px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); display: flex; align-items: center; justify-content: center; color: #fb7185; flex-shrink: 0;">
+                <span class="dashicons dashicons-update" style="font-size: 28px; width: 28px; height: 28px;"></span>
+            </div>
+            <div>
+                <h3 style="margin: 0 0 4px 0; font-size: 16px; font-weight: 800; color: #ffffff;">استيراد ومزامنة ملف 2627.csv المرجعي</h3>
+                <p style="margin: 0; font-size: 12.5px; color: #94a3b8; font-weight: 500; line-height: 1.5;">
+                    مزامنة دورية وتحديث البيانات مباشرة من مصدر الملف المرجعي المعرف بالنظام (<code style="background: rgba(255,255,255,0.15); padding: 2px 6px; border-radius: 4px; color: #fb7185; font-family: monospace;">eess/2627.csv</code>) مع الحفاظ التام على أكواد الطلاب المولدة.
+                </p>
+            </div>
+        </div>
+        <div>
+            <button type="button" onclick="eessOpenSync2627Modal()" class="sm-btn" style="height: 42px; padding: 0 22px; background: #881337; color: #ffffff !important; border-radius: 10px; font-weight: 800; font-size: 13px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: background 0.2s;" onmouseover="this.style.background='#9f1239'" onmouseout="this.style.background='#881337'">
+                <span class="dashicons dashicons-database-import" style="font-size: 16px; width: 16px; height: 16px;"></span>
+                <span>فحص ومزامنة 2627.csv ➔</span>
+            </button>
+        </div>
+    </div>
+
     <!-- STEP 1: FILE SELECTION & UPLOAD -->
     <div id="imp-area-selection">
         <div style="background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 16px; padding: 30px 20px; text-align: center; margin-bottom: 20px; transition: border-color 0.2s;" ondragover="this.style.borderColor='#881337'" ondragleave="this.style.borderColor='#cbd5e1'">
@@ -121,22 +142,26 @@ $can_import = current_user_can('manage_options') || current_user_can('إدارة
             </div>
 
             <!-- Detailed Stats Grid -->
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; text-align: center;">
+            <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; text-align: center;">
                 <div style="background: white; border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px;">
-                    <div style="font-size: 11px; color: #64748b; font-weight: 700;">إجمالي السجلات</div>
-                    <div style="font-size: 16px; font-weight: 900; color: #0f172a;" id="imp-stat-total">0</div>
+                    <div style="font-size: 10.5px; color: #64748b; font-weight: 700;">إجمالي السجلات</div>
+                    <div style="font-size: 15px; font-weight: 900; color: #0f172a;" id="imp-stat-total">0</div>
                 </div>
                 <div style="background: white; border: 1px solid #86efac; border-radius: 10px; padding: 10px;">
-                    <div style="font-size: 11px; color: #166534; font-weight: 700;">المستوردة بنجاح</div>
-                    <div style="font-size: 16px; font-weight: 900; color: #16a34a;" id="imp-stat-success">0</div>
+                    <div style="font-size: 10.5px; color: #166534; font-weight: 700;">طلاب جدد</div>
+                    <div style="font-size: 15px; font-weight: 900; color: #16a34a;" id="imp-stat-success">0</div>
+                </div>
+                <div style="background: white; border: 1px solid #bae6fd; border-radius: 10px; padding: 10px;">
+                    <div style="font-size: 10.5px; color: #0369a1; font-weight: 700;">سجلات محدثة</div>
+                    <div style="font-size: 15px; font-weight: 900; color: #0284c7;" id="imp-stat-updated">0</div>
                 </div>
                 <div style="background: white; border: 1px solid #fef08a; border-radius: 10px; padding: 10px;">
-                    <div style="font-size: 11px; color: #854d0e; font-weight: 700;">المحدثة / المكررة</div>
-                    <div style="font-size: 16px; font-weight: 900; color: #ca8a04;" id="imp-stat-dup">0</div>
+                    <div style="font-size: 10.5px; color: #854d0e; font-weight: 700;">متطابقة / بدون تغيير</div>
+                    <div style="font-size: 15px; font-weight: 900; color: #ca8a04;" id="imp-stat-dup">0</div>
                 </div>
                 <div style="background: white; border: 1px solid #fecdd3; border-radius: 10px; padding: 10px;">
-                    <div style="font-size: 11px; color: #991b1b; font-weight: 700;">المرفوضة / الأخطاء</div>
-                    <div style="font-size: 16px; font-weight: 900; color: #dc2626;" id="imp-stat-error">0</div>
+                    <div style="font-size: 10.5px; color: #991b1b; font-weight: 700;">مرفوضة / أخطاء</div>
+                    <div style="font-size: 15px; font-weight: 900; color: #dc2626;" id="imp-stat-error">0</div>
                 </div>
             </div>
         </div>
@@ -154,6 +179,64 @@ $can_import = current_user_can('manage_options') || current_user_can('إدارة
 
         <div style="display: flex; justify-content: center; gap: 12px;">
             <button type="button" onclick="location.reload()" style="height: 42px; padding: 0 24px; background: #0f172a; color: white; border: none; border-radius: 10px; font-weight: 800; font-size: 13px; cursor: pointer;">استيراد ملف جديد ↺</button>
+        </div>
+    </div>
+
+    <!-- 2627.CSV CONFIRMATION & FILE METADATA MODAL -->
+    <div id="eess-sync-2627-modal" class="sm-modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); z-index: 999999; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; font-family: 'Cairo', sans-serif;" dir="rtl">
+        <div style="background: #ffffff; border-radius: 20px; max-width: 580px; width: 100%; border: 1px solid #cbd5e1; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); overflow: hidden;">
+            <div style="background: #0f172a; color: #ffffff; padding: 18px 24px; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0; font-size: 16px; font-weight: 800; color: #ffffff; display: flex; align-items: center; gap: 10px;">
+                    <span class="dashicons dashicons-update" style="color: #fb7185; font-size: 20px; width: 20px; height: 20px;"></span>
+                    <span>تأكيد مزامنة الملف المرجعي 2627.csv</span>
+                </h3>
+                <button type="button" onclick="document.getElementById('eess-sync-2627-modal').style.display='none'" style="background: none; border: none; color: #ffffff; font-size: 24px; cursor: pointer; line-height: 1;">&times;</button>
+            </div>
+
+            <div style="padding: 24px;">
+                <div id="sync-modal-loading" style="text-align: center; padding: 30px 10px;">
+                    <div style="font-size: 14px; font-weight: 800; color: #334155; margin-bottom: 8px;">جاري فحص حالة الملف وحسابه بالخادم...</div>
+                    <p style="font-size: 12px; color: #64748b; margin: 0;">يتم حساب التغييرات المحدثة والـ Hash الخاص بالملف.</p>
+                </div>
+
+                <div id="sync-modal-content" style="display: none;">
+                    <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; padding: 16px; margin-bottom: 18px; font-size: 12.5px; line-height: 1.8;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                            <span style="color: #64748b; font-weight: 700;">اسم ومسار الملف المرجعي:</span>
+                            <strong style="color: #0f172a; font-family: monospace;" id="sync-info-file">eess/2627.csv</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                            <span style="color: #64748b; font-weight: 700;">حجم الملف وعدد السجلات:</span>
+                            <strong style="color: #0f172a;" id="sync-info-size-rows">-</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                            <span style="color: #64748b; font-weight: 700;">تاريخ آخر تعديل للملف:</span>
+                            <strong style="color: #0f172a;" id="sync-info-mtime">-</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                            <span style="color: #64748b; font-weight: 700;">بصمة التنسيق (File Hash / MD5):</span>
+                            <strong style="color: #0284c7; font-family: monospace;" id="sync-info-hash">-</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                            <span style="color: #64748b; font-weight: 700;">حالة التحديثات مقارنة بالسجل السابق:</span>
+                            <span id="sync-info-status-badge"></span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: #64748b; font-weight: 700;">آخر مزامنة ناجحة:</span>
+                            <strong style="color: #0f172a;" id="sync-info-last-sync">-</strong>
+                        </div>
+                    </div>
+
+                    <div style="font-size: 12px; color: #475569; font-weight: 600; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 12px 14px; margin-bottom: 20px; line-height: 1.6;">
+                        ℹ️ <strong>ملاحظة هامة:</strong> ستقوم العملية بقراءة الملف المحدث وتوليد أكواد للطلاب الجدد مع حفظ وتحديث بيانات الطلاب الحاليين وعدم المساس بالأكواد الرقمية الصادرة سابقاً.
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                        <button type="button" onclick="document.getElementById('eess-sync-2627-modal').style.display='none'" class="sm-btn" style="height: 40px; padding: 0 20px; background: #f1f5f9; color: #475569; border-radius: 8px; font-weight: 700; border: 1px solid #cbd5e1; cursor: pointer;">إلغاء</button>
+                        <button type="button" id="sync-confirm-start-btn" onclick="eessConfirmStart2627Sync()" class="sm-btn" style="height: 40px; padding: 0 24px; background: #881337; color: #ffffff !important; border-radius: 8px; font-weight: 800; border: none; cursor: pointer;">تأكيد وبدء المزامنة والآن ➔</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -238,12 +321,93 @@ function impUpdateUIFromJob(job) {
 
     document.getElementById('imp-stat-total').innerText = totalRows;
     document.getElementById('imp-stat-success').innerText = job.success || 0;
-    document.getElementById('imp-stat-dup').innerText = job.duplicate || 0;
+    if (document.getElementById('imp-stat-updated')) {
+        document.getElementById('imp-stat-updated').innerText = job.updated || 0;
+    }
+    document.getElementById('imp-stat-dup').innerText = job.unchanged || job.duplicate || 0;
     document.getElementById('imp-stat-error').innerText = job.error || 0;
 
     document.getElementById('imp-percentage').innerText = pct + '%';
     document.getElementById('imp-progress-bar').style.width = pct + '%';
     document.getElementById('imp-status-text').innerText = `جاري المعالجة الخلفية... تم إنجاز ${processed} من ${totalRows} طالب (${pct}%)`;
+}
+
+function eessOpenSync2627Modal() {
+    const modal = document.getElementById('eess-sync-2627-modal');
+    const loading = document.getElementById('sync-modal-loading');
+    const content = document.getElementById('sync-modal-content');
+
+    loading.style.display = 'block';
+    content.style.display = 'none';
+    modal.style.display = 'flex';
+
+    jQuery.post('<?php echo $ajax_url; ?>', {
+        action: 'eess_check_2627_csv_file',
+        nonce: '<?php echo $admin_nonce; ?>'
+    }, function(res) {
+        loading.style.display = 'none';
+        content.style.display = 'block';
+
+        if (res.success && res.data) {
+            const data = res.data;
+            if (!data.exists) {
+                document.getElementById('sync-info-file').innerText = 'غير موجود (' + data.path + ')';
+                document.getElementById('sync-info-size-rows').innerText = 'الملف غير متاح حالياً بالمسار';
+                document.getElementById('sync-info-mtime').innerText = '-';
+                document.getElementById('sync-info-hash').innerText = '-';
+                document.getElementById('sync-info-status-badge').innerHTML = '<span style="background: #fee2e2; color: #dc2626; padding: 2px 8px; border-radius: 6px; font-weight: 800;">الملف المرجعي غير موجود بالمسار</span>';
+                document.getElementById('sync-info-last-sync').innerText = data.last_sync_time || 'لم تجرَ أي مزامنة سابقة';
+                document.getElementById('sync-confirm-start-btn').disabled = true;
+                document.getElementById('sync-confirm-start-btn').style.opacity = '0.5';
+            } else {
+                document.getElementById('sync-info-file').innerText = 'eess/2627.csv';
+                document.getElementById('sync-info-size-rows').innerText = data.size_formatted + ' (' + data.total_rows + ' سجل طالب)';
+                document.getElementById('sync-info-mtime').innerText = data.mtime;
+                document.getElementById('sync-info-hash').innerText = data.hash_short;
+                document.getElementById('sync-info-last-sync').innerText = data.last_sync_time || 'لم تجرَ أي مزامنة سابقة';
+
+                if (data.is_changed) {
+                    document.getElementById('sync-info-status-badge').innerHTML = '<span style="background: #fef3c7; color: #b45309; border: 1px solid #fde68a; padding: 2px 8px; border-radius: 6px; font-weight: 800;">توجد تحديثات جديدة جاهزة للمزامنة ↺</span>';
+                } else {
+                    document.getElementById('sync-info-status-badge').innerHTML = '<span style="background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; padding: 2px 8px; border-radius: 6px; font-weight: 800;">الملف مطابق لآخر مزامنة تم تسجيلها ✓</span>';
+                }
+
+                document.getElementById('sync-confirm-start-btn').disabled = false;
+                document.getElementById('sync-confirm-start-btn').style.opacity = '1';
+            }
+        } else {
+            alert('خطأ أثناء جلب بيانات الملف المرجعي.');
+            modal.style.display = 'none';
+        }
+    }).fail(function() {
+        alert('تعذر الاتصال بالسيرفر لفحص الملف.');
+        modal.style.display = 'none';
+    });
+}
+
+function eessConfirmStart2627Sync() {
+    document.getElementById('eess-sync-2627-modal').style.display = 'none';
+    document.getElementById('imp-area-selection').style.display = 'none';
+    document.getElementById('imp-area-progress').style.display = 'block';
+
+    document.getElementById('imp-status-text').innerText = 'جاري قراءة وتجهيز الملف المرجعي 2627.csv للمزامنة...';
+
+    jQuery.post('<?php echo $ajax_url; ?>', {
+        action: 'eess_start_2627_csv_sync',
+        nonce: '<?php echo $admin_nonce; ?>'
+    }, function(res) {
+        if (res.success && res.data && res.data.file_path) {
+            impActiveFilePath = res.data.file_path;
+            if (res.data.job) impUpdateUIFromJob(res.data.job);
+            impProcessChunk(res.data.file_path, 0, 0);
+        } else {
+            alert('فشل بدء مزامنة الملف المرجعي: ' + (res.data || 'خطأ غير معروف'));
+            location.reload();
+        }
+    }).fail(function() {
+        alert('حدث خطأ في الاتصال بالسيرفر عند بدء المزامنة.');
+        location.reload();
+    });
 }
 
 function impProcessChunk(filePath, offset, retryCount) {
@@ -293,10 +457,16 @@ function impProcessChunk(filePath, offset, retryCount) {
 }
 
 function impShowCompletedSummary(job) {
-    let html = `<strong>خلاصة نتائج استيراد الملف الشامل:</strong><br>`;
+    let html = `<strong>خلاصة نتائج مزامنة واستيراد الملف المرجعي الشامل:</strong><br>`;
     html += `• إجمالي السجلات المعالجة: ${job.processed || job.total}<br>`;
-    html += `• السجلات الجديدة المستوردة بنجاح: ${job.success || 0}<br>`;
-    html += `• السجلات المحدثة/المكررة: ${job.duplicate || 0}<br>`;
+    html += `• الطلاب الجدد (تم توليد أكواد وحفظهم): ${job.success || 0}<br>`;
+    if (typeof job.updated !== 'undefined') {
+        html += `• السجلات المحدثة (تعديل بيانات): ${job.updated || 0}<br>`;
+    }
+    html += `• السجلات المتطابقة (بدون تغييرات): ${job.unchanged || job.duplicate || 0}<br>`;
+    if (job.generated_codes) {
+        html += `• الأكواد الأكاديمية الجديدة المولدة: ${job.generated_codes}<br>`;
+    }
     html += `• السجلات المرفوضة: ${job.error || 0}<br>`;
 
     if (job.details && job.details.length > 0) {
