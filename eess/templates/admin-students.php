@@ -47,34 +47,13 @@ $to_num = min($offset + $limit, $total_students_count);
         </div>
 
         <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-            <!-- Single Unified Import / Export Dropdown Button -->
-            <div style="position: relative; display: inline-block;">
-                <button type="button" onclick="const d = document.getElementById('eess-students-import-export-dropdown'); d.style.display = d.style.display === 'none' ? 'block' : 'none'; event.stopPropagation();" class="eess-hdr-btn" style="background: #f8fafc !important; color: #1e293b !important; border: 1px solid #cbd5e1 !important; border-radius: 8px; padding: 0 12px; height: 34px; font-weight: 800; font-size: 12px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.04);">
-                    <span class="dashicons dashicons-database" style="font-size: 16px; width: 16px; height: 16px; color: #881337;"></span>
-                    <span>استيراد / تصدير</span>
-                    <span class="dashicons dashicons-arrow-down-alt2" style="font-size: 10px; width: 10px; height: 10px; color: #475569;"></span>
-                </button>
-
-                <div id="eess-students-import-export-dropdown" style="display: none; position: absolute; left: 0; top: 115%; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 14px; width: 270px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 99999; padding: 6px 0; text-align: right;">
-                    <div style="padding: 6px 16px; font-size: 11px; color: #94a3b8; font-weight: 800; border-bottom: 1px solid #f1f5f9;">بوابة استيراد وتصدير بيانات الطلاب [import]</div>
-                    <a href="<?php echo esc_url(get_permalink(get_option('eess_import_portal_page_id')) ?: home_url('/import/')); ?>" target="_blank" style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; color: #334155; font-size: 12px; font-weight: 700; text-decoration: none; border-bottom: 1px solid #f1f5f9; transition: background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
-                        <span class="dashicons dashicons-upload" style="font-size: 16px; width: 16px; height: 16px; color: #0284c7;"></span>
-                        <span>البوابة الموحدة للاستيراد والتصدير [import]</span>
-                    </a>
-                    <a href="<?php echo admin_url('admin-ajax.php?action=sm_download_student_import_template'); ?>" target="_blank" style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; color: #334155; font-size: 12px; font-weight: 700; text-decoration: none; border-bottom: 1px solid #f1f5f9; transition: background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
-                        <span class="dashicons dashicons-media-document" style="font-size: 16px; width: 16px; height: 16px; color: #16a34a;"></span>
-                        <span>تحميل نموذج الاستيراد القياسي (12 عمود)</span>
-                    </a>
-                    <div style="padding: 6px 16px; font-size: 11px; color: #94a3b8; font-weight: 800; border-bottom: 1px solid #f1f5f9;">تصدير التقارير والبطاقات</div>
-                    <a href="<?php echo admin_url('admin-ajax.php?action=sm_print&print_type=id_card'); ?>" target="_blank" style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; color: #15803d; font-size: 12px; font-weight: 700; text-decoration: none; transition: background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
-                        <span class="dashicons dashicons-id" style="font-size: 16px; width: 16px; height: 16px;"></span>
-                        <span>طباعة بطاقات تصريح الخروج للمدرسة</span>
-                    </a>
-                </div>
-            </div>
+            <!-- Dedicated [import] Portal Icon Button Shortcut -->
+            <a href="<?php echo esc_url(get_permalink(get_option('eess_import_portal_page_id')) ?: home_url('/import/')); ?>" target="_blank" title="بوابة استيراد وتصدير بيانات الطلاب الشاملة [import]" style="width: 34px; height: 34px; border-radius: 8px; background: #ffffff; color: #0284c7; border: 1px solid #cbd5e1; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 1px 2px rgba(0,0,0,0.04);">
+                <span class="dashicons dashicons-database" style="font-size: 16px; width: 16px; height: 16px; color: #0284c7;"></span>
+            </a>
 
             <!-- Digital Exit Card Portal Icon Button -->
-            <a href="<?php echo esc_url(get_permalink(get_option('eess_exit_card_portal_page_id')) ?: home_url('/card/')); ?>" target="_blank" title="بوابة إصدار البطاقات" style="width: 34px; height: 34px; border-radius: 8px; background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 1px 2px rgba(0,0,0,0.04);">
+            <a href="<?php echo esc_url(get_permalink(get_option('eess_exit_card_portal_page_id')) ?: home_url('/card/')); ?>" target="_blank" title="بوابة إصدار البطاقات [card]" style="width: 34px; height: 34px; border-radius: 8px; background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 1px 2px rgba(0,0,0,0.04);">
                 <span class="dashicons dashicons-external" style="font-size: 16px; width: 16px; height: 16px; color: #0f172a;"></span>
             </a>
 
@@ -716,6 +695,8 @@ $to_num = min($offset + $limit, $total_students_count);
         document.getElementById('import-selection-area').style.display = 'block';
         document.getElementById('import-progress-area').style.display = 'none';
     }
+
+    <?php include SM_PLUGIN_DIR . 'templates/partials/student-profile-edit-modal.php'; ?>
 
     (function() {
         document.addEventListener('click', function(e) {
