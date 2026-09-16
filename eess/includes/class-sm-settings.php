@@ -431,7 +431,7 @@ class SM_Settings {
                 )
             ),
             'student-cards' => array(
-                'label' => 'بطاقات الطلاب',
+                'label' => 'إصدار البطاقات',
                 'dashicon' => 'dashicons-id',
                 'tab' => 'student-cards',
                 'default' => array(
@@ -464,45 +464,6 @@ class SM_Settings {
                     'sm_parent' => false,
                     'sm_discipline_supervisor' => true,
                     'sm_activities_supervisor' => true,
-                    'sm_transportation_supervisor' => false,
-                    'sm_bus_supervisor' => false,
-                    'sm_hr' => false,
-                )
-            ),
-            'assets' => array(
-                'label' => 'إدارة العهد والمعدات',
-                'dashicon' => 'dashicons-store',
-                'tab' => 'assets',
-                'default' => array(
-                    'sm_system_admin' => true,
-                    'sm_principal' => true,
-                    'sm_supervisor' => true,
-                    'sm_coordinator' => true,
-                    'sm_hod' => true,
-                    'sm_teacher' => true,
-                    'sm_student' => false,
-                    'sm_parent' => false,
-                    'sm_discipline_supervisor' => false,
-                    'sm_activities_supervisor' => true,
-                    'sm_transportation_supervisor' => true,
-                    'sm_bus_supervisor' => false,
-                    'sm_hr' => false,
-                )
-            ),
-            'assignments' => array(
-                'label' => 'الواجبات المدرسية',
-                'dashicon' => 'dashicons-portfolio',
-                'tab' => 'assignments',
-                'default' => array(
-                    'sm_system_admin' => true,
-                    'sm_principal' => false,
-                    'sm_supervisor' => false,
-                    'sm_coordinator' => false,
-                    'sm_teacher' => true,
-                    'sm_student' => true,
-                    'sm_parent' => false,
-                    'sm_discipline_supervisor' => false,
-                    'sm_activities_supervisor' => false,
                     'sm_transportation_supervisor' => false,
                     'sm_bus_supervisor' => false,
                     'sm_hr' => false,
@@ -643,25 +604,6 @@ class SM_Settings {
                     'sm_transportation_supervisor' => false,
                     'sm_bus_supervisor' => false,
                     'sm_hr' => true,
-                )
-            ),
-            'documents' => array(
-                'label' => 'مكتبة الوثائق والتقارير',
-                'dashicon' => 'dashicons-media-document',
-                'tab' => 'documents',
-                'default' => array(
-                    'sm_system_admin' => true,
-                    'sm_principal' => true,
-                    'sm_supervisor' => true,
-                    'sm_coordinator' => true,
-                    'sm_teacher' => true,
-                    'sm_student' => false,
-                    'sm_parent' => false,
-                    'sm_discipline_supervisor' => true,
-                    'sm_activities_supervisor' => true,
-                    'sm_transportation_supervisor' => true,
-                    'sm_bus_supervisor' => true,
-                    'sm_hr' => false,
                 )
             ),
             'clinic' => array(
@@ -954,15 +896,6 @@ class SM_Settings {
             'sm_review_term_plan' => 'term-plans',
             'sm_delete_term_plan' => 'term-plans',
 
-            // Assignments
-            'sm_add_assignment_ajax' => 'assignments',
-            'sm_approve_plan_ajax' => 'assignments',
-
-            // Documents
-            'sm_add_document_ajax' => 'documents',
-            'sm_update_document_ajax' => 'documents',
-            'sm_delete_document_ajax' => 'documents',
-            'sm_print' => 'documents',
 
             // Clinic
             'sm_add_clinic_referral' => 'clinic',

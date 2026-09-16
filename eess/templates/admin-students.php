@@ -143,7 +143,7 @@ $to_num = min($offset + $limit, $total_students_count);
             </div>
 
             <!-- Digital Exit Card Portal Icon Button -->
-            <a href="<?php echo esc_url(get_permalink(get_option('eess_exit_card_portal_page_id')) ?: home_url('/card/')); ?>" target="_blank" title="بوابة بطاقات الطلاب" style="width: 34px; height: 34px; border-radius: 8px; background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 1px 2px rgba(0,0,0,0.04);">
+            <a href="<?php echo esc_url(get_permalink(get_option('eess_exit_card_portal_page_id')) ?: home_url('/card/')); ?>" target="_blank" title="بوابة إصدار البطاقات" style="width: 34px; height: 34px; border-radius: 8px; background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 1px 2px rgba(0,0,0,0.04);">
                 <span class="dashicons dashicons-external" style="font-size: 16px; width: 16px; height: 16px; color: #0f172a;"></span>
             </a>
 

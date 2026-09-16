@@ -90,10 +90,6 @@ class School_Management {
         $this->loader->add_action('wp_ajax_sm_toggle_attendance_status_ajax', $plugin_public, 'ajax_toggle_attendance_status');
         $this->loader->add_action('wp_ajax_sm_filter_violations', $plugin_public, 'ajax_filter_violations');
         $this->loader->add_action('wp_ajax_sm_mark_contacted', $plugin_public, 'ajax_mark_contacted');
-        $this->loader->add_action('wp_ajax_sm_add_document_ajax', $plugin_public, 'ajax_add_document');
-        $this->loader->add_action('wp_ajax_sm_update_document_ajax', $plugin_public, 'ajax_update_document');
-        $this->loader->add_action('wp_ajax_sm_delete_document_ajax', $plugin_public, 'ajax_delete_document');
-        $this->loader->add_action('wp_ajax_sm_add_assignment_ajax', $plugin_public, 'ajax_add_assignment');
         $this->loader->add_action('wp_ajax_sm_approve_plan_ajax', $plugin_public, 'ajax_approve_plan');
         $this->loader->add_action('wp_ajax_sm_bulk_delete_users_ajax', $plugin_public, 'ajax_bulk_delete_users');
         $this->loader->add_action('wp_ajax_sm_add_clinic_referral', $plugin_public, 'ajax_add_clinic_referral');
@@ -174,7 +170,6 @@ class School_Management {
         $this->loader->add_action('wp_ajax_eess_approve_user', $plugin_public, 'ajax_approve_user');
         $this->loader->add_action('wp_ajax_eess_reject_user', $plugin_public, 'ajax_reject_user');
         $this->loader->add_action('wp_ajax_eess_save_user_notes', $plugin_public, 'ajax_save_user_notes');
-        $this->loader->add_action('wp_ajax_eess_get_user_assignments', $plugin_public, 'ajax_get_user_assignments');
 
         // Unified User & Employee Modal AJAX Handlers
         $this->loader->add_action('wp_ajax_eess_check_user_uniqueness', $plugin_public, 'ajax_check_user_uniqueness');
