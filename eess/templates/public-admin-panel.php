@@ -844,7 +844,7 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
             }
 
             $cur_header = $header_map[$active_tab] ?? null;
-            $excluded_banner_tabs = array('summary', 'grades', 'employee-profile', 'term-plans', 'students', 'teachers', 'parents', 'hr-evaluation', 'hr-management', 'clinic', 'lesson-plans', 'attendance');
+            $excluded_banner_tabs = array('summary', 'grades', 'employee-profile', 'term-plans', 'students', 'student-cards', 'teachers', 'parents', 'hr-evaluation', 'hr-management', 'clinic', 'lesson-plans', 'attendance');
             if ($cur_header && !in_array($active_tab, $excluded_banner_tabs) && !isset($_GET['manage_employee_id']) && !isset($_GET['eess_print_eval']) && !isset($_GET['eess_print_report'])):
             ?>
                 <!-- Standardized Enterprise Page Header -->

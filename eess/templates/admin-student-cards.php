@@ -79,7 +79,24 @@ $requests = !empty($where_args) ? $wpdb->get_results($wpdb->prepare($sql, $where
 $institutions = EESS_Org_Helper::get_institutions();
 ?>
 
-<div class="eess-student-cards-app" style="font-family: 'Cairo', sans-serif; direction: rtl; color: #0f172a;">
+<div class="eess-student-cards-app" style="font-family: 'Cairo', sans-serif; direction: rtl; color: #0f172a; width: 100% !important; max-width: 100% !important; box-sizing: border-box;">
+
+    <!-- 1. Header Banner Card (Wine Red Theme) -->
+    <div style="background: #ffffff; padding: 18px 22px; border-radius: 14px; border: 1px solid #e2e8f0; margin-bottom: 20px; box-shadow: 0 4px 18px rgba(0, 0, 0, 0.02); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 44px; height: 44px; background: #fef2f2; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #881337; border: 1px solid #fecdd3; flex-shrink: 0;">
+                <span class="dashicons dashicons-id" style="font-size: 24px; width: 24px; height: 24px; line-height: 1;"></span>
+            </div>
+            <div>
+                <h2 style="margin: 0 0 2px 0; font-size: 19px; font-weight: 900; color: #0f172a; letter-spacing: -0.3px;">
+                    إصدار البطاقات (Student Card Issuance)
+                </h2>
+                <p style="margin: 0; font-size: 12px; color: #64748b; font-weight: 600;">
+                    وحدة مستقلة مخصصة لإدارة ومتابعة طلبات بطاقات الخروج الرقمية، المراجعة، الاعتماد، والتجهيز والطباعة الرسمية
+                </p>
+            </div>
+        </div>
+    </div>
 
     <!-- Top Summary Statistics Cards -->
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 20px;">
