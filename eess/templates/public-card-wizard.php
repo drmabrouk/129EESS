@@ -14,14 +14,79 @@ $ajax_url = admin_url('admin-ajax.php');
 
 <div class="eess-card-wizard-app" style="max-width: 680px; margin: 20px auto; background: #ffffff; border-radius: 20px; border: 1px solid #e2e8f0; box-shadow: 0 10px 30px rgba(15,23,42,0.08); font-family: 'Cairo', sans-serif; direction: rtl; padding: 24px; box-sizing: border-box; color: #0f172a;">
 
+<?php
+$is_sys_admin = is_user_logged_in() && (current_user_can('manage_options') || in_array('sm_system_admin', (array)wp_get_current_user()->roles));
+$portal_settings = get_option('eess_card_portal_settings', array(
+    'operational_phase' => 'data_update',
+    'enabled_fields'    => array('national_id', 'parent_phone', 'emirate', 'address', 'photo_url'),
+    'require_photo'     => 'yes'
+));
+$active_phase = $portal_settings['operational_phase'] ?? 'data_update';
+?>
+
     <!-- Header & Branding Banner -->
-    <div style="text-align: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 18px; margin-bottom: 20px;">
+    <div style="position: relative; text-align: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 18px; margin-bottom: 20px;">
+        <?php if ($is_sys_admin): ?>
+        <!-- System Administrator Settings Gear Button -->
+        <button type="button" onclick="wOpenAdminSettingsModal()" title="إعدادات مدير النظام" style="position: absolute; top: 0; left: 0; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 10px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #0f172a; transition: background 0.2s;">
+            <span class="dashicons dashicons-admin-generic" style="font-size: 20px; width: 20px; height: 20px;"></span>
+        </button>
+        <?php endif; ?>
+
         <div style="width: 72px; height: 72px; margin: 0 auto 10px auto; background: #ffffff; border-radius: 16px; padding: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); border: 1px solid #cbd5e1; display: flex; align-items: center; justify-content: center;">
             <img src="<?php echo esc_url($sys_logo); ?>" style="width: 100%; height: 100%; object-fit: contain; border-radius: 12px;" alt="Logo">
         </div>
         <h2 style="margin: 0 0 4px 0; font-size: 20px; font-weight: 900; color: #0f172a;"><?php echo esc_html($school_name); ?></h2>
-        <div style="font-size: 13px; color: #881337; font-weight: 800;">بوابة تقديم ومتابعة طلبات بطاقات تصريح الخروج الرقمية</div>
+        <div style="font-size: 13px; color: #881337; font-weight: 800;" id="w-portal-subhead">
+            <?php echo ($active_phase === 'data_update') ? 'بوابة تحديث بيانات الطلاب وإصدار الأكواد الرقمية المعتمدة' : 'بوابة تقديم ومتابعة طلبات بطاقات تصريح الخروج الرقمية'; ?>
+        </div>
     </div>
+
+    <?php if ($is_sys_admin): ?>
+    <!-- System Administrator Settings Modal -->
+    <div id="eess-card-settings-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.6); z-index: 99999; align-items: center; justify-content: center;">
+        <div style="background: #ffffff; width: 90%; max-width: 520px; border-radius: 16px; padding: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); direction: rtl; font-family: 'Cairo', sans-serif;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 16px;">
+                <h3 style="margin: 0; font-size: 16px; font-weight: 900; color: #0f172a;">⚙️ لوحة ضبط إعدادات البوابة (خاص بمدير النظام)</h3>
+                <button type="button" onclick="wCloseAdminSettingsModal()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #64748b;">✕</button>
+            </div>
+
+            <div style="margin-bottom: 18px;">
+                <label style="font-size: 12.5px; font-weight: 800; color: #334155; display: block; margin-bottom: 6px;">المرحلة التشغيلية الحالية للبوابة:</label>
+                <select id="w_admin_phase_select" style="width: 100%; height: 42px; border-radius: 8px; border: 1.5px solid #cbd5e1; padding: 0 12px; font-size: 13px; font-weight: 700; color: #0f172a; outline: none;">
+                    <option value="data_update" <?php selected($active_phase, 'data_update'); ?>>المرحلة الأولى: تحديث بيانات الطلاب واستكمال النواقص</option>
+                    <option value="card_request" <?php selected($active_phase, 'card_request'); ?>>المرحلة الثانية: استقبال طلبات بطاقات تصاريح الخروج</option>
+                </select>
+            </div>
+
+            <div style="margin-bottom: 18px;">
+                <label style="font-size: 12.5px; font-weight: 800; color: #334155; display: block; margin-bottom: 8px;">حقول البيانات المطلوب التحقق منها واستكمالها من ولي الأمر:</label>
+                <?php
+                $enabled_fields = (array)($portal_settings['enabled_fields'] ?? array());
+                $field_options = array(
+                    'national_id'  => 'الهوية الوطنية / رقم الإقامة',
+                    'parent_phone' => 'رقم هاتف ولي الأمر المعتمد',
+                    'emirate'      => 'الإمارة السكنية (الإمارات 7)',
+                    'address'      => 'العنوان التفصيلي ومحل الإقامة',
+                    'photo_url'    => 'الصورة الشخصية الرسمية (خلفية بيضاء)'
+                );
+                foreach ($field_options as $key => $label):
+                    $chk = in_array($key, $enabled_fields) ? 'checked' : '';
+                ?>
+                <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: #1e293b; margin-bottom: 6px; cursor: pointer;">
+                    <input type="checkbox" class="w-admin-field-chk" value="<?php echo esc_attr($key); ?>" <?php echo $chk; ?> style="width: 16px; height: 16px;">
+                    <span><?php echo esc_html($label); ?></span>
+                </label>
+                <?php endforeach; ?>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #e2e8f0; padding-top: 14px;">
+                <button type="button" onclick="wCloseAdminSettingsModal()" style="height: 38px; padding: 0 16px; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; border-radius: 8px; font-weight: 800; font-size: 12px; cursor: pointer;">إلغاء</button>
+                <button type="button" onclick="wSaveAdminPortalSettings()" id="w_btn_save_admin_settings" style="height: 38px; padding: 0 22px; background: #881337; color: white; border: none; border-radius: 8px; font-weight: 800; font-size: 12px; cursor: pointer;">حفظ الإعدادات والتحديث</button>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
 
     <!-- Multi-Step Progress Indicator -->
     <div id="w-progress-bar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; position: relative;">
@@ -222,6 +287,41 @@ let wSelectedStudent = null;
 let wVerifiedData = null;
 let wSearchTimeout = null;
 let wSubmitting = false;
+
+function wOpenAdminSettingsModal() {
+    const modal = document.getElementById('eess-card-settings-modal');
+    if (modal) modal.style.display = 'flex';
+}
+
+function wCloseAdminSettingsModal() {
+    const modal = document.getElementById('eess-card-settings-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+function wSaveAdminPortalSettings() {
+    const phase = document.getElementById('w_admin_phase_select').value;
+    const fields = [];
+    document.querySelectorAll('.w-admin-field-chk:checked').forEach(c => fields.push(c.value));
+
+    const btn = document.getElementById('w_btn_save_admin_settings');
+    btn.disabled = true;
+    btn.innerText = 'جاري الحفظ... ⏳';
+
+    jQuery.post('<?php echo $ajax_url; ?>', {
+        action: 'eess_save_card_portal_settings',
+        operational_phase: phase,
+        enabled_fields: fields
+    }, function(res) {
+        btn.disabled = false;
+        btn.innerText = 'حفظ الإعدادات والتحديث';
+        if (res.success) {
+            alert(res.data.message || 'تم حفظ الإعدادات بنجاح.');
+            location.reload();
+        } else {
+            alert(res.data || 'حدث خطأ أثناء حفظ الإعدادات.');
+        }
+    });
+}
 
 // HTML5 Canvas Signature Logic
 let wCanvas = null;
