@@ -5,10 +5,6 @@ $roles = (array) $current_user->roles;
 $is_discipline_sup = in_array('sm_discipline_supervisor', $roles);
 $is_principal = in_array('sm_principal', $roles);
 $is_admin = current_user_can('شؤون_الطلاب') || current_user_can('manage_options') || current_user_can('manage_students') || $is_discipline_sup || $is_principal;
-$import_results = get_transient('sm_import_results_' . get_current_user_id());
-if ($import_results) {
-    delete_transient('sm_import_results_' . get_current_user_id());
-}
 
 // Query parameters & Pagination for Student Affairs (10 per page default)
 $paged = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
@@ -33,67 +29,6 @@ $to_num = min($offset + $limit, $total_students_count);
 ?>
 <div class="sm-content-wrapper" dir="rtl" style="font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important; color: #1e293b; width: 100% !important; max-width: 100% !important; box-sizing: border-box;">
 
-    <?php if ($import_results): ?>
-        <div style="background: #fff; border-radius: 16px; border: 1px solid #e2e8f0; margin-bottom: 24px; overflow: hidden; box-shadow: 0 4px 18px rgba(0,0,0,0.02);">
-            <div style="background: #f8fafc; padding: 16px 24px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
-                <h4 style="margin:0; color: #0f172a; font-weight: 800; font-size: 15px;">تقرير استيراد الطلاب الأخير</h4>
-                <span style="font-size: 12px; color: #64748b; font-weight: 700;">إجمالي السجلات المعالجة: <?php echo $import_results['total']; ?></span>
-            </div>
-            <div style="padding: 24px;">
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 20px;">
-                    <div style="background: #f0fff4; padding: 14px; border-radius: 12px; border: 1px solid #c6f6d5; text-align: center;">
-                        <div style="font-size: 22px; font-weight: 800; color: #2f855a;"><?php echo $import_results['success'] - ($import_results['duplicate'] ?? 0); ?></div>
-                        <div style="font-size: 11.5px; color: #38a169; font-weight: 700;">سجلات جديدة</div>
-                    </div>
-                    <div style="background: #e6fffa; padding: 14px; border-radius: 12px; border: 1px solid #b2f5ea; text-align: center;">
-                        <div style="font-size: 22px; font-weight: 800; color: #2c7a7b;"><?php echo $import_results['generated'] ?? 0; ?></div>
-                        <div style="font-size: 11.5px; color: #319795; font-weight: 700;">أكواد تم توليدها</div>
-                    </div>
-                    <div style="background: #ebf8ff; padding: 14px; border-radius: 12px; border: 1px solid #bee3f8; text-align: center;">
-                        <div style="font-size: 22px; font-weight: 800; color: #2b6cb0;"><?php echo $import_results['duplicate'] ?? 0; ?></div>
-                        <div style="font-size: 11.5px; color: #3182ce; font-weight: 700;">سجلات مكررة</div>
-                    </div>
-                    <div style="background: #fffaf0; padding: 14px; border-radius: 12px; border: 1px solid #feebc8; text-align: center;">
-                        <div style="font-size: 22px; font-weight: 800; color: #c05621;"><?php echo $import_results['warning']; ?></div>
-                        <div style="font-size: 11.5px; color: #dd6b20; font-weight: 700;">تنبيهات</div>
-                    </div>
-                    <div style="background: #fff5f5; padding: 14px; border-radius: 12px; border: 1px solid #fed7d7; text-align: center;">
-                        <div style="font-size: 22px; font-weight: 800; color: #c53030;"><?php echo $import_results['error']; ?></div>
-                        <div style="font-size: 11.5px; color: #e53e3e; font-weight: 700;">أخطاء</div>
-                    </div>
-                </div>
-
-                <?php if (!empty($import_results['details'])): ?>
-                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; max-height: 220px; overflow-y: auto;">
-                        <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: right;">
-                            <thead>
-                                <tr style="background: #edf2f7; position: sticky; top: 0;">
-                                    <th style="padding: 10px 15px; border-bottom: 1px solid #cbd5e0; width: 80px;">النوع</th>
-                                    <th style="padding: 10px 15px; border-bottom: 1px solid #cbd5e0;">التفاصيل والسبب</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($import_results['details'] as $detail): ?>
-                                    <tr>
-                                        <td style="padding: 10px 15px; border-bottom: 1px solid #e2e8f0;">
-                                            <?php if ($detail['type'] == 'error'): ?>
-                                                <span style="color: #e53e3e; font-weight: 700;">خطأ</span>
-                                            <?php elseif ($detail['type'] == 'info'): ?>
-                                                <span style="color: #3182ce; font-weight: 700;">تكرار</span>
-                                            <?php else: ?>
-                                                <span style="color: #dd6b20; font-weight: 700;">تنبيه</span>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td style="padding: 10px 15px; border-bottom: 1px solid #e2e8f0; color: #4a5568;"><?php echo esc_html($detail['msg']); ?></td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                <?php endif; ?>
-            </div>
-        </div>
-    <?php endif; ?>
 
     <!-- 1. Header Banner Card (Wine Red / Red Pastel Theme) -->
     <div style="background: #ffffff; padding: 14px 18px; border-radius: 14px; border: 1px solid #e2e8f0; margin-bottom: 14px; box-shadow: 0 4px 18px rgba(0, 0, 0, 0.02); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
@@ -121,18 +56,14 @@ $to_num = min($offset + $limit, $total_students_count);
                 </button>
 
                 <div id="eess-students-import-export-dropdown" style="display: none; position: absolute; left: 0; top: 115%; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 14px; width: 270px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 99999; padding: 6px 0; text-align: right;">
-                    <div style="padding: 6px 16px; font-size: 11px; color: #94a3b8; font-weight: 800; border-bottom: 1px solid #f1f5f9;">عمليات استيراد وتصدير بيانات الطلاب</div>
+                    <div style="padding: 6px 16px; font-size: 11px; color: #94a3b8; font-weight: 800; border-bottom: 1px solid #f1f5f9;">بوابة استيراد وتصدير بيانات الطلاب [import]</div>
                     <a href="<?php echo esc_url(get_permalink(get_option('eess_import_portal_page_id')) ?: home_url('/import/')); ?>" target="_blank" style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; color: #334155; font-size: 12px; font-weight: 700; text-decoration: none; border-bottom: 1px solid #f1f5f9; transition: background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
                         <span class="dashicons dashicons-upload" style="font-size: 16px; width: 16px; height: 16px; color: #0284c7;"></span>
-                        <span>بوابة استيراد وتحديث البيانات (بوابة مفردة [import])</span>
-                    </a>
-                    <a href="<?php echo admin_url('admin-ajax.php?action=sm_export_students_csv&nonce=' . wp_create_nonce('sm_admin_action')); ?>" style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; color: #334155; font-size: 12px; font-weight: 700; text-decoration: none; border-bottom: 1px solid #f1f5f9; transition: background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
-                        <span class="dashicons dashicons-download" style="font-size: 16px; width: 16px; height: 16px; color: #881337;"></span>
-                        <span>تصدير بيانات شؤون الطلاب (Excel/CSV)</span>
+                        <span>البوابة الموحدة للاستيراد والتصدير [import]</span>
                     </a>
                     <a href="<?php echo admin_url('admin-ajax.php?action=sm_download_student_import_template'); ?>" target="_blank" style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; color: #334155; font-size: 12px; font-weight: 700; text-decoration: none; border-bottom: 1px solid #f1f5f9; transition: background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
                         <span class="dashicons dashicons-media-document" style="font-size: 16px; width: 16px; height: 16px; color: #16a34a;"></span>
-                        <span>تحميل نموذج الاستيراد الرسمي (16 عمود)</span>
+                        <span>تحميل نموذج الاستيراد القياسي (12 عمود)</span>
                     </a>
                     <div style="padding: 6px 16px; font-size: 11px; color: #94a3b8; font-weight: 800; border-bottom: 1px solid #f1f5f9;">تصدير التقارير والبطاقات</div>
                     <a href="<?php echo admin_url('admin-ajax.php?action=sm_print&print_type=id_card'); ?>" target="_blank" style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; color: #15803d; font-size: 12px; font-weight: 700; text-decoration: none; transition: background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
