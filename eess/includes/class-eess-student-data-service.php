@@ -355,10 +355,12 @@ class EESS_Student_Data_Service {
             }
         }
 
-        // Invalidate transient & object caches to ensure immediate data updates
-        $wpdb->query("DELETE FROM {$wpdb->prefix}options WHERE option_name LIKE '_transient_sm_%' OR option_name LIKE '_transient_timeout_sm_%'");
-        $wpdb->query("DELETE FROM {$wpdb->prefix}options WHERE option_name LIKE '_transient_eess_%' OR option_name LIKE '_transient_timeout_eess_%'");
-        wp_cache_flush();
+        // Defer transient cache invalidation during bulk import to prevent DB lock contention on large datasets
+        if (!defined('DOING_AJAX') || !DOING_AJAX || ($_POST['action'] ?? '') !== 'sm_process_import_chunk') {
+            $wpdb->query("DELETE FROM {$wpdb->prefix}options WHERE option_name LIKE '_transient_sm_%' OR option_name LIKE '_transient_timeout_sm_%'");
+            $wpdb->query("DELETE FROM {$wpdb->prefix}options WHERE option_name LIKE '_transient_eess_%' OR option_name LIKE '_transient_timeout_eess_%'");
+            wp_cache_flush();
+        }
 
         if ($final_id > 0) {
             EESS_Org_Helper::resolve_student_org_ids($final_id, $grade, $section);
