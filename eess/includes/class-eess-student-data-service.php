@@ -118,10 +118,26 @@ class EESS_Student_Data_Service {
         SM_DB::ensure_student_columns_exist();
 
         $student_id = intval($data['id'] ?? ($data['student_id'] ?? 0));
-        $name       = sanitize_text_field($data['name'] ?? ($data['full_name'] ?? ''));
-        $grade      = self::normalize_grade($data['class_name'] ?? ($data['class'] ?? ($data['grade'] ?? '')));
-        $section    = self::normalize_section($data['section'] ?? '');
-        $national_id= sanitize_text_field($data['national_id'] ?? '');
+        $raw_name   = trim(sanitize_text_field($data['name'] ?? ($data['full_name'] ?? '')));
+        $raw_grade  = trim(sanitize_text_field($data['class_name'] ?? ($data['class'] ?? ($data['grade'] ?? ''))));
+        $raw_sec    = trim(sanitize_text_field($data['section'] ?? ''));
+        $raw_nat_id = trim(sanitize_text_field($data['national_id'] ?? ''));
+
+        // Required fields validation: Name, Grade, and Section are mandatory
+        if (empty($raw_name)) {
+            return new WP_Error('missing_required_name', 'اسم الطالب حقل إجباري.');
+        }
+        if (empty($raw_grade)) {
+            return new WP_Error('missing_required_grade', 'الصف الدراسي حقل إجباري.');
+        }
+        if (empty($raw_sec)) {
+            return new WP_Error('missing_required_section', 'الشعبة / الفصل حقل إجباري.');
+        }
+
+        $name        = $raw_name;
+        $grade       = self::normalize_grade($raw_grade);
+        $section     = self::normalize_section($raw_sec);
+        $national_id = !empty($raw_nat_id) ? $raw_nat_id : null;
 
         // Server-Side Role and Institution Scope Validation
         $curr_user_id = get_current_user_id();
@@ -198,8 +214,8 @@ class EESS_Student_Data_Service {
 
 
 
-        // Automatic Institution & School Scope Resolution
-        $raw_input_org = intval($data['school_id'] ?? ($data['institution_id'] ?? 0));
+        // Automatic Institution & School Scope Resolution from Organizational Structure
+        $raw_input_org = trim($data['school_id'] ?? ($data['institution_id'] ?? ($data['school_code'] ?? ($data['institution_code'] ?? ''))));
 
         // Enforce Institution Modification Restriction: Only System Administrators can change institution
         $user_roles = (array) wp_get_current_user()->roles;
@@ -213,21 +229,32 @@ class EESS_Student_Data_Service {
             }
         }
 
-        if ($student_id == 0 && $raw_input_org <= 0) {
-            $raw_input_org = 2; // Default institution for new students
+        $institution_id = null;
+        $school_id      = null;
+
+        if (!empty($raw_input_org)) {
+            if (is_numeric($raw_input_org)) {
+                $inst_num = intval($raw_input_org);
+                $inst_row = $wpdb->get_row($wpdb->prepare("SELECT id, code, name FROM {$wpdb->prefix}eess_institutions WHERE id = %d OR code = %d LIMIT 1", $inst_num, $inst_num));
+            } else {
+                $inst_row = $wpdb->get_row($wpdb->prepare("SELECT id, code, name FROM {$wpdb->prefix}eess_institutions WHERE name = %s OR code = %s LIMIT 1", $raw_input_org, $raw_input_org));
+            }
+
+            if ($inst_row) {
+                $institution_id = intval($inst_row->id);
+                $school_id      = intval($inst_row->id);
+            }
         }
 
-        $institution_id = $raw_input_org;
-        $school_id      = $raw_input_org;
-
-        if ($raw_input_org > 0) {
-            $inst_row = $wpdb->get_row($wpdb->prepare("SELECT id, code FROM {$wpdb->prefix}eess_institutions WHERE id = %d", $raw_input_org));
-            if (!$inst_row) {
-                $inst_row = $wpdb->get_row($wpdb->prepare("SELECT id, code FROM {$wpdb->prefix}eess_institutions WHERE code = %d", $raw_input_org));
-            }
-            if ($inst_row) {
-                $institution_id = $inst_row->id;
-                $school_id      = $inst_row->id;
+        // Default to primary institution from Organizational Structure if no match found
+        if (empty($institution_id)) {
+            $first_inst = $wpdb->get_var("SELECT id FROM {$wpdb->prefix}eess_institutions ORDER BY id ASC LIMIT 1");
+            if ($first_inst) {
+                $institution_id = intval($first_inst);
+                $school_id      = intval($first_inst);
+            } else {
+                $institution_id = 1;
+                $school_id      = 1;
             }
         }
 
