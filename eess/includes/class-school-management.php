@@ -216,6 +216,7 @@ class School_Management {
         $this->loader->add_action('wp_ajax_sm_update_exit_card_request_status', $plugin_public, 'ajax_update_exit_card_request_status');
         $this->loader->add_action('wp_ajax_sm_get_exit_card_request_details', $plugin_public, 'ajax_get_exit_card_request_details');
         $this->loader->add_action('wp_ajax_sm_save_exit_card_settings', $plugin_public, 'ajax_save_exit_card_settings');
+        $this->loader->add_action('wp_ajax_eess_save_card_portal_settings', $plugin_public, 'ajax_save_card_portal_settings');
 
         // Public Exit Card Request Wizard Hooks [card]
         $this->loader->add_action('wp_ajax_sm_public_search_student', $plugin_public, 'ajax_public_search_student');

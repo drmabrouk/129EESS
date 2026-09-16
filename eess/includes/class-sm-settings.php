@@ -804,6 +804,10 @@ class SM_Settings {
             'sm_get_students_attendance_ajax',
             'sm_save_attendance_ajax',
             'sm_save_attendance_batch_ajax',
+            'eess_portal_save_student_photo',
+            'sm_public_get_student_portal_data',
+            'sm_public_save_student_portal_data',
+            'eess_save_card_portal_settings',
             'eess_forgot_verify_identity',
             'eess_forgot_set_password',
             'eess_register_submit',
@@ -907,6 +911,7 @@ class SM_Settings {
             // Attendance
             'sm_get_students_attendance_ajax' => 'attendance',
             'sm_save_attendance_ajax' => 'attendance',
+            'eess_save_card_portal_settings' => 'all_staff',
             'sm_save_attendance_batch_ajax' => 'attendance',
             'sm_reset_class_code_ajax' => 'attendance',
             'sm_toggle_attendance_status_ajax' => 'attendance',
@@ -1207,5 +1212,15 @@ class SM_Settings {
             'label4' => 'التقويم الصفي وأدوات القياس (Evaluation & Assessment)',
             'placeholder4' => 'أسئلة وأدوات تقييم فهم واستيعاب الطلاب خلال الحصة...'
         );
+    }
+
+    public static function get_card_portal_settings() {
+        $defaults = array(
+            'operational_phase' => 'data_update', // 'data_update' (Phase 1) or 'card_request' (Phase 2)
+            'enabled_fields' => array('national_id', 'guardian_phone', 'emirate', 'address'),
+            'require_photo' => 'yes'
+        );
+        $saved = get_option('eess_card_portal_settings', array());
+        return wp_parse_args($saved, $defaults);
     }
 }

@@ -13832,13 +13832,12 @@ class SM_Public {
 
         $safe_suggestions = array();
         foreach ($results as $s) {
-            $name_parts = explode(' ', trim($s->name));
-            $display_name = count($name_parts) >= 2 ? ($name_parts[0] . ' ' . $name_parts[count($name_parts)-1]) : $s->name;
             $safe_suggestions[] = array(
-                'id' => $s->id,
-                'display_name' => $display_name,
-                'class_name' => $s->class_name ?: 'الصف الدراسي',
-                'section' => $s->section ?: 'أ'
+                'id'           => $s->id,
+                'full_name'    => $s->name,
+                'display_name' => $s->name,
+                'class_name'   => $s->class_name ?: 'الصف الدراسي',
+                'section'      => $s->section ?: 'أ'
             );
         }
 
@@ -14128,5 +14127,26 @@ class SM_Public {
         ));
 
         wp_send_json_success(array('message' => 'تم حفظ إعدادات ضوابط تصاريح الخروج بنجاح.'));
+    }
+
+    public function ajax_save_card_portal_settings() {
+        if (!is_user_logged_in() || (!current_user_can('manage_options') && !in_array('sm_system_admin', (array)wp_get_current_user()->roles))) {
+            wp_send_json_error('عفواً، هذه الخيارات مخصصة حصرياً لمدير النظام.');
+        }
+
+        $phase = sanitize_text_field($_POST['operational_phase'] ?? 'data_update');
+        if (!in_array($phase, array('data_update', 'card_request'))) {
+            $phase = 'data_update';
+        }
+
+        $fields = isset($_POST['enabled_fields']) ? array_map('sanitize_text_field', (array)$_POST['enabled_fields']) : array();
+
+        update_option('eess_card_portal_settings', array(
+            'operational_phase' => $phase,
+            'enabled_fields'    => $fields,
+            'require_photo'     => 'yes'
+        ));
+
+        wp_send_json_success(array('message' => 'تم حفظ وتحديث إعدادات البوابة المباشرة بنجاح.'));
     }
 }
