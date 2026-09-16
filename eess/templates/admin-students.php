@@ -500,6 +500,88 @@ $to_num = min($offset + $limit, $total_students_count);
         </div>
     </div>
 
+    <!-- VIEW STUDENT DETAILS MODAL -->
+    <div id="view-student-modal" class="sm-modal-overlay" style="display: none; z-index: 999999;">
+        <div class="sm-modal-content" style="max-width: 800px; width: 100%; border-radius: 20px; background: #ffffff; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); overflow: hidden; display: flex; flex-direction: column; max-height: 90vh;">
+            <div style="background: #0f172a; color: #ffffff; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0; font-size: 16px; font-weight: 800; color: #ffffff; display: flex; align-items: center; gap: 10px;">
+                    <span class="dashicons dashicons-id-alt" style="color: #f43f5e; font-size: 20px; width: 20px; height: 20px;"></span>
+                    <span>السجل التفصيلي والانضباطي للطالب</span>
+                </h3>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button type="button" id="print-full-record-btn" class="sm-btn" style="background: #1e293b; color: #ffffff; border: 1px solid #334155; height: 32px; padding: 0 12px; font-size: 12px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                        <span class="dashicons dashicons-printer" style="font-size: 14px; width: 14px; height: 14px;"></span>
+                        <span>طباعة السجل</span>
+                    </button>
+                    <button type="button" onclick="document.getElementById('view-student-modal').style.display='none'" style="background: none; border: none; color: #ffffff; font-size: 24px; cursor: pointer; line-height: 1;">&times;</button>
+                </div>
+            </div>
+            <div id="stu_details_content" style="padding: 24px; overflow-y: auto; flex: 1;">
+            </div>
+        </div>
+    </div>
+
+    <!-- STUDENT ACCOUNT ACTIONS MODAL -->
+    <div id="eess-stu-account-actions-modal" class="sm-modal-overlay" style="display: none; z-index: 999999;">
+        <div class="sm-modal-content" style="max-width: 460px; width: 100%; border-radius: 20px; padding: 24px 28px; background: #ffffff; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); font-family: 'Cairo', sans-serif;" dir="rtl">
+            <div style="border-bottom: 1px solid #f1f5f9; padding-bottom: 12px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h3 style="margin: 0; font-size: 16px; font-weight: 800; color: #0f172a;">إجراءات حساب الطالب</h3>
+                    <p id="eess_stu_actions_modal_subtitle" style="margin: 4px 0 0 0; font-size: 12px; color: #64748b; font-weight: 600;"></p>
+                </div>
+                <button type="button" onclick="document.getElementById('eess-stu-account-actions-modal').style.display='none'" style="background: none; border: none; font-size: 22px; color: #64748b; cursor: pointer;">&times;</button>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button type="button" id="eess_act_msg_btn" class="sm-btn" style="background: #f8fafc; color: #0f172a; border: 1px solid #cbd5e1; height: 42px; border-radius: 12px; font-weight: 800; display: flex; align-items: center; justify-content: flex-start; padding: 0 16px; gap: 10px; cursor: pointer;">
+                    <span class="dashicons dashicons-email-alt" style="color: #16a34a;"></span>
+                    <span>إرسال رسالة رسمية للطالب</span>
+                </button>
+                <button type="button" id="eess_act_passreq_btn" class="sm-btn" style="background: #f8fafc; color: #0f172a; border: 1px solid #cbd5e1; height: 42px; border-radius: 12px; font-weight: 800; display: flex; align-items: center; justify-content: flex-start; padding: 0 16px; gap: 10px; cursor: pointer;">
+                    <span class="dashicons dashicons-lock" style="color: #d97706;"></span>
+                    <span>طلب تعيين كلمة مرور جديدة</span>
+                </button>
+                <button type="button" id="eess_act_restrict_btn" class="sm-btn" style="background: #f8fafc; color: #dc2626; border: 1px solid #fecdd3; height: 42px; border-radius: 12px; font-weight: 800; display: flex; align-items: center; justify-content: flex-start; padding: 0 16px; gap: 10px; cursor: pointer;">
+                    <span class="dashicons dashicons-dismiss" style="color: #dc2626;"></span>
+                    <span>تقييد / تعطيل حساب الطالب</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- RESTRICT ACCOUNT CONFIRMATION MODAL -->
+    <div id="eess-restrict-account-modal" class="sm-modal-overlay" style="display: none; z-index: 999999;">
+        <div class="sm-modal-content" style="max-width: 440px; width: 100%; border-radius: 20px; padding: 28px 32px; background: #ffffff; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); text-align: center; font-family: 'Cairo', sans-serif;" dir="rtl">
+            <input type="hidden" id="eess_restrict_stu_id">
+            <div style="width: 50px; height: 50px; border-radius: 50%; background: #fef2f2; color: #dc2626; border: 1px solid #fecdd3; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 12px;">
+                <span class="dashicons dashicons-dismiss" style="font-size: 24px; width: 24px; height: 24px;"></span>
+            </div>
+            <h3 style="margin: 0 0 10px 0; font-size: 16px; font-weight: 800; color: #0f172a;">تقييد حساب الطالب</h3>
+            <p id="eess-restrict-modal-msg" style="margin: 0 0 20px 0; font-size: 13px; color: #475569; font-weight: 600; line-height: 1.6;"></p>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button type="button" onclick="eessConfirmRestrictAccountSubmit()" class="sm-btn" style="background: #dc2626; color: #ffffff; height: 38px; padding: 0 22px; border-radius: 8px; font-weight: 800; border: none; cursor: pointer;">تأكيد التقييد</button>
+                <button type="button" onclick="document.getElementById('eess-restrict-account-modal').style.display='none'" class="sm-btn" style="background: #f1f5f9; color: #64748b; height: 38px; padding: 0 18px; border-radius: 8px; font-weight: 700; border: 1px solid #cbd5e1; cursor: pointer;">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PASSWORD CHANGE REQUEST MODAL -->
+    <div id="eess-password-request-modal" class="sm-modal-overlay" style="display: none; z-index: 999999;">
+        <div class="sm-modal-content" style="max-width: 440px; width: 100%; border-radius: 20px; padding: 28px 32px; background: #ffffff; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); text-align: center; font-family: 'Cairo', sans-serif;" dir="rtl">
+            <input type="hidden" id="eess_pass_req_stu_id">
+            <div style="width: 50px; height: 50px; border-radius: 50%; background: #fef3c7; color: #d97706; border: 1px solid #fde68a; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 12px;">
+                <span class="dashicons dashicons-lock" style="font-size: 24px; width: 24px; height: 24px;"></span>
+            </div>
+            <h3 style="margin: 0 0 10px 0; font-size: 16px; font-weight: 800; color: #0f172a;">طلب تغيير كلمة المرور</h3>
+            <p id="eess-pass-req-modal-msg" style="margin: 0 0 20px 0; font-size: 13px; color: #475569; font-weight: 600; line-height: 1.6;"></p>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button type="button" onclick="eessConfirmPasswordRequestSubmit()" class="sm-btn" style="background: #d97706; color: #ffffff; height: 38px; padding: 0 22px; border-radius: 8px; font-weight: 800; border: none; cursor: pointer;">إرسال الطلب الإجباري</button>
+                <button type="button" onclick="document.getElementById('eess-password-request-modal').style.display='none'" class="sm-btn" style="background: #f1f5f9; color: #64748b; height: 38px; padding: 0 18px; border-radius: 8px; font-weight: 700; border: 1px solid #cbd5e1; cursor: pointer;">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <?php include SM_PLUGIN_DIR . 'templates/partials/student-profile-edit-modal.php'; ?>
+
     <script>
     function changeStudentPageLimit(limitVal) {
         const url = new URL(window.location.href);
@@ -582,121 +664,6 @@ $to_num = min($offset + $limit, $total_students_count);
             toolbar.style.display = selected > 0 ? 'flex' : 'none';
         }
     }
-
-    // Chunked File Upload Progress Form
-    let chunkedFile, chunkedSize, chunkedId, chunkedTotalParts, chunkedCurrentPart;
-    const CHUNK_SIZE = 100 * 1024; // 100kb chunks
-
-    window.startChunkedUpload = function() {
-        const fileInput = document.getElementById('csv-file-input');
-        if (fileInput.files.length === 0) {
-            alert('يرجى تحديد ملف CSV أولاً.');
-            return;
-        }
-
-        chunkedFile = fileInput.files[0];
-        chunkedSize = chunkedFile.size;
-        chunkedTotalParts = Math.ceil(chunkedSize / CHUNK_SIZE);
-        chunkedCurrentPart = 0;
-
-        document.getElementById('import-selection-area').style.display = 'none';
-        document.getElementById('import-progress-area').style.display = 'block';
-        updateImportProgress('جاري رفع وتحليل ملف البيانات...', 0);
-
-        uploadNextChunk();
-    };
-
-    function uploadNextChunk() {
-        const start = chunkedCurrentPart * CHUNK_SIZE;
-        const end = Math.min(start + CHUNK_SIZE, chunkedSize);
-        const chunk = chunkedFile.slice(start, end);
-
-        const formData = new FormData();
-        formData.append('action', 'sm_upload_import_csv');
-        formData.append('csv_file', chunk, chunkedFile.name);
-        formData.append('nonce', '<?php echo wp_create_nonce("sm_admin_action"); ?>');
-
-        fetch('<?php echo admin_url('admin-ajax.php'); ?>', { method: 'POST', body: formData })
-        .then(r => r.json())
-        .then(res => {
-            if (res.success) {
-                processImportChunk(res.data.file_path, 0);
-            } else {
-                alert('فشل رفع الملف: ' + res.data);
-                resetImportUI();
-            }
-        });
-    }
-
-    function processImportChunk(filePath, offset, retryCount = 0) {
-        const formData = new FormData();
-        formData.append('action', 'sm_process_import_chunk');
-        formData.append('file_path', filePath);
-        formData.append('offset', offset);
-        formData.append('nonce', '<?php echo wp_create_nonce("sm_admin_action"); ?>');
-
-        fetch('<?php echo admin_url('admin-ajax.php'); ?>', { method: 'POST', body: formData })
-        .then(r => r.json())
-        .then(res => {
-            if (res.success) {
-                const finished = res.data.finished;
-                const processed = res.data.total_so_far;
-                const results = res.data.results || {};
-
-                if (finished) {
-                    let summaryMsg = `تم الانتهاء من استيراد ملف البيانات بنجاح!\n` +
-                                     `✓ السجلات المستوردة بنجاح: ${results.success || processed}\n` +
-                                     (results.duplicate ? `ℹ️ السجلات المحدثة/المكررة: ${results.duplicate}\n` : '') +
-                                     (results.error ? `⚠️ السجلات المرفوضة لعدم استيفاء الشروط: ${results.error}\n` : '');
-
-                    if (results.details && results.details.length > 0) {
-                        const errorDetails = results.details.filter(d => d.type === 'error').map(d => d.msg).join('\n');
-                        if (errorDetails) {
-                            summaryMsg += `\nتفاصيل الأخطاء:\n` + errorDetails;
-                        }
-                    }
-
-                    updateImportProgress('تم الانتهاء من استيراد كافة البيانات بنجاح!', 100);
-                    alert(summaryMsg);
-                    setTimeout(() => location.reload(), 1200);
-                } else {
-                    const totalRows = res.data.total_rows || 1;
-                    const pct = Math.min(99, Math.round((processed / totalRows) * 100));
-                    updateImportProgress(`جاري تحليل واستيراد السجلات... تم معالجة ${processed} من ${totalRows} طالب (${pct}%)`, pct);
-                    processImportChunk(filePath, offset + res.data.processed, 0);
-                }
-            } else {
-                if (retryCount < 3) {
-                    updateImportProgress(`إعادة محاولة الدفعة (المحاولة ${retryCount + 1}/3)...`, Math.min(99, Math.round((offset / 2000) * 100)));
-                    setTimeout(() => processImportChunk(filePath, offset, retryCount + 1), 2000);
-                } else {
-                    alert('خطأ أثناء المعالجة: ' + (res.data || 'حدث خطأ أثناء قراءة الملف'));
-                    resetImportUI();
-                }
-            }
-        }).catch(err => {
-            if (retryCount < 3) {
-                updateImportProgress(`خطأ مؤقت في الاتصال بالسيرفر. إعادة المحاولة (${retryCount + 1}/3)...`, Math.min(99, Math.round((offset / 2000) * 100)));
-                setTimeout(() => processImportChunk(filePath, offset, retryCount + 1), 2500);
-            } else {
-                alert('تعذر الاتصال بالسيرفر بعد 3 محاولات. يرجى التثبت من استقرار الاتصال بالإنترنت.');
-                resetImportUI();
-            }
-        });
-    }
-
-    function updateImportProgress(text, pct) {
-        document.getElementById('import-status-text').innerText = text;
-        document.getElementById('import-percentage').innerText = pct + '%';
-        document.getElementById('import-progress-bar').style.width = pct + '%';
-    }
-
-    function resetImportUI() {
-        document.getElementById('import-selection-area').style.display = 'block';
-        document.getElementById('import-progress-area').style.display = 'none';
-    }
-
-    <?php include SM_PLUGIN_DIR . 'templates/partials/student-profile-edit-modal.php'; ?>
 
     (function() {
         document.addEventListener('click', function(e) {
