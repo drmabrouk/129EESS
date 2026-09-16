@@ -1165,7 +1165,13 @@ class EESS_Org_Helper {
             $class_id = $wpdb->insert_id;
         }
 
-        // 4. Update the student table row (preserve existing institution_id and school_id without overwriting)
+        // 4. Resolve Student Affairs Department (Code 3)
+        $student_affairs_dept_id = $wpdb->get_var("SELECT id FROM {$wpdb->prefix}eess_departments WHERE code = '3' OR name LIKE '%شؤون الطلبة%' OR name LIKE '%شؤون الطلاب%' ORDER BY id ASC LIMIT 1");
+        if (!$student_affairs_dept_id) {
+            $student_affairs_dept_id = 3;
+        }
+
+        // 5. Update the student table row (preserve existing institution_id and school_id without overwriting)
         $curr_row = $wpdb->get_row($wpdb->prepare("SELECT institution_id, school_id FROM {$wpdb->prefix}sm_students WHERE id = %d", $student_id));
         $inst_to_set = ($curr_row && intval($curr_row->institution_id) > 0) ? intval($curr_row->institution_id) : 1;
         $sch_to_set  = ($curr_row && intval($curr_row->school_id) > 0) ? intval($curr_row->school_id) : $inst_to_set;
@@ -1173,6 +1179,7 @@ class EESS_Org_Helper {
         $wpdb->update("{$wpdb->prefix}sm_students", array(
             'institution_id' => $inst_to_set,
             'school_id'      => $sch_to_set,
+            'department_id'  => intval($student_affairs_dept_id),
             'grade_id'       => $grade_id,
             'class_id'       => $class_id
         ), array('id' => $student_id));
