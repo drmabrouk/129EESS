@@ -32,8 +32,8 @@ $can_import = current_user_can('manage_options') || current_user_can('إدارة
     </div>
     <?php else: ?>
 
-    <!-- Control Actions Banner (Import Template & Export Database) -->
-    <div style="display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap;">
+    <!-- Control Actions Banner (Import Template & Export Database & SysAdmin Controls) -->
+    <div style="display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; align-items: center;">
         <a href="<?php echo admin_url('admin-ajax.php?action=sm_export_students_csv&nonce=' . $admin_nonce); ?>" style="flex: 1; height: 42px; background: #881337; color: white; border-radius: 10px; font-weight: 800; font-size: 13px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(136,19,55,0.18);">
             <span class="dashicons dashicons-download" style="font-size: 18px;"></span>
             <span>تصدير سجلاّت الطلاب المعتمدة (Excel/CSV)</span>
@@ -42,6 +42,15 @@ $can_import = current_user_can('manage_options') || current_user_can('إدارة
             <span class="dashicons dashicons-media-document" style="font-size: 18px; color: #16a34a;"></span>
             <span>تحميل نموذج الاستيراد القياسي (الـ 12 أعمدة)</span>
         </a>
+        <?php
+        $user_roles = (array) wp_get_current_user()->roles;
+        $is_sys_admin = current_user_can('manage_options') || in_array('administrator', $user_roles, true) || in_array('sm_system_admin', $user_roles, true);
+        if ($is_sys_admin):
+        ?>
+        <button type="button" onclick="eessOpenSysadminModal()" class="sm-btn" title="إعدادات وإجراءات مدير النظام المتقدمة (إعادة الضبط / الحذف للمؤسسة)" style="height: 42px; width: 44px; background: #0f172a; color: #ffffff !important; border-radius: 10px; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;" onmouseover="this.style.background='#1e293b'" onmouseout="this.style.background='#0f172a'">
+            <span class="dashicons dashicons-admin-generic" style="font-size: 20px; width: 20px; height: 20px; color: #fb7185;"></span>
+        </button>
+        <?php endif; ?>
     </div>
 
     <!-- Official 12-Column Import Guide & Rules Card -->
@@ -179,6 +188,59 @@ $can_import = current_user_can('manage_options') || current_user_can('إدارة
 
         <div style="display: flex; justify-content: center; gap: 12px;">
             <button type="button" onclick="location.reload()" style="height: 42px; padding: 0 24px; background: #0f172a; color: white; border: none; border-radius: 10px; font-weight: 800; font-size: 13px; cursor: pointer;">استيراد ملف جديد ↺</button>
+        </div>
+    </div>
+
+    <!-- SYSTEM ADMIN ADVANCED CONTROL MODAL -->
+    <div id="eess-sysadmin-import-modal" class="sm-modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); z-index: 999999; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; font-family: 'Cairo', sans-serif;" dir="rtl">
+        <div style="background: #ffffff; border-radius: 20px; max-width: 620px; width: 100%; border: 1px solid #cbd5e1; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); overflow: hidden;">
+            <div style="background: #0f172a; color: #ffffff; padding: 18px 24px; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0; font-size: 16px; font-weight: 800; color: #ffffff; display: flex; align-items: center; gap: 10px;">
+                    <span class="dashicons dashicons-admin-generic" style="color: #fb7185; font-size: 20px; width: 20px; height: 20px;"></span>
+                    <span>لوحة التحكم المتقدمة لمدير النظام (SysAdmin Controls)</span>
+                </h3>
+                <button type="button" onclick="document.getElementById('eess-sysadmin-import-modal').style.display='none'" style="background: none; border: none; color: #ffffff; font-size: 24px; cursor: pointer; line-height: 1;">&times;</button>
+            </div>
+
+            <div style="padding: 24px; display: flex; flex-direction: column; gap: 20px;">
+
+                <!-- Section 1: Academic Year Prefix Setting -->
+                <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 14px; padding: 16px;">
+                    <label style="display: block; font-size: 12.5px; font-weight: 800; color: #0f172a; margin-bottom: 6px;">1. بادئة العام الأكاديمي المولدة مسبقاً (Academic Year Prefix)</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="text" id="sysadmin_academic_year_prefix" placeholder="2627" style="height: 38px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0 12px; font-size: 13px; font-weight: 800; font-family: monospace; width: 140px; color: #881337;">
+                        <button type="button" onclick="eessSysadminSaveAcademicYearPrefix()" class="sm-btn" style="height: 38px; padding: 0 16px; background: #0f172a; color: #ffffff !important; border-radius: 8px; font-weight: 800; font-size: 12px; border: none; cursor: pointer;">حفظ البادئة</button>
+                    </div>
+                    <small style="font-size: 11px; color: #64748b; margin-top: 4px; display: block;">مثال: بادئة العام الأكاديمي الحالي <strong style="color:#881337;">2627</strong> تُرفق بـ كود المؤسسة + التسلسل (مثال: 2627200001).</small>
+                </div>
+
+                <!-- Section 2: Institution Selector & Reset Operations -->
+                <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 14px; padding: 16px;">
+                    <label style="display: block; font-size: 12.5px; font-weight: 800; color: #0f172a; margin-bottom: 8px;">2. اختر المؤسسة التعليمية من الهيكل التنظيمي:</label>
+                    <select id="sysadmin_institution_select" onchange="eessSysadminInstitutionChanged(this.value)" style="width: 100%; height: 40px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0 12px; font-size: 13px; font-weight: 800; color: #0f172a; outline: none; margin-bottom: 12px;">
+                        <option value="">جاري تحميل القائمة الديناميكية للمؤسسات...</option>
+                    </select>
+
+                    <div id="sysadmin_inst_info_box" style="display: none; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; font-size: 12px; color: #334155; margin-bottom: 14px; line-height: 1.6;">
+                        • المؤسسة المحددة: <strong id="sysadmin_inst_name_text" style="color: #881337;">-</strong><br>
+                        • كود المؤسسة الرقمي: <strong id="sysadmin_inst_code_text" style="font-family: monospace;">-</strong><br>
+                        • إجمالي الطلاب المسجلين بالمؤسسة: <strong id="sysadmin_inst_stucount_text" style="color: #0284c7;">0 طالب</strong>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button type="button" onclick="eessSysadminResetInstitutionSequence()" class="sm-btn" style="flex: 1; height: 40px; background: #d97706; color: #ffffff !important; border-radius: 8px; font-weight: 800; font-size: 12px; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+                            <span class="dashicons dashicons-redo" style="font-size: 15px;"></span>
+                            <span>إعادة ضبط تسلسل الكود للمؤسسة (00001)</span>
+                        </button>
+
+                        <button type="button" onclick="eessSysadminDeleteInstitutionStudents()" class="sm-btn" style="flex: 1; height: 40px; background: #dc2626; color: #ffffff !important; border-radius: 8px; font-weight: 800; font-size: 12px; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+                            <span class="dashicons dashicons-trash" style="font-size: 15px;"></span>
+                            <span>حذف جميع طلاب المؤسسة المختارة نهائياً</span>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
         </div>
     </div>
 

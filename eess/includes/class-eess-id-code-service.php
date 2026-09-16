@@ -154,22 +154,35 @@ class EESS_ID_Code_Service {
     }
 
     /**
-     * Generates a unique Student Code based on System Administrator Central Configuration
+     * Resets the student numbering sequence for an institution back to 0
+     */
+    public static function reset_student_sequence($inst_id = 1) {
+        global $wpdb;
+        self::ensure_counters_table_exists();
+        $inst_id = intval($inst_id);
+        if ($inst_id <= 0) $inst_id = 1;
+        $table = "{$wpdb->prefix}eess_id_counters";
+
+        $wpdb->query($wpdb->prepare(
+            "INSERT INTO $table (institution_id, counter_type, last_sequence)
+             VALUES (%d, 'student', 0)
+             ON DUPLICATE KEY UPDATE last_sequence = 0",
+            $inst_id
+        ));
+    }
+
+    /**
+     * Generates a unique Student Code: [Academic Year Prefix (2627)] + [Institution Code] + [5-digit sequence (00001)]
      */
     public static function generate_student_code($inst_id = 1) {
         global $wpdb;
         $inst_code = self::get_institution_code($inst_id);
-        $config = self::get_numbering_config();
+        $prefix = get_option('eess_academic_year_prefix', '2627');
 
         do {
             $seq = self::get_next_sequence($inst_id, 'student');
-            $seq_str = sprintf("%0" . $config['student_digits'] . "d", $seq);
-
-            $code = $config['student_prefix'] . str_replace(
-                array('{inst_code}', '{seq}', '{year}'),
-                array($inst_code, $seq_str, date('Y')),
-                $config['student_format']
-            );
+            $seq_str = sprintf("%05d", $seq);
+            $code = $prefix . $inst_code . $seq_str;
 
             $exists = $wpdb->get_var($wpdb->prepare(
                 "SELECT id FROM {$wpdb->prefix}sm_students WHERE student_code = %s LIMIT 1",
