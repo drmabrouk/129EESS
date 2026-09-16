@@ -17,18 +17,28 @@ $ajax_url = admin_url('admin-ajax.php');
 <?php
 $is_sys_admin = is_user_logged_in() && (current_user_can('manage_options') || in_array('sm_system_admin', (array)wp_get_current_user()->roles));
 $portal_settings = get_option('eess_card_portal_settings', array(
-    'operational_phase' => 'data_update',
-    'enabled_fields'    => array('national_id', 'parent_phone', 'emirate', 'address', 'photo_url'),
-    'require_photo'     => 'yes'
+    'enable_data_update'  => 'yes',
+    'enable_student_code' => 'yes',
+    'enable_exit_card'    => 'yes',
+    'operational_phase'   => 'data_update',
+    'enabled_fields'      => array('national_id', 'parent_phone', 'emirate', 'address', 'photo_url'),
+    'step_order'          => array('identify', 'verify_update', 'sign_declare', 'submit_summary'),
+    'require_photo'       => 'yes'
 ));
-$active_phase = $portal_settings['operational_phase'] ?? 'data_update';
+
+$enable_data_update  = $portal_settings['enable_data_update'] ?? 'yes';
+$enable_student_code = $portal_settings['enable_student_code'] ?? 'yes';
+$enable_exit_card    = $portal_settings['enable_exit_card'] ?? 'yes';
+$active_phase        = $portal_settings['operational_phase'] ?? 'data_update';
+$enabled_fields      = (array)($portal_settings['enabled_fields'] ?? array('national_id', 'parent_phone', 'emirate', 'address', 'photo_url'));
+$admin_nonce         = wp_create_nonce('sm_admin_action');
 ?>
 
     <!-- Header & Branding Banner -->
     <div style="position: relative; text-align: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 18px; margin-bottom: 20px;">
         <?php if ($is_sys_admin): ?>
         <!-- System Administrator Settings Gear Button -->
-        <button type="button" onclick="wOpenAdminSettingsModal()" title="إعدادات مدير النظام" style="position: absolute; top: 0; left: 0; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 10px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #0f172a; transition: background 0.2s;">
+        <button type="button" onclick="wOpenAdminSettingsModal()" title="لوحة إعدادات مدير النظام" style="position: absolute; top: 0; left: 0; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 10px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #0f172a; transition: background 0.2s;">
             <span class="dashicons dashicons-admin-generic" style="font-size: 20px; width: 20px; height: 20px;"></span>
         </button>
         <?php endif; ?>
@@ -43,31 +53,52 @@ $active_phase = $portal_settings['operational_phase'] ?? 'data_update';
     </div>
 
     <?php if ($is_sys_admin): ?>
-    <!-- System Administrator Settings Modal -->
+    <!-- Comprehensive System Administrator Configuration Panel -->
     <div id="eess-card-settings-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.6); z-index: 99999; align-items: center; justify-content: center;">
-        <div style="background: #ffffff; width: 90%; max-width: 520px; border-radius: 16px; padding: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); direction: rtl; font-family: 'Cairo', sans-serif;">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 16px;">
-                <h3 style="margin: 0; font-size: 16px; font-weight: 900; color: #0f172a;">⚙️ لوحة ضبط إعدادات البوابة (خاص بمدير النظام)</h3>
-                <button type="button" onclick="wCloseAdminSettingsModal()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #64748b;">✕</button>
+        <div style="background: #ffffff; width: 92%; max-width: 580px; max-height: 90vh; overflow-y: auto; border-radius: 18px; padding: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.25); direction: rtl; font-family: 'Cairo', sans-serif;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 12px; margin-bottom: 16px;">
+                <h3 style="margin: 0; font-size: 16.5px; font-weight: 900; color: #0f172a;">⚙️ لوحة ضبط وتكوين البوابة المباشرة (مدير النظام)</h3>
+                <button type="button" onclick="wCloseAdminSettingsModal()" style="background: none; border: none; font-size: 22px; cursor: pointer; color: #64748b;">✕</button>
             </div>
 
-            <div style="margin-bottom: 18px;">
-                <label style="font-size: 12.5px; font-weight: 800; color: #334155; display: block; margin-bottom: 6px;">المرحلة التشغيلية الحالية للبوابة:</label>
-                <select id="w_admin_phase_select" style="width: 100%; height: 42px; border-radius: 8px; border: 1.5px solid #cbd5e1; padding: 0 12px; font-size: 13px; font-weight: 700; color: #0f172a; outline: none;">
-                    <option value="data_update" <?php selected($active_phase, 'data_update'); ?>>المرحلة الأولى: تحديث بيانات الطلاب واستكمال النواقص</option>
-                    <option value="card_request" <?php selected($active_phase, 'card_request'); ?>>المرحلة الثانية: استقبال طلبات بطاقات تصاريح الخروج</option>
+            <!-- Workflow Toggles -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; margin-bottom: 16px;">
+                <h4 style="margin: 0 0 10px 0; font-size: 13px; font-weight: 800; color: #0f172a;">1. تفعيل وإيقاف مسارات البوابة الرئيسية:</h4>
+
+                <label style="display: flex; align-items: center; gap: 10px; font-size: 12.5px; font-weight: 700; color: #1e293b; margin-bottom: 8px; cursor: pointer;">
+                    <input type="checkbox" id="w_admin_chk_data_update" value="yes" <?php checked($enable_data_update, 'yes'); ?> style="width: 17px; height: 17px;">
+                    <span>مسار استكمال وتحديث بيانات الطلاب المفقودة</span>
+                </label>
+
+                <label style="display: flex; align-items: center; gap: 10px; font-size: 12.5px; font-weight: 700; color: #1e293b; margin-bottom: 8px; cursor: pointer;">
+                    <input type="checkbox" id="w_admin_chk_student_code" value="yes" <?php checked($enable_student_code, 'yes'); ?> style="width: 17px; height: 17px;">
+                    <span>مسار التوليد والتطابق التلقائي لكود الطالب المدرسي الرسمي</span>
+                </label>
+
+                <label style="display: flex; align-items: center; gap: 10px; font-size: 12.5px; font-weight: 700; color: #1e293b; margin-bottom: 0; cursor: pointer;">
+                    <input type="checkbox" id="w_admin_chk_exit_card" value="yes" <?php checked($enable_exit_card, 'yes'); ?> style="width: 17px; height: 17px;">
+                    <span>مسار تقديم وتوثيق طلب بطاقة تصريح الخروج الرقمية</span>
+                </label>
+            </div>
+
+            <!-- Operational Phase Selection -->
+            <div style="margin-bottom: 16px;">
+                <label style="font-size: 13px; font-weight: 800; color: #334155; display: block; margin-bottom: 6px;">2. المرحلة التشغيلية الرئيسية:</label>
+                <select id="w_admin_phase_select" style="width: 100%; height: 42px; border-radius: 10px; border: 1.5px solid #cbd5e1; padding: 0 12px; font-size: 13px; font-weight: 700; color: #0f172a; outline: none;">
+                    <option value="data_update" <?php selected($active_phase, 'data_update'); ?>>المرحلة الأولى: حصر وتحديث البيانات وإصدار الأكواد</option>
+                    <option value="card_request" <?php selected($active_phase, 'card_request'); ?>>المرحلة الثانية: استقبال طلبات بطاقات تصاريح الخروج الرقمية</option>
                 </select>
             </div>
 
-            <div style="margin-bottom: 18px;">
-                <label style="font-size: 12.5px; font-weight: 800; color: #334155; display: block; margin-bottom: 8px;">حقول البيانات المطلوب التحقق منها واستكمالها من ولي الأمر:</label>
+            <!-- Missing Field Selection -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; margin-bottom: 18px;">
+                <label style="font-size: 13px; font-weight: 800; color: #334155; display: block; margin-bottom: 8px;">3. الحقول الفردية المطلوب استكمالها عند وجود نقص في سجل الطالب:</label>
                 <?php
-                $enabled_fields = (array)($portal_settings['enabled_fields'] ?? array());
                 $field_options = array(
-                    'national_id'  => 'الهوية الوطنية / رقم الإقامة',
-                    'parent_phone' => 'رقم هاتف ولي الأمر المعتمد',
-                    'emirate'      => 'الإمارة السكنية (الإمارات 7)',
-                    'address'      => 'العنوان التفصيلي ومحل الإقامة',
+                    'national_id'  => 'الهوية الوطنية / رقم الإقامة (اختیاري في السجل الشامل)',
+                    'parent_phone' => 'رقم هاتف التواصل لولي الأمر المعتمد',
+                    'emirate'      => 'الإمارة السكنية (الإمارات السبع)',
+                    'address'      => 'العنوان السكني التفصيلي',
                     'photo_url'    => 'الصورة الشخصية الرسمية (خلفية بيضاء)'
                 );
                 foreach ($field_options as $key => $label):
@@ -80,9 +111,12 @@ $active_phase = $portal_settings['operational_phase'] ?? 'data_update';
                 <?php endforeach; ?>
             </div>
 
-            <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #e2e8f0; padding-top: 14px;">
-                <button type="button" onclick="wCloseAdminSettingsModal()" style="height: 38px; padding: 0 16px; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; border-radius: 8px; font-weight: 800; font-size: 12px; cursor: pointer;">إلغاء</button>
-                <button type="button" onclick="wSaveAdminPortalSettings()" id="w_btn_save_admin_settings" style="height: 38px; padding: 0 22px; background: #881337; color: white; border: none; border-radius: 8px; font-weight: 800; font-size: 12px; cursor: pointer;">حفظ الإعدادات والتحديث</button>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 2px solid #f1f5f9; padding-top: 14px;">
+                <button type="button" onclick="wResetAdminPortalSettings()" style="height: 38px; padding: 0 16px; background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; border-radius: 8px; font-weight: 800; font-size: 12px; cursor: pointer;">إعادة الضبط الافتراضي ↺</button>
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" onclick="wCloseAdminSettingsModal()" style="height: 38px; padding: 0 16px; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; border-radius: 8px; font-weight: 800; font-size: 12px; cursor: pointer;">إلغاء</button>
+                    <button type="button" onclick="wSaveAdminPortalSettings()" id="w_btn_save_admin_settings" style="height: 38px; padding: 0 22px; background: #881337; color: white; border: none; border-radius: 8px; font-weight: 800; font-size: 12.5px; cursor: pointer;">حفظ وتطبيق الإعدادات ✓</button>
+                </div>
             </div>
         </div>
     </div>
@@ -117,9 +151,9 @@ $active_phase = $portal_settings['operational_phase'] ?? 'data_update';
     <!-- STEP 1: SEARCH & IDENTIFY STUDENT -->
     <div id="w-panel-step-1" style="display: block;">
         <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px; margin-bottom: 18px;">
-            <label style="font-size: 13px; font-weight: 800; color: #0f172a; display: block; margin-bottom: 6px;">ادخل بداية اسم الطالب المسجل بالمدرسة (10 حروف على الأقل):</label>
-            <input type="text" id="w_student_name_input" onkeyup="wDebounceSearchName()" placeholder="مثال: عبد الله محمد علي..." style="width: 100%; height: 44px; border-radius: 10px; border: 1.5px solid #cbd5e1; padding: 0 14px; font-size: 13px; font-weight: 700; box-sizing: border-box; outline: none; transition: border-color 0.2s;">
-            <div style="font-size: 11px; color: #64748b; margin-top: 6px; font-weight: 600;">تنبيه أمني: يتطلب البحث كتابة 10 حروف من بداية الاسم المسجل للنظام لحماية الخصوصية.</div>
+            <label style="font-size: 13px; font-weight: 800; color: #0f172a; display: block; margin-bottom: 6px;">ادخل اسم الطالب الكامل المسجل بالمدرسة (الاسم الرباعي):</label>
+            <input type="text" id="w_student_name_input" onkeyup="wDebounceSearchName()" placeholder="مثال: عبد الله محمد علي الشامسي..." style="width: 100%; height: 44px; border-radius: 10px; border: 1.5px solid #cbd5e1; padding: 0 14px; font-size: 13px; font-weight: 700; box-sizing: border-box; outline: none; transition: border-color 0.2s;">
+            <div style="font-size: 11px; color: #64748b; margin-top: 6px; font-weight: 600;">تنبيه أمني: يتطلب النظام إدخال الاسم الكامل المسجل للطالب بالمدرسة لضمان الدقة والمطابقة الشاملة.</div>
         </div>
 
         <div id="w-search-suggestions" style="display: none; margin-bottom: 18px;"></div>
@@ -300,6 +334,10 @@ function wCloseAdminSettingsModal() {
 
 function wSaveAdminPortalSettings() {
     const phase = document.getElementById('w_admin_phase_select').value;
+    const enableDataUpdate = document.getElementById('w_admin_chk_data_update').checked ? 'yes' : 'no';
+    const enableStudentCode = document.getElementById('w_admin_chk_student_code').checked ? 'yes' : 'no';
+    const enableExitCard = document.getElementById('w_admin_chk_exit_card').checked ? 'yes' : 'no';
+
     const fields = [];
     document.querySelectorAll('.w-admin-field-chk:checked').forEach(c => fields.push(c.value));
 
@@ -309,16 +347,37 @@ function wSaveAdminPortalSettings() {
 
     jQuery.post('<?php echo $ajax_url; ?>', {
         action: 'eess_save_card_portal_settings',
+        nonce: '<?php echo $admin_nonce; ?>',
+        enable_data_update: enableDataUpdate,
+        enable_student_code: enableStudentCode,
+        enable_exit_card: enableExitCard,
         operational_phase: phase,
         enabled_fields: fields
     }, function(res) {
         btn.disabled = false;
-        btn.innerText = 'حفظ الإعدادات والتحديث';
+        btn.innerText = 'حفظ وتطبيق الإعدادات ✓';
         if (res.success) {
             alert(res.data.message || 'تم حفظ الإعدادات بنجاح.');
             location.reload();
         } else {
             alert(res.data || 'حدث خطأ أثناء حفظ الإعدادات.');
+        }
+    });
+}
+
+function wResetAdminPortalSettings() {
+    if (!confirm('هل أنت تأكد من رغبتك في إعادة ضبط إعدادات البوابة للوضع الافتراضي؟')) return;
+
+    jQuery.post('<?php echo $ajax_url; ?>', {
+        action: 'eess_save_card_portal_settings',
+        nonce: '<?php echo $admin_nonce; ?>',
+        reset_default: '1'
+    }, function(res) {
+        if (res.success) {
+            alert(res.data.message || 'تم إعادة الضبط بنجاح.');
+            location.reload();
+        } else {
+            alert(res.data || 'فشلت عملية إعادة الضبط.');
         }
     });
 }
