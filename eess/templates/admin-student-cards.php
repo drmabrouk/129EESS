@@ -1,7 +1,7 @@
 <?php
 /**
  * Dedicated EESS Student Cards Management Module Template
- * Section: بطاقات الطلاب
+ * Section: إصدار البطاقات
  */
 
 if (!defined('ABSPATH')) exit;

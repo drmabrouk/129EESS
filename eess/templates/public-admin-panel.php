@@ -621,7 +621,7 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
                     'button' => ''
                 ),
                 'student-cards' => array(
-                    'title' => 'إدارة بطاقات تصاريع الخروج للطلاب (Student Cards)',
+                    'title' => 'إصدار البطاقات (Student Card Issuance)',
                     'desc' => 'وحدة مستقلة مخصصة لإدارة ومتابعة طلبات بطاقات الخروج الرقمية، المراجعة، الاعتماد، والتجهيز والطباعة الرسمية.',
                     'button' => ''
                 ),
@@ -844,7 +844,7 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
             }
 
             $cur_header = $header_map[$active_tab] ?? null;
-            $excluded_banner_tabs = array('summary', 'grades', 'employee-profile', 'term-plans', 'students', 'teachers', 'parents', 'hr-evaluation', 'hr-management', 'documents', 'clinic', 'lesson-plans', 'assignments', 'attendance');
+            $excluded_banner_tabs = array('summary', 'grades', 'employee-profile', 'term-plans', 'students', 'teachers', 'parents', 'hr-evaluation', 'hr-management', 'clinic', 'lesson-plans', 'attendance');
             if ($cur_header && !in_array($active_tab, $excluded_banner_tabs) && !isset($_GET['manage_employee_id']) && !isset($_GET['eess_print_eval']) && !isset($_GET['eess_print_report'])):
             ?>
                 <!-- Standardized Enterprise Page Header -->
@@ -935,16 +935,8 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
                     include SM_PLUGIN_DIR . 'templates/admin-term-plans.php';
                     break;
 
-                case 'assets':
-                    include SM_PLUGIN_DIR . 'templates/admin-asset-management.php';
-                    break;
-
                 case 'system-announcements':
                     include SM_PLUGIN_DIR . 'templates/admin-system-announcements.php';
-                    break;
-
-                case 'assignments':
-                    include SM_PLUGIN_DIR . 'templates/admin-assignments.php';
                     break;
 
                 case 'clinic':

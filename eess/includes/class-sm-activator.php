@@ -703,7 +703,7 @@ class SM_Activator {
                 'content' => '[sm_class_attendance]',
             ),
             'card' => array(
-                'title'   => 'بوابة بطاقات الطلاب',
+                'title'   => 'بوابة إصدار البطاقات',
                 'content' => '[card]',
             ),
             'import' => array(
