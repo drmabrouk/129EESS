@@ -83,6 +83,8 @@ class School_Management {
         $this->loader->add_action('wp_ajax_sm_upload_import_csv', $plugin_public, 'ajax_upload_import_csv');
         $this->loader->add_action('wp_ajax_sm_process_import_chunk', $plugin_public, 'ajax_process_import_chunk');
         $this->loader->add_action('wp_ajax_eess_get_import_job_status', $plugin_public, 'ajax_eess_get_import_job_status');
+        $this->loader->add_action('wp_ajax_eess_check_2627_csv_file', $plugin_public, 'ajax_eess_check_2627_csv_file');
+        $this->loader->add_action('wp_ajax_eess_start_2627_csv_sync', $plugin_public, 'ajax_eess_start_2627_csv_sync');
         $this->loader->add_action('wp_ajax_sm_export_students_csv', $plugin_public, 'ajax_export_students_csv');
         $this->loader->add_action('wp_ajax_sm_download_student_import_template', $plugin_public, 'ajax_download_student_import_template');
         $this->loader->add_action('wp_ajax_sm_print_student_full_report', $plugin_public, 'ajax_print_student_full_report');

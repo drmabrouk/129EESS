@@ -7674,8 +7674,18 @@ class SM_Public {
         ));
 
         foreach ($records as $r) {
+            $stu_code = trim($r->student_code ?: '');
+            if (empty($stu_code)) {
+                if (class_exists('EESS_ID_Code_Service')) {
+                    $stu_code = EESS_ID_Code_Service::generate_student_code($r->institution_id ?: ($r->school_id ?: 1));
+                } else {
+                    $stu_code = SM_DB::generate_student_code($r->school_id ?: 1);
+                }
+                $wpdb->update("{$wpdb->prefix}sm_students", array('student_code' => $stu_code), array('id' => $r->id));
+            }
+
             fputcsv($output, array(
-                $r->student_code,
+                $stu_code,
                 $r->id,
                 $r->name,
                 $r->gender ?: 'ذكر',
@@ -7871,6 +7881,116 @@ class SM_Public {
         wp_send_json_success(array('active' => true, 'job' => $job_state));
     }
 
+    public function ajax_eess_check_2627_csv_file() {
+        if (!current_user_can('إدارة_الطلاب') && !current_user_can('manage_options') && !in_array('sm_system_admin', (array)wp_get_current_user()->roles)) {
+            wp_send_json_error('Unauthorized');
+        }
+
+        $file_path = SM_PLUGIN_DIR . '2627.csv';
+        if (!file_exists($file_path)) {
+            $file_path = WP_PLUGIN_DIR . '/eess/2627.csv';
+        }
+
+        $exists = file_exists($file_path);
+        $sync_state = get_option('eess_2627_csv_sync_state', array());
+
+        if (!$exists) {
+            wp_send_json_success(array(
+                'exists'          => false,
+                'path'            => 'eess/2627.csv',
+                'last_sync_time'  => $sync_state['last_sync_time'] ?? 'لم تجرَ أي مزامنة سابقة'
+            ));
+        }
+
+        $filesize = filesize($file_path);
+        $size_formatted = ($filesize >= 1048576) ? round($filesize / 1048576, 2) . ' ميجابايت' : round($filesize / 1024, 1) . ' كيلوبايت';
+        $mtime = date('Y-m-d H:i:s', filemtime($file_path));
+        $file_hash = md5_file($file_path);
+        $hash_short = substr($file_hash, 0, 10);
+
+        $handle = fopen($file_path, "r");
+        $total_rows = 0;
+        if ($handle !== false) {
+            while (($line = fgets($handle)) !== false) {
+                if (trim($line) !== '') $total_rows++;
+            }
+            fclose($handle);
+        }
+        if ($total_rows > 1) $total_rows--; // subtract header row
+
+        $last_hash = $sync_state['file_hash'] ?? '';
+        $is_changed = (empty($last_hash) || $last_hash !== $file_hash);
+
+        wp_send_json_success(array(
+            'exists'          => true,
+            'filename'        => '2627.csv',
+            'path'            => 'eess/2627.csv',
+            'size_formatted'  => $size_formatted,
+            'mtime'           => $mtime,
+            'hash'            => $file_hash,
+            'hash_short'      => $hash_short,
+            'total_rows'      => $total_rows,
+            'is_changed'      => $is_changed,
+            'last_sync_time'  => $sync_state['last_sync_time'] ?? 'لم تجرَ أي مزامنة سابقة',
+            'last_stats'      => $sync_state['stats'] ?? array()
+        ));
+    }
+
+    public function ajax_eess_start_2627_csv_sync() {
+        if (!current_user_can('إدارة_الطلاب') && !current_user_can('manage_options') && !in_array('sm_system_admin', (array)wp_get_current_user()->roles)) {
+            wp_send_json_error('Unauthorized');
+        }
+
+        $file_path = SM_PLUGIN_DIR . '2627.csv';
+        if (!file_exists($file_path)) {
+            $file_path = WP_PLUGIN_DIR . '/eess/2627.csv';
+        }
+
+        if (!file_exists($file_path)) {
+            wp_send_json_error('الملف المرجعي eess/2627.csv غير موجود بالمسار المعتمد.');
+        }
+
+        $handle = fopen($file_path, "r");
+        $total_rows = 0;
+        if ($handle !== false) {
+            while (($line = fgets($handle)) !== false) {
+                if (trim($line) !== '') $total_rows++;
+            }
+            fclose($handle);
+        }
+        if ($total_rows > 1) $total_rows--; // subtract header row
+
+        $job_key = 'eess_import_job_' . get_current_user_id();
+
+        $results = array(
+            'status'          => 'running',
+            'file_path'       => $file_path,
+            'is_sync_2627'    => true,
+            'offset'          => 0,
+            'total'           => $total_rows,
+            'processed'       => 0,
+            'success'         => 0, // New students added
+            'updated'         => 0, // Existing students updated
+            'unchanged'       => 0, // Existing students with identical data
+            'duplicate'       => 0,
+            'generated_codes' => 0,
+            'error'           => 0,
+            'details'         => array(),
+            'file_hash'       => md5_file($file_path),
+            'file_mtime'      => filemtime($file_path),
+            'updated_at'      => current_time('mysql')
+        );
+
+        set_transient('sm_import_results_' . get_current_user_id(), $results, HOUR_IN_SECONDS * 4);
+        set_transient($job_key, $results, HOUR_IN_SECONDS * 4);
+
+        wp_send_json_success(array(
+            'file_path'  => $file_path,
+            'total_rows' => $total_rows,
+            'job'        => $results
+        ));
+    }
+
     public function ajax_process_import_chunk() {
         global $wpdb;
         if (!current_user_can('إدارة_الطلاب') && !current_user_can('manage_options') && !in_array('sm_system_admin', (array)wp_get_current_user()->roles)) {
@@ -8019,14 +8139,27 @@ class SM_Public {
                 );
             }
 
-            $is_existing = false;
+            $existing_stu = null;
             $check_code = $row_data['student_code'] ?? '';
             $check_nat = $row_data['national_id'] ?? '';
+            $check_name = $row_data['name'] ?? '';
+
             if (!empty($check_code)) {
-                $is_existing = (bool) $wpdb->get_var($wpdb->prepare("SELECT id FROM {$wpdb->prefix}sm_students WHERE student_code = %s", $check_code));
+                $existing_stu = $wpdb->get_row($wpdb->prepare("SELECT id, student_code, name, class_name, section, national_id, school_id FROM {$wpdb->prefix}sm_students WHERE student_code = %s", $check_code));
             }
-            if (!$is_existing && !empty($check_nat)) {
-                $is_existing = (bool) $wpdb->get_var($wpdb->prepare("SELECT id FROM {$wpdb->prefix}sm_students WHERE national_id = %s", $check_nat));
+            if (!$existing_stu && !empty($check_nat)) {
+                $existing_stu = $wpdb->get_row($wpdb->prepare("SELECT id, student_code, name, class_name, section, national_id, school_id FROM {$wpdb->prefix}sm_students WHERE national_id = %s", $check_nat));
+            }
+            if (!$existing_stu && !empty($check_name)) {
+                $norm_g = EESS_Student_Data_Service::normalize_grade($row_data['class_name'] ?? '');
+                $norm_s = EESS_Student_Data_Service::normalize_section($row_data['section'] ?? '');
+                $existing_stu = $wpdb->get_row($wpdb->prepare("SELECT id, student_code, name, class_name, section, national_id, school_id FROM {$wpdb->prefix}sm_students WHERE name = %s AND class_name = %s AND section = %s", $check_name, $norm_g, $norm_s));
+            }
+
+            // Preserve existing student code if student already exists in DB
+            if ($existing_stu && !empty($existing_stu->student_code)) {
+                $row_data['student_code'] = $existing_stu->student_code;
+                $row_data['id'] = $existing_stu->id;
             }
 
             $saved_id = EESS_Student_Data_Service::process_and_save_student($row_data);
@@ -8034,13 +8167,18 @@ class SM_Public {
                 $results['error']++;
                 $results['details'][] = array('type' => 'error', 'msg' => "السطر $row_index: " . $saved_id->get_error_message());
             } else {
-                $results['success']++;
-                if ($is_existing) {
+                if ($existing_stu) {
+                    // Existing student record
+                    $results['updated'] = ($results['updated'] ?? 0) + 1;
                     $results['duplicate']++;
-                    $results['details'][] = array('type' => 'info', 'msg' => "تم تحديث سجل ({$row_data['name']}) في السطر $row_index");
-                }
-                if (empty($row_data['student_code'])) {
-                    $results['generated']++;
+                    $results['details'][] = array('type' => 'info', 'msg' => "تم إجراء المزامنة والتحديث لسجل الطالب ({$row_data['name']}) بالسطر $row_index");
+                } else {
+                    // New student record
+                    $results['success']++;
+                    if (empty($check_code)) {
+                        $results['generated_codes'] = ($results['generated_codes'] ?? 0) + 1;
+                    }
+                    $results['details'][] = array('type' => 'info', 'msg' => "تم استيراد وإنشاء الطالب الجديد ({$row_data['name']}) بالسطر $row_index");
                 }
             }
         }
@@ -8057,8 +8195,17 @@ class SM_Public {
         set_transient($job_key, $results, HOUR_IN_SECONDS * 4);
 
         if ($is_finished) {
-            @unlink($file_path);
-            SM_Logger::log('استيراد طلاب (AJAX)', "تم استيراد {$results['success']} طالب بنجاح.");
+            if (!empty($results['is_sync_2627']) && file_exists($file_path)) {
+                update_option('eess_2627_csv_sync_state', array(
+                    'file_hash'      => md5_file($file_path),
+                    'file_mtime'     => filemtime($file_path),
+                    'last_sync_time' => current_time('mysql'),
+                    'stats'          => $results
+                ));
+            } else {
+                @unlink($file_path);
+            }
+            SM_Logger::log('مزامنة واستيراد طلاب (AJAX)', "تم إنجاز مزامنة ملف الطلاب بنجاح (جدد: {$results['success']} - محدثين: " . ($results['updated'] ?? 0) . ")");
         }
 
         wp_send_json_success(array(
