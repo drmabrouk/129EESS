@@ -7943,11 +7943,11 @@ class SM_Public {
                     'name'                  => isset($data[2]) ? trim($data[2]) : '',
                     'gender'                => isset($data[3]) ? trim($data[3]) : 'ذكر',
                     'dob'                   => isset($data[4]) ? trim($data[4]) : '',
-                    'nationality'           => isset($data[5]) ? trim($data[5]) : 'سعودي',
+                    'nationality'           => isset($data[5]) ? trim($data[5]) : 'الإمارات العربية المتحدة',
                     'national_id'           => isset($data[6]) ? trim($data[6]) : '',
                     'class_name'            => isset($data[7]) ? trim($data[7]) : '',
                     'section'               => isset($data[8]) ? trim($data[8]) : '',
-                    'school_id'             => is_numeric($data[10] ?? '') ? intval($data[10]) : 0,
+                    'school_id'             => isset($data[10]) ? trim($data[10]) : '',
                     'guardian_name'         => isset($data[11]) ? trim($data[11]) : '',
                     'guardian_relationship' => isset($data[12]) ? trim($data[12]) : 'أب',
                     'parent_email'          => isset($data[13]) ? trim($data[13]) : '',
@@ -7955,7 +7955,7 @@ class SM_Public {
                     'student_status'        => isset($data[15]) ? trim($data[15]) : 'Active',
                     'enrollment_status'     => isset($data[16]) ? trim($data[16]) : 'Enrolled',
                     'enrollment_date'       => isset($data[17]) ? trim($data[17]) : date('Y-m-d'),
-                    'emirate'               => isset($data[18]) ? trim($data[18]) : 'أبوظبي',
+                    'emirate'               => isset($data[18]) ? trim($data[18]) : 'الشارقة',
                     'address'               => isset($data[19]) ? trim($data[19]) : '',
                     'student_behavior'      => isset($data[20]) ? trim($data[20]) : '',
                     'academic_level'        => isset($data[21]) ? trim($data[21]) : 'ممتاز',
@@ -7983,7 +7983,7 @@ class SM_Public {
                     'parent_email'   => isset($data[10]) ? trim($data[10]) : '',
                     'guardian_phone' => isset($data[11]) ? trim($data[11]) : '',
                     'photo_url'      => isset($data[13]) ? trim($data[13]) : '',
-                    'school_id'      => is_numeric($data[14] ?? '') ? intval($data[14]) : 0
+                    'school_id'      => isset($data[14]) ? trim($data[14]) : ''
                 );
             } else {
                 // 11 Official Columns
@@ -7997,7 +7997,7 @@ class SM_Public {
                     'parent_email'   => isset($data[7]) ? trim($data[7]) : '',
                     'guardian_phone' => isset($data[8]) ? trim($data[8]) : '',
                     'photo_url'      => isset($data[9]) ? trim($data[9]) : '',
-                    'school_id'      => is_numeric($data[10] ?? '') ? intval($data[10]) : 0
+                    'school_id'      => isset($data[10]) ? trim($data[10]) : ''
                 );
             }
 
