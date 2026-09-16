@@ -13814,30 +13814,65 @@ class SM_Public {
         return ob_get_clean();
     }
 
+    private function normalize_arabic_name($str) {
+        $str = preg_replace('/[أإآآ]/u', 'ا', $str);
+        $str = preg_replace('/[ة]/u', 'ه', $str);
+        $str = preg_replace('/[ى]/u', 'ي', $str);
+        $str = preg_replace('/\s+/u', ' ', $str);
+        return trim($str);
+    }
+
     public function ajax_public_search_student() {
         $name_query = sanitize_text_field($_POST['name_query'] ?? '');
         $clean_query = trim($name_query);
 
-        if (mb_strlen($clean_query) < 10) {
-            wp_send_json_error('يرجى إدخال 10 حروف على الأقل من بداية اسم الطالب للبحث.');
+        if (empty($clean_query)) {
+            wp_send_json_error('يرجى إدخال الاسم الكامل المسجل للطالب بالمدرسة.');
+        }
+
+        $normalized_input = $this->normalize_arabic_name($clean_query);
+        $input_words = explode(' ', $normalized_input);
+
+        if (count($input_words) < 2) {
+            wp_send_json_error('يرجى إدخال اسم الطالب الكامل (الاسم الثلاثي أو الرباعي على الأقل).');
         }
 
         global $wpdb;
-        $sql = "SELECT id, name, class_name, section FROM {$wpdb->prefix}sm_students WHERE name LIKE %s ORDER BY name ASC LIMIT 10";
-        $results = $wpdb->get_results($wpdb->prepare($sql, $wpdb->esc_like($clean_query) . '%'));
+        $all_students = $wpdb->get_results("SELECT id, name, class_name, section, student_code, national_id, parent_phone, emirate, address, photo_url, school_id FROM {$wpdb->prefix}sm_students");
 
-        if (empty($results)) {
-            wp_send_json_error('لم يتم العثور على طالب يطابق بداية الاسم المدخل.');
+        $matched_students = array();
+        foreach ($all_students as $s) {
+            $norm_student_name = $this->normalize_arabic_name($s->name);
+            if ($norm_student_name === $normalized_input) {
+                $matched_students[] = $s;
+            }
+        }
+
+        if (empty($matched_students)) {
+            // Fallback: check exact match on original name column directly
+            $exact_db = $wpdb->get_results($wpdb->prepare(
+                "SELECT id, name, class_name, section, student_code, national_id, parent_phone, emirate, address, photo_url, school_id FROM {$wpdb->prefix}sm_students WHERE name = %s",
+                $clean_query
+            ));
+            if (!empty($exact_db)) {
+                $matched_students = $exact_db;
+            }
+        }
+
+        if (empty($matched_students)) {
+            wp_send_json_error('لم يتم العثور على طالب يطابق الاسم الكامل المدخل. يرجى التثبت من كتابة الاسم كما هو في سجلات شؤون الطلاب.');
         }
 
         $safe_suggestions = array();
-        foreach ($results as $s) {
+        foreach ($matched_students as $s) {
             $safe_suggestions[] = array(
                 'id'           => $s->id,
                 'full_name'    => $s->name,
                 'display_name' => $s->name,
                 'class_name'   => $s->class_name ?: 'الصف الدراسي',
-                'section'      => $s->section ?: 'أ'
+                'section'      => $s->section ?: 'أ',
+                'student_code' => $s->student_code ?: '',
+                'has_photo'    => !empty($s->photo_url)
             );
         }
 
@@ -14130,9 +14165,28 @@ class SM_Public {
     }
 
     public function ajax_save_card_portal_settings() {
+        check_ajax_referer('sm_admin_action', 'nonce');
         if (!is_user_logged_in() || (!current_user_can('manage_options') && !in_array('sm_system_admin', (array)wp_get_current_user()->roles))) {
             wp_send_json_error('عفواً، هذه الخيارات مخصصة حصرياً لمدير النظام.');
         }
+
+        if (isset($_POST['reset_default']) && $_POST['reset_default'] == '1') {
+            $defaults = array(
+                'enable_data_update' => 'yes',
+                'enable_student_code' => 'yes',
+                'enable_exit_card'    => 'yes',
+                'operational_phase'   => 'data_update',
+                'enabled_fields'      => array('national_id', 'parent_phone', 'emirate', 'address', 'photo_url'),
+                'step_order'          => array('identify', 'verify_update', 'sign_declare', 'submit_summary'),
+                'require_photo'       => 'yes'
+            );
+            update_option('eess_card_portal_settings', $defaults);
+            wp_send_json_success(array('message' => 'تم إعادة ضبط إعدادات البوابة إلى الوضع الافتراضي بنجاح.', 'settings' => $defaults));
+        }
+
+        $enable_data_update  = sanitize_text_field($_POST['enable_data_update'] ?? 'yes');
+        $enable_student_code = sanitize_text_field($_POST['enable_student_code'] ?? 'yes');
+        $enable_exit_card    = sanitize_text_field($_POST['enable_exit_card'] ?? 'yes');
 
         $phase = sanitize_text_field($_POST['operational_phase'] ?? 'data_update');
         if (!in_array($phase, array('data_update', 'card_request'))) {
@@ -14140,13 +14194,20 @@ class SM_Public {
         }
 
         $fields = isset($_POST['enabled_fields']) ? array_map('sanitize_text_field', (array)$_POST['enabled_fields']) : array();
+        $step_order = isset($_POST['step_order']) ? array_map('sanitize_text_field', (array)$_POST['step_order']) : array('identify', 'verify_update', 'sign_declare', 'submit_summary');
 
-        update_option('eess_card_portal_settings', array(
-            'operational_phase' => $phase,
-            'enabled_fields'    => $fields,
-            'require_photo'     => 'yes'
-        ));
+        $settings = array(
+            'enable_data_update'  => $enable_data_update,
+            'enable_student_code' => $enable_student_code,
+            'enable_exit_card'    => $enable_exit_card,
+            'operational_phase'   => $phase,
+            'enabled_fields'      => $fields,
+            'step_order'          => $step_order,
+            'require_photo'       => in_array('photo_url', $fields) ? 'yes' : 'no'
+        );
 
-        wp_send_json_success(array('message' => 'تم حفظ وتحديث إعدادات البوابة المباشرة بنجاح.'));
+        update_option('eess_card_portal_settings', $settings);
+
+        wp_send_json_success(array('message' => 'تم حفظ وتحديث إعدادات لوحة مدير النظام بنجاح.', 'settings' => $settings));
     }
 }
