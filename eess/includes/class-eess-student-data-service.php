@@ -218,6 +218,11 @@ class EESS_Student_Data_Service {
 
 
 
+        // Ensure mandatory institutions (Codes 1 to 6) exist in Organizational Structure
+        if (class_exists('EESS_Org_Helper')) {
+            EESS_Org_Helper::seed_mandatory_institutions();
+        }
+
         // Automatic Institution & School Scope Resolution from Organizational Structure
         $raw_input_org = $raw_school;
 
@@ -239,9 +244,10 @@ class EESS_Student_Data_Service {
         if (!empty($raw_input_org)) {
             if (is_numeric($raw_input_org)) {
                 $inst_num = intval($raw_input_org);
-                $inst_row = $wpdb->get_row($wpdb->prepare("SELECT id, code, name FROM {$wpdb->prefix}eess_institutions WHERE id = %d OR code = %d LIMIT 1", $inst_num, $inst_num));
+                // Match code first, then ID
+                $inst_row = $wpdb->get_row($wpdb->prepare("SELECT id, code, name FROM {$wpdb->prefix}eess_institutions WHERE code = %d OR id = %d LIMIT 1", $inst_num, $inst_num));
             } else {
-                $inst_row = $wpdb->get_row($wpdb->prepare("SELECT id, code, name FROM {$wpdb->prefix}eess_institutions WHERE name = %s OR code = %s LIMIT 1", $raw_input_org, $raw_input_org));
+                $inst_row = $wpdb->get_row($wpdb->prepare("SELECT id, code, name FROM {$wpdb->prefix}eess_institutions WHERE name = %s OR CAST(code AS CHAR) = %s LIMIT 1", $raw_input_org, $raw_input_org));
             }
 
             if ($inst_row) {
@@ -250,16 +256,9 @@ class EESS_Student_Data_Service {
             }
         }
 
-        // Default to primary institution from Organizational Structure if no match found
+        // Reject row with clear error if School ID / Code is invalid and not found in Organizational Structure
         if (empty($institution_id)) {
-            $first_inst = $wpdb->get_var("SELECT id FROM {$wpdb->prefix}eess_institutions ORDER BY id ASC LIMIT 1");
-            if ($first_inst) {
-                $institution_id = intval($first_inst);
-                $school_id      = intval($first_inst);
-            } else {
-                $institution_id = 1;
-                $school_id      = 1;
-            }
+            return new WP_Error('invalid_school_code', 'رمز/معرف المدرسة المدخل (' . esc_html($raw_input_org) . ') غير موجود في الهيكل التنظيمي للمؤسسات.');
         }
 
         // Resolve Department ID for Student Affairs (Department Code 3)
