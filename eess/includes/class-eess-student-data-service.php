@@ -40,28 +40,73 @@ class EESS_Student_Data_Service {
     }
 
     /**
-     * Normalize Grade input (numeric or string)
+     * Normalize Grade input (numeric 1..12, Arabic textual names, English names)
      */
     public static function normalize_grade($input) {
-        $clean = trim(str_ireplace(array('الصف', 'Grade', 'grade'), '', $input));
-        $num = intval($clean);
-        if ($num >= 1 && $num <= 12) {
-            $grade_map = array(
-                1 => 'الصف الأول', 2 => 'الصف الثاني', 3 => 'الصف الثالث', 4 => 'الصف الرابع',
-                5 => 'الصف الخامس', 6 => 'الصف السادس', 7 => 'الصف السابع', 8 => 'الصف الثامن',
-                9 => 'الصف التاسع', 10 => 'الصف العاشر', 11 => 'الصف الحادي عشر', 12 => 'الصف الثاني عشر'
-            );
-            return $grade_map[$num];
+        $raw = trim((string)$input);
+        if (empty($raw)) {
+            return 'الصف الأول';
         }
-        return !empty($input) ? sanitize_text_field($input) : 'الصف الأول';
+
+        $grade_map = array(
+            1 => 'الصف الأول', 2 => 'الصف الثاني', 3 => 'الصف الثالث', 4 => 'الصف الرابع',
+            5 => 'الصف الخامس', 6 => 'الصف السادس', 7 => 'الصف السابع', 8 => 'الصف الثامن',
+            9 => 'الصف التاسع', 10 => 'الصف العاشر', 11 => 'الصف الحادي عشر', 12 => 'الصف الثاني عشر'
+        );
+
+        // Remove 'الصف' or 'Grade'
+        $clean = trim(str_ireplace(array('الصف', 'Grade', 'grade'), '', $raw));
+
+        // Direct numeric check
+        if (is_numeric($clean)) {
+            $num = intval($clean);
+            if (isset($grade_map[$num])) {
+                return $grade_map[$num];
+            }
+        }
+
+        // Arabic word match
+        $word_map = array(
+            'الأول' => 1, 'الاول' => 1, 'الأولى' => 1, 'الاولى' => 1,
+            'الثاني' => 2, 'الثانية' => 2,
+            'الثالث' => 3, 'الثالثة' => 3,
+            'الرابع' => 4, 'الرابعة' => 4,
+            'الخامس' => 5, 'الخامسة' => 5,
+            'السادس' => 6, 'السادسة' => 6,
+            'السابع' => 7, 'السابعة' => 7,
+            'الثامن' => 8, 'الثامنة' => 8,
+            'التاسع' => 9, 'التاسعة' => 9,
+            'العاشر' => 10, 'العاشرة' => 10,
+            'الحادي عشر' => 11, 'الحادي عشرة' => 11,
+            'الثاني عشر' => 12, 'الثاني عشرة' => 12
+        );
+
+        foreach ($word_map as $word => $num) {
+            if (mb_strpos($clean, $word) !== false) {
+                return $grade_map[$num];
+            }
+        }
+
+        return sanitize_text_field($raw);
     }
 
     /**
      * Normalize Section input
      */
     public static function normalize_section($input) {
+        $raw = trim((string)$input);
+        if (empty($raw)) {
+            return 'أ';
+        }
+
+        // Handle cases like "10-A", "10/A", "10-أ"
+        if (strpos($raw, '-') !== false || strpos($raw, '/') !== false) {
+            $parts = preg_split('/[-\/]/', $raw);
+            $raw = trim(end($parts));
+        }
+
         if (class_exists('EESS_Org_Helper')) {
-            $resolved = EESS_Org_Helper::normalize_section($input);
+            $resolved = EESS_Org_Helper::normalize_section($raw);
             return $resolved['ar'];
         }
         return 'أ';
