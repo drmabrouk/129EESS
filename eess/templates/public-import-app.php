@@ -15,7 +15,7 @@ $admin_nonce = wp_create_nonce('sm_admin_action');
 $can_import = current_user_can('manage_options') || current_user_can('إدارة_الطلاب') || in_array('sm_system_admin', (array)wp_get_current_user()->roles);
 ?>
 
-<div class="eess-import-app" style="max-width: 820px; margin: 20px auto; background: #ffffff; border-radius: 20px; border: 1px solid #e2e8f0; box-shadow: 0 10px 30px rgba(15,23,42,0.08); font-family: 'Cairo', sans-serif; direction: rtl; padding: 28px; box-sizing: border-box; color: #0f172a;">
+<div class="eess-import-app" style="max-width: 860px; margin: 20px auto; background: #ffffff; border-radius: 20px; border: 1px solid #e2e8f0; box-shadow: 0 10px 30px rgba(15,23,42,0.08); font-family: 'Cairo', sans-serif; direction: rtl; padding: 28px; box-sizing: border-box; color: #0f172a;">
 
     <!-- Branding Header -->
     <div style="text-align: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 20px; margin-bottom: 24px;">
@@ -23,7 +23,7 @@ $can_import = current_user_can('manage_options') || current_user_can('إدارة
             <img src="<?php echo esc_url($sys_logo); ?>" style="width: 100%; height: 100%; object-fit: contain; border-radius: 12px;" alt="Logo">
         </div>
         <h2 style="margin: 0 0 4px 0; font-size: 22px; font-weight: 900; color: #0f172a;"><?php echo esc_html($school_name); ?></h2>
-        <div style="font-size: 14px; color: #881337; font-weight: 800;">البوابة الموحدة لتصدير واستيراد بيانات الطلاب الشاملة (Excel / CSV)</div>
+        <div style="font-size: 14px; color: #881337; font-weight: 800;">البوابة الموحدة لتصدير واستيراد بيانات الطلاب (المخطط القياسي الـ 12 أعمدة)</div>
     </div>
 
     <?php if (!$can_import): ?>
@@ -40,8 +40,49 @@ $can_import = current_user_can('manage_options') || current_user_can('إدارة
         </a>
         <a href="<?php echo admin_url('admin-ajax.php?action=sm_download_student_import_template'); ?>" target="_blank" style="flex: 1; height: 42px; background: #f1f5f9; color: #1e293b; border: 1px solid #cbd5e1; border-radius: 10px; font-weight: 800; font-size: 13px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px;">
             <span class="dashicons dashicons-media-document" style="font-size: 18px; color: #16a34a;"></span>
-            <span>تحميل نموذج الاستيراد الشامل (16 عمود)</span>
+            <span>تحميل نموذج الاستيراد القياسي (الـ 12 أعمدة)</span>
         </a>
+    </div>
+
+    <!-- Official 12-Column Import Guide & Rules Card -->
+    <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 16px; padding: 20px; margin-bottom: 24px;">
+        <h4 style="margin: 0 0 12px 0; font-size: 14.5px; font-weight: 900; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+            <span>📖 دليل وإرشادات ترتيب الأعمدة الـ 12 المعتمدة في ملف الاستيراد:</span>
+        </h4>
+        <p style="font-size: 12px; color: #475569; margin: 0 0 14px 0; line-height: 1.6;">
+            لتفادي الأخطاء، يجب أن يتوافق ملف Excel/CSV مع المخطط الهيكلي التالي (12 عموداً بالترتيب القياسي المحدد):
+        </p>
+
+        <div style="max-height: 230px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 10px; background: #ffffff;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 11.5px; text-align: right;">
+                <thead>
+                    <tr style="background: #f1f5f9; color: #334155; position: sticky; top: 0;">
+                        <th style="padding: 8px 10px; border-bottom: 1px solid #cbd5e1; width: 45px;">م</th>
+                        <th style="padding: 8px 10px; border-bottom: 1px solid #cbd5e1;">اسم العمود</th>
+                        <th style="padding: 8px 10px; border-bottom: 1px solid #cbd5e1; width: 90px;">الحالة</th>
+                        <th style="padding: 8px 10px; border-bottom: 1px solid #cbd5e1;">القيم والافتراضات</th>
+                        <th style="padding: 8px 10px; border-bottom: 1px solid #cbd5e1;">مثال توضيحي</th>
+                    </tr>
+                </thead>
+                <tbody style="color: #475569;">
+                    <tr><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; font-weight:700;">1</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">معرف المدرسة (School ID)</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; color: #dc2626; font-weight:700;">إجباري</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">كود الموديل الهيكلي (1 - 6)</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">1</td></tr>
+                    <tr><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; font-weight:700;">2</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">كود الطالب (Student Code)</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; color: #881337; font-weight:700;">اختياري (تلقائي)</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">يولّد تلقائياً إن كان فارغاً</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">STU-10025</td></tr>
+                    <tr><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; font-weight:700;">3</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">الاسم الكامل (Full Name)</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; color: #dc2626; font-weight:700;">إجباري</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">اسم الطالب الثلاثي/الرباعي</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">عبد الله محمد الشامسي</td></tr>
+                    <tr><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; font-weight:700;">4</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">رقم الهوية الوطنية (National ID)</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; color: #16a34a; font-weight:700;">اختياري تماماً</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">تُقبل الخانة الفارغة دون تعارض</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">784-1995-1234567-1</td></tr>
+                    <tr><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; font-weight:700;">5</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">الجنس (Gender)</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; color: #64748b;">اختياري</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">القيمة الافتراضية: "ذكر"</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">ذكر / أنثى</td></tr>
+                    <tr><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; font-weight:700;">6</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">تاريخ الميلاد (Date of Birth)</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; color: #64748b;">اختياري</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">YYYY-MM-DD</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">2014-05-15</td></tr>
+                    <tr><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; font-weight:700;">7</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">الجنسية (Nationality)</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; color: #64748b;">اختياري</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">الافتراضي: "الإمارات"</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">الإمارات العربية المتحدة</td></tr>
+                    <tr><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; font-weight:700;">8</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">الإمارة (Emirate)</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; color: #64748b;">اختياري</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">القيمة الافتراضية: "الشارقة"</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">الشارقة / عجمان / دبي</td></tr>
+                    <tr><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; font-weight:700;">9</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">الصف الدراسي (Grade)</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; color: #dc2626; font-weight:700;">إجباري</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">مطابقة الهيكل التنظيمي</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">الصف 6</td></tr>
+                    <tr><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; font-weight:700;">10</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">الشعبة / الفصل (Section)</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; color: #dc2626; font-weight:700;">إجباري</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">أ / ب / ج / د</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">أ</td></tr>
+                    <tr><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; font-weight:700;">11</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">اسم ولي الأمر (Guardian Name)</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; color: #64748b;">اختياري</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">الاسم الكامل لولي الأمر</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">محمد الشامسي</td></tr>
+                    <tr><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; font-weight:700;">12</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">رقم هاتف ولي الأمر (Guardian Phone)</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9; color: #64748b;">اختياري</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">أرقام الهاتف المعتمدة</td><td style="padding: 6px 10px; border-bottom: 1px solid #f1f5f9;">0501234567</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div style="font-size: 11.5px; color: #166534; font-weight: 700; margin-top: 10px;">
+            ✓ يتم ربط كل طالب مستورد تلقائياً بقسم شؤون الطلاب (كود 3) مع إنشاء الحساب المعتمد والتوليد التلقائي للأكواد الرقمية والأرقام التسلسلية.
+        </div>
     </div>
 
     <!-- STEP 1: FILE SELECTION & UPLOAD -->
@@ -50,22 +91,14 @@ $can_import = current_user_can('manage_options') || current_user_can('إدارة
             <div style="width: 56px; height: 56px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px auto; color: #881337;">
                 <span class="dashicons dashicons-upload" style="font-size: 28px; width: 28px; height: 28px;"></span>
             </div>
-            <h3 style="margin: 0 0 6px 0; font-size: 16px; font-weight: 800; color: #0f172a;">اختر أو أسقط ملف البيانات الشامل (Excel / CSV)</h3>
-            <p style="margin: 0 0 16px 0; font-size: 12.5px; color: #64748b; font-weight: 600;">يدعم النظام معالجة الملفات الضخمة حتى 2,000+ سجل بآلية المهام الخلفية المستمرة</p>
+            <h3 style="margin: 0 0 6px 0; font-size: 16px; font-weight: 800; color: #0f172a;">اختر أو أسقط ملف البيانات القياسي (Excel / CSV)</h3>
+            <p style="margin: 0 0 16px 0; font-size: 12.5px; color: #64748b; font-weight: 600;">يدعم النظام المعالجة المستقرة للبيانات بأسلوب الدفعات الخلفية المستمرة</p>
 
             <input type="file" id="imp_file_input" accept=".csv, .xlsx, .xls" style="display: none;" onchange="impFileSelected(this)">
             <button type="button" onclick="document.getElementById('imp_file_input').click()" style="height: 42px; padding: 0 24px; background: #0f172a; color: white; border: none; border-radius: 10px; font-weight: 800; font-size: 13.5px; cursor: pointer;">
                 📁 استعراض واختيار الملف
             </button>
             <div id="imp-file-name-preview" style="margin-top: 10px; font-size: 12.5px; font-weight: 800; color: #15803d; display: none;"></div>
-        </div>
-
-        <!-- System Requirements Summary Box -->
-        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 14px; padding: 16px; font-size: 12px; color: #166534; line-height: 1.6; margin-bottom: 20px;">
-            <strong>📋 ضوابط واستحقاقات الملف الشامل:</strong><br>
-            • الحقول الإجبارية: اسم الطالب الكامل، رمز/اسم المدرسة، الصف الدراسي، والشعبة.<br>
-            • الحقول الاختيارية: الهوية الوطنية/الإقامة (يمكن تركها فارغة ولن تسبب تكرار أو تعارض مفاتيح).<br>
-            • يتم ربط الطالب تلقائياً بقسم شؤون الطلاب (كود 3) وتوليد كود الطالب الرقمي والرقم التسلسلي تلقائياً.
         </div>
 
         <div style="display: flex; justify-content: flex-end;">
