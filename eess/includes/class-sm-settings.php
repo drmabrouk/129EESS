@@ -625,25 +625,6 @@ class SM_Settings {
                     'sm_hr' => false,
                 )
             ),
-            'school-structure' => array(
-                'label' => 'الهيكل التنظيمي والاداري',
-                'dashicon' => 'dashicons-category',
-                'tab' => 'school-structure',
-                'default' => array(
-                    'sm_system_admin' => true,
-                    'sm_principal' => false,
-                    'sm_supervisor' => false,
-                    'sm_coordinator' => false,
-                    'sm_teacher' => false,
-                    'sm_student' => false,
-                    'sm_parent' => false,
-                    'sm_discipline_supervisor' => false,
-                    'sm_activities_supervisor' => false,
-                    'sm_transportation_supervisor' => false,
-                    'sm_bus_supervisor' => false,
-                    'sm_hr' => false,
-                )
-            ),
             'global-settings' => array(
                 'label' => 'إعدادات النظام',
                 'dashicon' => 'dashicons-admin-generic',
@@ -713,7 +694,7 @@ class SM_Settings {
             return true;
         }
 
-        if ($key === 'school-structure' || $key === 'global-settings') {
+        if ($key === 'global-settings') {
             return false;
         }
 

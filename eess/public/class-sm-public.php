@@ -6329,7 +6329,7 @@ class SM_Public {
                 if (is_wp_error($res)) {
                     wp_die('خطأ في حفظ المادة المركزية: ' . $res->get_error_message());
                 }
-                wp_redirect(add_query_arg(array('sm_tab' => 'school-structure', 'sm_admin_msg' => 'settings_saved'), wp_get_referer()));
+                wp_redirect(add_query_arg(array('sm_tab' => 'grades', 'sm_admin_msg' => 'settings_saved'), wp_get_referer()));
                 exit;
             }
         }
