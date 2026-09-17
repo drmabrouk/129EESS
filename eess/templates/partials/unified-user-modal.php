@@ -4,18 +4,7 @@ if (!defined('ABSPATH')) exit;
 $institutions = class_exists('EESS_Org_Helper') ? EESS_Org_Helper::get_institutions() : array();
 $all_schools  = class_exists('EESS_Org_Helper') ? EESS_Org_Helper::get_all_schools() : array();
 $subjects     = class_exists('EESS_Org_Helper') ? array_column(EESS_Org_Helper::get_official_subjects(), 'name', 'code') : array();
-$departments_objs = class_exists('EESS_Org_Helper') ? EESS_Org_Helper::get_departments_by_institution(1) : array();
-$departments = array();
-if (!empty($departments_objs)) {
-    foreach ($departments_objs as $d_obj) {
-        if (!empty($d_obj->name)) {
-            $departments[$d_obj->code ?: $d_obj->id] = $d_obj->name;
-        }
-    }
-}
-if (empty($departments) && class_exists('EESS_Org_Helper')) {
-    $departments = array_column(EESS_Org_Helper::get_official_departments(), 'name', 'code');
-}
+$departments  = class_exists('EESS_Org_Helper') ? array_column(EESS_Org_Helper::get_official_departments(), 'name', 'code') : array();
 ?>
 
 <!-- UNIFIED USER & EMPLOYEE MANAGEMENT MODAL -->

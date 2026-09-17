@@ -45,6 +45,7 @@ $students = SM_DB::get_students();
         <div class="sm-tabs-wrapper" style="display: flex; gap: 10px; border-bottom: 2px solid #eee; padding-bottom: 10px; flex: 1;">
             <button class="sm-tab-btn sm-active" onclick="smOpenInternalTab('individual-grading', this)">رصد فردي</button>
             <button class="sm-tab-btn" onclick="smOpenInternalTab('class-grading', this)">رصد جماعي (حسب الصف)</button>
+            <button class="sm-tab-btn" onclick="smOpenInternalTab('subjects-registry', this)">المواد الدراسية (الـ 19 المعتمدة)</button>
         </div>
     </div>
 
@@ -152,6 +153,42 @@ $students = SM_DB::get_students();
             </div>
         </div>
         <div id="batch-students-container"></div>
+    </div>
+
+    <!-- 3. CENTRAL SUBJECTS REGISTRY SUBTAB -->
+    <div id="subjects-registry" class="sm-internal-tab" style="display:none;">
+        <div style="background: #ffffff; border-radius: 16px; border: 1px solid #cbd5e1; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); margin-bottom: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <div>
+                    <h3 style="margin: 0 0 4px 0; font-size: 16px; font-weight: 800; color: #0f172a;">سجل المواد الدراسية المعتمدة (19 مادة)</h3>
+                    <p style="margin: 0; font-size: 12px; color: #64748b; font-weight: 500;">المواد الدراسية الأساسية المحملة تلقائياً بالنظام والمتاحة مباشرة لجميع المكونات والصفوف</p>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+                <?php
+                $official_subjects = EESS_Org_Helper::get_official_subjects();
+                $official_depts = EESS_Org_Helper::get_official_departments();
+                foreach ($official_subjects as $s_code => $s_info):
+                    $dept_name = isset($official_depts[$s_info['dept_code']]) ? $official_depts[$s_info['dept_code']]['name'] : 'قسم أكاديمي';
+                    $teacher_cnt = EESS_Org_Helper::get_subject_teacher_count($s_info['name']);
+                ?>
+                <div style="background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; gap: 10px;">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+                            <h4 style="margin: 0; font-size: 14px; font-weight: 800; color: #0f172a;"><?php echo esc_html($s_info['name']); ?></h4>
+                            <span style="font-family: monospace; font-size: 11px; background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 6px; font-weight: bold; border: 1px solid #bae6fd;">كود: <?php echo $s_code; ?></span>
+                        </div>
+                        <div style="font-size: 11.5px; color: #64748b; font-weight: 600;">القسم التابع: <strong style="color: #475569;"><?php echo esc_html($dept_name); ?></strong></div>
+                    </div>
+                    <div style="border-top: 1px solid #e2e8f0; padding-top: 8px; font-size: 11px; color: #881337; font-weight: 800; display: flex; justify-content: space-between; align-items: center;">
+                        <span>🎓 الكادر التدريسي المسند:</span>
+                        <span style="background: #fef2f2; border: 1px solid #fecdd3; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 800;"><?php echo $teacher_cnt; ?> معلم</span>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
     </div>
 
 </div>
