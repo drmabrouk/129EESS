@@ -244,6 +244,14 @@ class SM_Public {
     }
 
     public function enqueue_styles() {
+        global $post;
+        $is_eess_admin = is_admin() && isset($_GET['page']) && strpos($_GET['page'], 'school-management') !== false;
+        $has_shortcode = is_a($post, 'WP_Post') && (has_shortcode($post->post_content, 'import') || has_shortcode($post->post_content, 'card') || has_shortcode($post->post_content, 'sm_class_attendance') || has_shortcode($post->post_content, 'school_management'));
+
+        if (!$is_eess_admin && !$has_shortcode) {
+            return;
+        }
+
         wp_enqueue_media();
         wp_enqueue_script('jquery');
         wp_enqueue_style('dashicons');
