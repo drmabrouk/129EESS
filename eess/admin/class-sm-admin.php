@@ -85,7 +85,7 @@ class SM_Admin {
             }
             .sm-content-wrapper, .sm-admin-dashboard, .sm-container,
             .sm-content-wrapper *:not(.dashicons), .sm-admin-dashboard *:not(.dashicons), .sm-container *:not(.dashicons) {
-                font-family: 'Cairo', 'Noto Kufi Arabic', sans-serif !important;
+                font-family: 'Alexandria', 'Cairo', 'Noto Kufi Arabic', sans-serif !important;
             }
             .sm-content-wrapper { font-size: calc({$appearance['font_size']} * 0.93); }
         ";

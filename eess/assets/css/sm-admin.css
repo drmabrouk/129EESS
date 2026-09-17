@@ -24,7 +24,7 @@
 
 .sm-content-wrapper, .sm-admin-dashboard, .sm-container,
 .sm-content-wrapper *:not(.dashicons), .sm-admin-dashboard *:not(.dashicons), .sm-container *:not(.dashicons) {
-    font-family: 'Cairo', 'Noto Kufi Arabic', sans-serif !important;
+    font-family: 'Alexandria', 'Cairo', 'Noto Kufi Arabic', sans-serif !important;
     color: var(--sm-dark-color);
 }
 
@@ -416,4 +416,21 @@
     width: 18px !important;
     height: 18px !important;
     display: block !important;
+}
+
+
+/* EESS Responsive RTL & Layout Fixes */
+@media (max-width: 768px) {
+    .sm-grid, [style*="display: grid"] {
+        grid-template-columns: 1fr !important;
+    }
+    .sm-modal-overlay > div {
+        max-width: 95% !important;
+        margin: 10px auto !important;
+        max-height: 90vh !important;
+    }
+    .sm-table-container {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
 }
